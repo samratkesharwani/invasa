@@ -6,6 +6,8 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Header from '../Header'
 
 const FormElementInput = () => {
+ const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     brandName: "",
     ownerName: "",
@@ -45,10 +47,11 @@ const FormElementInput = () => {
 
     if (brandError) {
       console.error("Brand insert error:", brandError);
+    }else{
+      navigate('/thanks');
     }
   };
 
- const navigate = useNavigate();
   const handleBackClick = () => {
     navigate(-1);
   }

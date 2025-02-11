@@ -5,7 +5,6 @@ import {useNavigate} from 'react-router-dom';
 import "../../css/tailwind.css";
 import { supabase } from "../../utils/supabase";
 import Header from "../Header";
-import dummy from './dummy.json';
 
 
 
