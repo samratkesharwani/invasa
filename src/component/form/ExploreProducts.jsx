@@ -57,7 +57,8 @@ const FormElementInput = () => {
     <>
   <Header/>
             <section className="py-12 bg-dark">
-                <div className="container">
+            <div className="container border border-primary rounded-md p-4 mx-auto">
+
                     <form onSubmit={handleSubmit}>
                     <h3 className="p-8 mb-4 text-2xl font-bold text-dark text-white sm:text-[40px]/[48px]">
         <ArrowBackIcon fontSize="large" onClick={handleBackClick} /> <span className="ml-4">Onboarding Form-</span>
