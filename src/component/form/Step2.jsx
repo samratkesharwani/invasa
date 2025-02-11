@@ -27,7 +27,7 @@ function Step3({ formData, setFormData, prevPage, nextPage }) {
         />
       ))}
       </div>
-    <b style={{textAlign:'center', fontSize:'calc(8px + 0.3vw)',width:'100px'}} className='text-white'>If you don't sell a particular item, feel free to leave the corresponding fields blank.</b>
+    <b style={{textAlign:'center', fontSize:'calc(10px + 0.3vw)',width:'100px'}} className='text-white'>If you don't sell a particular item, feel free to leave the corresponding fields blank.</b>
 
       <div className='flex w-full'>
         <div className='m-2'>

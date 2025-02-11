@@ -18,7 +18,7 @@ const SuccessAlert2 = () => {
   return (
     <>
       <Header/>
-      <div className="py-10 bg-white bg-dark">
+      <div className="py-10  bg-dark">
         <div className="container">
           <div className="border-green bg-green-light-6 flex w-full rounded-lg border-l-[6px] px-7 py-8 md:p-9">
             <div className="bg-green mr-5 flex h-[34px] w-full max-w-[34px] items-center justify-center rounded-md">

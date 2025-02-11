@@ -10,7 +10,7 @@ const Hero = () => {
   return (
     <>
       {/* <Navbar /> */}
-      <div className="relative bg-white pb-[110px] pt-[120px] bg-dark lg:pt-[150px]">
+      <div className="relative  pb-[110px] pt-[120px] bg-dark lg:pt-[150px]">
         <div className="container">
           <div className="-mx-4 flex flex-wrap">
             <div className="w-full px-4 lg:w-5/12">

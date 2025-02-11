@@ -14,11 +14,11 @@ const Card = () => {
   return (
     <>
     <Title title ="Why Choose Invasa Link?" />
-      <section className="bg-gray-2 pb-10 -mt-20 pt-20 bg-dark lg:pb-20 lg:pt-[120px]">
+      <section className=" pb-10 -mt-20 pt-20 bg-dark lg:pb-20 lg:pt-[120px]">
         <div className="container">
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             <SingleCard
-            style={{borderRadius:"20px", }}
+            style={{borderRadius:"20px" }}
               image={color}
               CardTitle="Decentralized Network"
               titleHref="/#"
@@ -64,28 +64,28 @@ const SingleCard = ({
   return (
     <>
       {/*  */}
-      <div className="mb-10 overflow-hidden rounded-lg bg-white shadow-1 duration-300 hover:shadow-3 bg-dark-2 dark:shadow-card dark:hover:shadow-3">
+      <div style={{}} className="border-primary border mb-10 overflow-hidden rounded-lg  shadow-1 duration-300 hover:shadow-3 bg-dark-2 dark:shadow-card dark:hover:shadow-3">
         <img src={image} alt="" className="w-full" />
         <div className="p-8 text-center sm:p-9 md:p-7 xl:p-9">
           <h3>
-            <a
+            <p
               href={titleHref ? titleHref : "/#"}
-              className="mb-4 block text-xl font-semibold text-dark hover:text-primary dark:text-white sm:text-[22px] md:text-xl lg:text-[22px] xl:text-xl 2xl:text-[22px]"
+              className="mb-4 block text-xl font-semibold text-dark text-white sm:text-[22px] md:text-xl lg:text-[22px] xl:text-xl 2xl:text-[22px]"
             >
               {CardTitle}
-            </a>
+            </p>
           </h3>
           <p className="mb-7 text-base leading-relaxed text-body-color dark:text-dark-6">
             {CardDescription}
           </p>
 
           {Button && (
-            <a
+            <p
               href={btnHref ? btnHref : "#"}
               className="inline-block rounded-full border border-gray-3 px-7 py-2 text-base font-medium text-body-color transition hover:border-primary hover:bg-primary hover:text-white dark:border-dark-3 dark:text-dark-6"
             >
               {Button}
-            </a>
+            </p>
           )}
         </div>
       </div>

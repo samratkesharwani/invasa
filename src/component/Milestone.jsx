@@ -11,7 +11,7 @@ const StatsCard = () => {
                   </h6>
 </div>
         <div style={{display: 'grid',placeItems:'center', margin:'2vw 10vw 2vw 10vw',}} >
-     <div style={{backgroundColor:'#1F2A37',color:'white', display: 'flex',justifyContent:'space-evenly',alignItems:'center',width:'90%', borderRadius:'20px' }}className="flex justify-between items-center bg-white p-5 rounded-lg w-1/2" >
+     <div style={{backgroundColor:'#1F2A37',color:'white', display: 'flex',justifyContent:'space-evenly',alignItems:'center',width:'90%', borderRadius:'20px' }}className="flex justify-between items-center  p-5 rounded-lg w-1/2" >
          <div style={{ marginLeft:"2vw"}} className="text-center m-4">
            <p className="text-2xl font-bold">4+</p>
            <p className="text-sm text-gray-600 mb-1">Bangalore</p>
