@@ -12,11 +12,7 @@ const Navbar = () => {
             <a href="/#" className="block py-5"  
                 style={{width:'12rem'}}
                 >
-              {/* <img
-                src={logo}
-                alt="logo"
-                className="dark:hidden"
-              /> */}
+             
               <img
                 src={logo}
                 alt="logo"
