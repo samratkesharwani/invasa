@@ -14,7 +14,7 @@ const Card = () => {
   return (
     <>
     <Title title ="Why Choose Invasa Link?" />
-      <section className="bg-gray-2 pb-10 -mt-20 pt-20 bg-dark lg:pb-20 lg:pt-[120px]">
+      <section className="pb-10 -mt-20 pt-20 bg-dark lg:pb-20 lg:pt-[120px]">
         <div className="container">
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             <SingleCard
