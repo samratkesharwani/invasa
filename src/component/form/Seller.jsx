@@ -4,6 +4,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Step1 from "./Step1";
 import Step2 from "./Step2";
 import Step3 from "./Step3";
+import Header from '../Header'
 
 const FormElementInput = () => {
   const [pageCounter, setPageCounter] = useState(1);
@@ -93,7 +94,10 @@ const FormElementInput = () => {
   };
 
   return (
-    <div className="container w-full" style={{width:'100vw', backgroundColor:'#111928'}}>
+    <>
+    <Header/>
+                <section className="py-12 bg-dark">
+    <div className="container border border-primary rounded-md">
       <h3 className="p-8 mb-4 text-2xl font-bold text-dark text-white sm:text-[40px]/[48px]">
         <ArrowBackIcon fontSize="large" onClick={handleBackClick} /> <span className="ml-4">Onboarding Form-</span>
       </h3>
@@ -106,6 +110,8 @@ const FormElementInput = () => {
         <Step3 setFormData={setFormData} handleChange={handleChange} formData={formData} prevPage={previousPage} nextPage={nextPage} />
       )}
     </div>
+    </section>
+    </>
   );
 };
 

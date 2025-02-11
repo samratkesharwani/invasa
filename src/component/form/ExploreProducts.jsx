@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import {useNavigate} from 'react-router-dom';
 import "../../css/tailwind.css";
 import { supabase } from "../../utils/supabase";
-// import "../../css/tailwind.css";
-import Header from "../Header";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import Header from '../Header'
+
 const FormElementInput = () => {
   const [formData, setFormData] = useState({
     brandName: "",
@@ -55,14 +55,13 @@ const FormElementInput = () => {
 
   return (
     <>
-  
-  <div style={{ marginBottom: '-3vw' }} className="bg-dark"></div>
+  <Header/>
             <section className="py-12 bg-dark">
                 <div className="container">
                     <form onSubmit={handleSubmit}>
-                    <h3 className=" text-2xl font-bold text-white sm:text-[40px]/[48px]">
-                            <ArrowBackIcon fontSize="large" onClick={handleBackClick} /> <span className="ml-4">Onboarding Form-</span>
-                        </h3>
+                    <h3 className="p-8 mb-4 text-2xl font-bold text-dark text-white sm:text-[40px]/[48px]">
+        <ArrowBackIcon fontSize="large" onClick={handleBackClick} /> <span className="ml-4">Onboarding Form-</span>
+      </h3>
                         <div className="-mx-4 flex flex-wrap">
                             <DefaultColumn>
                                 <TextInput
@@ -160,7 +159,7 @@ const DefaultColumn = ({ children }) => {
 const TextInput = ({ title, name, placeholder, onChange, value }) => {
   return (
     <>
-      <label className="mb-[10px] block text-base font-medium text-dark dark:text-white">
+      <label className="mb-[10px] block text-base font-medium text-white">
         {title}
       </label>
       <input
@@ -178,7 +177,7 @@ const TextInput = ({ title, name, placeholder, onChange, value }) => {
 const EmailInput = ({ name, placeholder, onChange, value }) => {
   return (
     <>
-      <label className="mb-[10px] block text-base font-medium text-dark dark:text-white">
+      <label className="mb-[10px] block text-base font-medium text-white">
         Email
       </label>
       <input
