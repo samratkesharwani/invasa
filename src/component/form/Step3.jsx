@@ -121,7 +121,7 @@ export default Step3
 const TextInput = ({ title, name, placeholder, onChange,type }) => {
   return (
     <div>
-      <label className="mb-[10px] block text-base font-medium text-dark dark:text-white">{title}</label>
+      <label className="mb-[10px] block text-base font-medium text-dark text-white">{title}</label>
       <input type={type} name={name} onChange={onChange} placeholder={placeholder} className="w-full bg-transparent rounded-md border border-stroke dark:border-dark-3 py-[10px] px-5 text-dark-6 outline-none transition focus:border-primary active:border-primary" />
     </div>
   );

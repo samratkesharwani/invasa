@@ -101,7 +101,7 @@ const DefaultColumn = ({ children }) => {
 const TextInput = ({ title, name, placeholder, onChange, value }) => {
   return (
     <>
-      <label className="mb-[10px] block text-base font-medium text-dark dark:text-white">
+      <label className="mb-[10px] block text-base font-medium text-dark text-white">
         {title}
       </label>
       <input
@@ -119,7 +119,7 @@ const TextInput = ({ title, name, placeholder, onChange, value }) => {
 const EmailInput = ({ name, placeholder, onChange, value }) => {
   return (
     <>
-      <label className="mb-[10px] block text-base font-medium text-dark dark:text-white">
+      <label className="mb-[10px] block text-base font-medium text-dark text-white">
         Email
       </label>
       <input

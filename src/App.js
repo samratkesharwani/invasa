@@ -19,25 +19,16 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   return (
     
-    // <AuthProvider>        
+  
       <Router>
         <Routes>
           <Route path="/" element={<Layout/>} />
           <Route path="/explore-products" element={<ExploreProducts />} />
           <Route path="/seller" element={<Seller/>} />
-          {/* <Route path="/signup" element={<Signup />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/admin" element={<AdminPanel />} />
-          <Route path="/general" element={<GeneralPosts />} /> */}
-          <Route path="/thanks" element={<Thanks />} />
-          {/* <Route path="/dashboard" element={
-            <Wrapper>
-            <Dashboard />
-            </Wrapper>
-            } /> */}
+          <Route path="/thanks" element={<Thanks />} />          
         </Routes>
       </Router>
-    // </AuthProvider>
+
   );
 }
 

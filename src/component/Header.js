@@ -16,7 +16,7 @@ const Navbar = () => {
               <img
                 src={logo}
                 alt="logo"
-                className="hidden dark:block"
+                className=""
               />
             </a>
           </div>

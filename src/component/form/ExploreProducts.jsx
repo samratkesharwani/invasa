@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import {useNavigate} from 'react-router-dom';
 import "../../css/tailwind.css";
 import { supabase } from "../../utils/supabase";
+// import "../../css/tailwind.css";
 import Header from "../Header";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 const FormElementInput = () => {
