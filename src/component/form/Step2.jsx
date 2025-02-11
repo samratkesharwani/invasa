@@ -54,7 +54,7 @@ export default Step3;
 const CustomInput = ({ handleChange, gsm, size, title }) => {
   return (
     <div style={{backgroundColor:"#1F2A37", margin:'10px', }} className="m-10 lg:w-1/4 w-full  bg-transparent rounded-md border border-stroke dark:border-dark-3 py-[10px] px-5 text-dark-6 outline-none transition focus:border-primary active:border-primary">
-      <h1 className="mb-4 block text-xl font-semibold text-dark dark:text-white sm:text-[22px] md:text-xl lg:text-[22px] xl:text-xl 2xl:text-[22px]">{title}</h1>
+      <h1 className="mb-4 block text-xl font-semibold text-dark text-white sm:text-[22px] md:text-xl lg:text-[22px] xl:text-xl 2xl:text-[22px]">{title}</h1>
       <MultiSelectButtons title={'Sizes'} data={size} handleChange={handleChange} />
       <TextInput type={'text'} title={'GSM'} name={'gsm'} placeholder={'180,200,200,etc'} onChange={(e) => handleChange('gsm', e.target.value)} />
       <TextInput type={'text'} title="Color" name="color" placeholder="White, Black, Etc" onChange={(e) => handleChange('color', e.target.value)} />
@@ -76,7 +76,7 @@ const MultiSelectButtons = ({ title, data, handleChange }) => {
 
   return (
     <div>
-      <label className="mb-[10px] block text-base font-medium text-dark dark:text-white">{title}</label>
+      <label className="mb-[10px] block text-base font-medium text-dark text-white">{title}</label>
       <div className="flex flex-wrap">
         {data.map((item, index) => (
           <button key={index} onClick={() => handleItemClick(item)} className={`m-3 p-2 border ${selectedItems.includes(item) ? 'bg-primary text-white' : 'bg-transparent text-white'}`}>
@@ -91,7 +91,7 @@ const MultiSelectButtons = ({ title, data, handleChange }) => {
 const TextInput = ({ title, name, placeholder, onChange,type }) => {
   return (
     <div>
-      <label className="mb-[10px] block text-base font-medium text-dark dark:text-white">{title}</label>
+      <label className="mb-[10px] block text-base font-medium text-dark text-white">{title}</label>
       <input type={type} name={name} onChange={onChange} placeholder={placeholder} className="w-full bg-transparent rounded-md border border-stroke dark:border-dark-3 py-[10px] px-5 text-dark-6 outline-none transition focus:border-primary active:border-primary" />
     </div>
   );

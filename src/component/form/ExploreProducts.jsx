@@ -56,8 +56,8 @@ const FormElementInput = () => {
   return (
     <>
   
-  <div style={{ marginBottom: '-3vw' }} className="dark:bg-dark"></div>
-            <section className="py-12 dark:bg-dark">
+  <div style={{ marginBottom: '-3vw' }} className="bg-dark"></div>
+            <section className="py-12 bg-dark">
                 <div className="container">
                     <form onSubmit={handleSubmit}>
                     <h3 className="p-8 mb-4 text-2xl font-bold text-dark dark:text-white sm:text-[40px]/[48px]">

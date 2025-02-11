@@ -51,8 +51,8 @@ function Step3({formData, handleChange, nextPage, prevPage}) {
 
     <div>
       
-      <div style={{ marginBottom: '-3vw' }} className="dark:bg-dark"></div>
-            <section className="py-12 dark:bg-dark">
+      <div style={{ marginBottom: '-3vw' }} className="bg-dark"></div>
+            <section className="py-12 bg-dark">
                 <div className="container">
                      
                         <div className="-mx-4 flex flex-wrap">
