@@ -10,6 +10,8 @@ import Layout from "./component/Layout";
 import ExploreProducts from "./component/form/ExploreProducts";
 import Seller from "./component/form/Seller";
 import Thanks from "./component/Thanks";
+import AdminDashboard from './component/admin/AdminDashboard'
+
 import './app.css'
 const ProtectedRoute = ({ children }) => {
   const user = useAuth();
@@ -26,6 +28,8 @@ function App() {
           <Route path="/explore-products" element={<ExploreProducts />} />
           <Route path="/seller" element={<Seller/>} />
           <Route path="/thanks" element={<Thanks />} />          
+              <Route path="/admin-A7bC3x9Z" element={<AdminDashboard/>}/>
+
         </Routes>
       </Router>
 
