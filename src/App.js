@@ -41,12 +41,12 @@ function App() {
           <Route path="/thanks" element={<Thanks />} />  
           <Route path="/login" element={<Login/>}  />      
           <Route path="/register" element={<Register/>}  />   
-          <Route path="/dashboard-brands" element={
+          <Route path="/dashboard-seller" element={
             <Wrapper>
               <BrandsDashboard/>
             </Wrapper>
             }/>
-          <Route path="/dashboard-seller" element={
+          <Route path="/dashboard-brands" element={
             <Wrapper>
             <SellerDashboard/>
              </Wrapper> 
