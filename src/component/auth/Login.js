@@ -70,7 +70,7 @@ const Signin = () => {
                   type="email"
                   name="email"
                   placeholder="Email"
-                  className="w-full px-4 py-2 border rounded-md"
+                  className="w-full text-black px-4 py-2 border rounded-md"
                   onChange={(e) => setEmail(e.target.value)}
                   required
                 />
@@ -78,7 +78,7 @@ const Signin = () => {
                   type="password"
                   name="password"
                   placeholder="Password"
-                  className="w-full px-4 py-2 mt-6 border rounded-md"
+                  className="w-full text-black px-4 py-2 mt-6 border rounded-md"
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
