@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Step1 from "./Step1";
 import Step2 from "./Step2";
 import Step3 from "./Step3";
@@ -16,56 +15,55 @@ const FormElementInput = () => {
     email: "",
     address: "",
     pincode: "",
+    city: "",
+    status:'pending',
+    coordinates:'',
     data: [
       {
         name: 'T-shirt',
         size: [],
         gsm: '',
         color: '',
-        price: ''
+        price: '',
+        quantity:0
       },
       {
         name: 'Oversize T-shirt',
         size: [],
         gsm: '',
         color: '',
-        price: ''
+        price: '',
+        quantity:0
+
       },
       {
         name: 'Hoodie',
         size: [],
         gsm: '',
         color: '',
-        price: ''
+        price: '',
+        quantity:0
+
       },
       {
         name: 'Oversize Hoodie',
         size: [],
         gsm: '',
         color: '',
-        price: ''
+        price: '',
+        quantity:0
+
       },
       {
         name: 'Sweatshirt',
         size: [],
         gsm: '',
         color: '',
-        price: ''
+        price: '',
+        quantity:0
+
       },
-      {
-        name: 'cap',
-        size: [],
-        gsm: '',
-        color: '',
-        price: ''
-      },
-      {
-        name: 'tote bag',
-        size: [],
-        gsm: '',
-        color: '',
-        price: ''
-      },
+      
       // Add other products similarly
     ],
     printer:'',
@@ -95,11 +93,11 @@ const FormElementInput = () => {
 
   return (
     <>
-    <Header/>
-                <section className="py-12 bg-dark">
-    <div className="container border border-primary rounded-md">
+                <section className="py-12 dark:bg-dark-2 p-5 mt-10 rounded-lg">
+    <div className="container">
       <h3 className="p-8 mb-4 text-2xl font-bold text-dark text-white sm:text-[40px]/[48px]">
-        <ArrowBackIcon fontSize="large" onClick={handleBackClick} /> <span className="ml-4">Onboarding Form-</span>
+        {/* <ArrowBackIcon fontSize="large" onClick={handleBackClick} />  */}
+        <span className="ml-4">Onboarding Form-</span> 
       </h3>
       {pageCounter === 1 && <Step1 handleChange={handleChange} formData={formData} nextPage={nextPage} />}
       

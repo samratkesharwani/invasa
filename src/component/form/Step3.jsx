@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Alert from '../Thanks'
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../utils/supabase';
@@ -6,8 +6,40 @@ function Step3({formData, handleChange, nextPage, prevPage}) {
   
   
   const navigate = useNavigate();
- 
-   const handleSubmit = async (e) => {
+  const [id, setId] =useState("")
+  useEffect(() => {
+      const fetchUserProfile = async () => {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+        if (sessionError || !session || !session.user) {
+          console.error("No user session found.");
+          return;
+        }
+    
+        const userId = session.user.id;
+    
+        try {
+          // Fetch user profile
+          const { data: userProfile, error: userProfileError } = await supabase
+            .from("profile")
+            .select("id")
+            .eq("id", userId)
+            .single();
+    
+          if (userProfileError) {
+            throw userProfileError;
+          }
+    
+          setId(userProfile.id);
+        } catch (error) {
+          console.error("Error fetching user data:", error.message);
+        }
+      };
+    
+      fetchUserProfile();
+    }, [])
+
+    const handleSubmit = async (e) => {
      e.preventDefault();
      console.log(formData);
  
@@ -16,16 +48,17 @@ function Step3({formData, handleChange, nextPage, prevPage}) {
     //    return;
     //  }
  
-    const { error: businessesError } = await supabase.from("businesses").insert([
+    const { error: businessOnboardForm } = await supabase.from("businessOnboardForm").insert([
 
        {
-        
+          id:id,
           businessName: formData.businessName,
           ownerName: formData.ownerName,
           contactNumber: formData.contactNumber,
           email: formData.email,
           address: formData.address,
           pincode: formData.pincode,
+          city: formData.city,
           data: formData.data,
           printer: formData.printer,
           printingMethod: formData.printingMethod,
@@ -35,8 +68,8 @@ function Step3({formData, handleChange, nextPage, prevPage}) {
        },
      ]);
  
-     if (businessesError) {
-       console.error("Brand insert error:", businessesError);
+     if (businessOnboardForm) {
+       console.error("Brand insert error:", businessOnboardForm);
      } else{
       navigate('/thanks');
      }
@@ -51,8 +84,8 @@ function Step3({formData, handleChange, nextPage, prevPage}) {
 
     <div>
       
-      <div style={{ marginBottom: '-3vw' }} className="bg-dark"></div>
-            <section className="py-12 bg-dark">
+      <div style={{ marginBottom: '-3vw' }} className=""></div>
+            <section className="py-12 ">
                 <div className="container">
                      
                         <div className="-mx-4 flex flex-wrap">
@@ -77,20 +110,20 @@ function Step3({formData, handleChange, nextPage, prevPage}) {
                             </DefaultColumn>
 
                             <DefaultColumn>
-                                <TextInput
-                                    title="What all printing method you use?"
-                                    name="printingMethod"
-                                    placeholder="DTF, DTG, Sublimation, etc."
-                                    onChange={handleChange}
-                                    value={formData.printingMethod}
-                                />
-                            </DefaultColumn>
+              <SelectInput
+                title="What all printing methods do you use?"
+                name="printingMethod"
+                options={['DTF']}
+                onChange={(e) => handleChange(e.target.name, e.target.value)}
+                value={formData.printingMethod}
+              />
+            </DefaultColumn>
 
                             <DefaultColumn>
                                 <TextInput
                                     title="Printing Price(in sq inch)"
                                     name="printingPrice"
-                                    placeholder="0.75 paise for dtf, 0.50 paise sublim....."
+                                    placeholder="0.75 paise for DTF, etc"
                                     onChange={handleChange}
                                     value={formData.printingPrice}
                                 />
@@ -98,7 +131,7 @@ function Step3({formData, handleChange, nextPage, prevPage}) {
               
                         </div>
                         <div className='flex w-full'>
-        <div className='m-2'>
+        <div className='flex justify-evenly items-center'>
           <button style={{ width: '100px' }} onClick={prevPage} className='p-2 m-1 w-full md:w-1/2 xl:w-1/4 bg-secondary border-secondary border rounded-md inline-flex items-center justify-center py-3 px-7 text-center text-base font-medium text-white hover:bg-[#0BB489] hover:border-[#0BB489] disabled:bg-gray-3 disabled:border-gray-3 disabled:text-dark-5'>
             Prev
           </button>
@@ -132,6 +165,20 @@ const DefaultColumn = ({ children }) => {
   return (
     <div className="w-full px-4 md:w-1/2 lg:w-1/3">
       <div className="mb-12">{children}</div>
+    </div>
+  );
+};
+const SelectInput = ({ title, name, options, onChange, value }) => {
+  return (
+    <div>
+      <label className="mb-2 block text-base font-medium text-white">
+        {title}
+      </label>
+      <select name={name} onChange={onChange} value={value} className="w-full bg-transparent rounded-md border border-stroke dark:border-dark-3 py-[10px] px-5 text-dark-6 outline-none transition focus:border-primary active:border-primary">
+        {options.map((option, index) => (
+          <option key={index} value={option}>{option}</option>
+        ))}
+      </select>
     </div>
   );
 };

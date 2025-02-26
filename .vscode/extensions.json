@@ -1,0 +1,9 @@
+{
+    "recommendations": [
+        "rodrigovallades.es7-react-js-snippets",
+        "bradlc.vscode-tailwindcss",
+        "mgmcdermott.vscode-language-babel",
+        "rvest.vs-code-prettier-eslint",
+        "esbenp.prettier-vscode"
+    ]
+}

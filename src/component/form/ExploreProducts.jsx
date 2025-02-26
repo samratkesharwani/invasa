@@ -1,12 +1,43 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import {useNavigate} from 'react-router-dom';
 import "../../css/tailwind.css";
 import { supabase } from "../../utils/supabase";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Header from '../Header'
 
-const FormElementInput = () => {
+const FormElementInput = ({}) => {
  const navigate = useNavigate();
+const [userId, setUserId]=useState("")
+useEffect(()=>{
+  const fetchUserProfile = async () => {
+
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+        if (sessionError || !session || !session.user) {
+          console.error("No user session found.");
+          return;
+        }
+    
+        const userId = session.user.id;
+        try{
+
+  const { data: userProfile, error: userProfileError } = await supabase
+          .from("profile")
+          .select("id")
+          .eq("id", userId)
+          .single();
+  
+        if (userProfileError) {
+          throw userProfileError;
+        }
+        setUserId(userProfile.id)
+      }catch (error) {
+        console.error("Error fetching user data:", error.message);
+      }
+    }
+    fetchUserProfile();
+
+},[])
 
   const [formData, setFormData] = useState({
     brandName: "",
@@ -33,8 +64,9 @@ const FormElementInput = () => {
       return;
     }
 
-    const { error: brandError } = await supabase.from("brandsForm").insert([
+    const { error: brandError } = await supabase.from("brandsOnboardForm").insert([
       {
+        id:userId,
         brandName: formData.brandName,
         ownerName: formData.ownerName,
         contactNumber: formData.contactNumber,
@@ -58,14 +90,13 @@ const FormElementInput = () => {
 
   return (
     <>
-  <Header/>
-            <section className="py-12 bg-dark">
-            <div className="container border border-primary rounded-md p-4 mx-auto">
+            <section className="py-12 dark:bg-dark-2 p-5 mt-10 rounded-lg">
+              <div className="container rounded-md p-4 mx-auto">
 
                     <form onSubmit={handleSubmit}>
                     <h3 className="p-8 mb-4 text-2xl font-bold text-dark text-white sm:text-[40px]/[48px]">
-        <ArrowBackIcon fontSize="large" onClick={handleBackClick} /> <span className="ml-4">Onboarding Form-</span>
-      </h3>
+                <span className="ml-4">Onboarding Form-</span>
+              </h3>
                         <div className="-mx-4 flex flex-wrap">
                             <DefaultColumn>
                                 <TextInput

@@ -1,6 +1,11 @@
 import React from "react";
 import Button from "../component/Button";
-const About1 = () => {
+import { useNavigate } from "react-router-dom";
+const About1 = ({navigateTo,loggedIn}) => {
+  const navigate= useNavigate();
+    const navigateRegister = ()=>{
+      navigate('/register')
+    }
   return (
     <>
       <section className="overflow-hidden pt-20 pb-12 lg:pt-[120px] lg:pb-[90px]  bg-dark">
@@ -620,18 +625,34 @@ const About1 = () => {
                 <div style={{}} >
 
 
-                    <h6 className="font-thin mb-3 p-3 flex items-center text-lg text-body-color dark:text-dark-6">
+                    <h6 className="font-bold mb-3 p-3 flex items-center text-lg text-body-color dark:text-dark-6">
                     Experience the future of printing with us! 🚀
                     </h6>
                 </div>
                 <div className="flex items-center space-x-4">
-                    <div className="m-2">
-                    <Button title="Become a Seller" link="/seller"/>
-                    </div>
-                    <div className="m-2">
-
-                    <Button className="m-3" title="Explore Products" link="/explore-products"/>
-                    </div>
+                   {  loggedIn?
+                                   <>
+                                   <button onClick={navigateTo} className='bg-primary border-primary border rounded-full inline-flex items-center justify-center py-3 px-7 text-center text-base font-medium text-white hover:bg-[#1B44C8] hover:border-[#1B44C8] disabled:bg-gray-3 disabled:border-gray-3 disabled:text-dark-5 active:bg-[#1B44C8] active:border-[#1B44C8]'>
+                        Go To Dashboard
+                      </button>
+                                   </>
+                                   :
+                                   <>
+                   {/* <h6 className="font-bold mb-3 flex items-center text-lg text-body-color dark:text-dark-6">
+                                      Onboard with us
+                                      <span className="ml-3 inline-block h-px w-8 bg-body-color"></span>
+                                    </h6> */}
+                  
+                                    <button
+              onClick={navigateRegister}
+                className="rounded-lg bg-primary px-7 py-3 text-base font-medium text-white hover:bg-opacity-90"
+              >
+                Get Started
+              </button>
+                                   </>
+                  
+                  
+                                      }
                     </div>
               </div>
             </div>

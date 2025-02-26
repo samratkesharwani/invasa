@@ -14,33 +14,68 @@ function Step3({ formData, setFormData, prevPage, nextPage }) {
   };
 
   return (
-    <div className='container'>
-    <div className="flex justify-between flex-wrap">
-      {formData.data.map((item, index) => (
-        <CustomInput
-          submit={submit}
-          key={index}
-          handleChange={(name, value) => handleCustomInputChange(index, name, value)}
-          title={item.name || `Item ${index + 1}`}
-          // gsm={} // Default GSM values, modify if needed
-          size={['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']} // Default sizes
-        />
-      ))}
-      </div>
-    <b style={{textAlign:'center', fontSize:'calc(10px + 0.3vw)',width:'100px'}} className='text-white'>If you don't sell a particular item, feel free to leave the corresponding fields blank.</b>
+    <div className="container">
+      <div className="flex justify-between flex-wrap">
+        {formData.data.map((item, index) => {
+          // Determine if GSM should be shown based on the product name
+          const isAccessory = item.name === 'Tote Bag' || item.name === 'Cap';
+          const sizeOptions = isAccessory ? ['One Size'] : ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
 
-      <div className='flex w-full'>
-        <div className='m-2'>
-          <button style={{ width: '100px' }} onClick={prevPage} className='p-2 m-1 w-full md:w-1/2 xl:w-1/4 bg-secondary border-secondary border rounded-md inline-flex items-center justify-center py-3 px-7 text-center text-base font-medium text-white hover:bg-[#0BB489] hover:border-[#0BB489] disabled:bg-gray-3 disabled:border-gray-3 disabled:text-dark-5'>
+          // Common GSM values (only for applicable products)
+          const gsmOptions = ['150', '180', '200', '220', '240', '280'];
+          // Common colors
+          const colorOptions = [
+            'White', 'Black', 'Navy', 'Red', 'Blue',
+            'Gray', 'Green', 'Yellow', 'Pink', 'Purple', 'Orange',
+          ];
+
+          return (
+            <CustomInput
+              submit={submit}
+              key={index}
+              handleChange={(name, value) =>
+                handleCustomInputChange(index, name, value)
+              }
+              title={item.name || `Item ${index + 1}`}
+              size={sizeOptions}
+              gsm={gsmOptions}
+              color={colorOptions}
+              showGSM={!isAccessory} // Show GSM only if not an accessory
+            />
+          );
+        })}
+      </div>
+      <b
+        style={{
+          textAlign: 'center',
+          fontSize: 'calc(10px + 0.3vw)',
+          width: '100%',
+        }}
+        className="text-white"
+      >
+        If you don't sell a particular item, feel free to leave the corresponding fields blank.
+      </b>
+
+      <div className="flex w-full">
+        <div className="m-2">
+          <button
+            style={{ width: '100px' }}
+            onClick={prevPage}
+            className="p-2 m-1 w-full md:w-1/2 xl:w-1/4 bg-secondary border-secondary border rounded-md text-base font-medium text-white hover:bg-[#0BB489] hover:border-[#0BB489]"
+          >
             Prev
           </button>
         </div>
-        <div className='m-2'>
-          <button style={{ width: '100px' }} onClick={() => {
-            nextPage();
-            console.log(formData);
-            setSubmit(true);
-          }} className='m-1 w-full md:w-1/2 xl:w-1/4 bg-secondary border-secondary border rounded-md inline-flex items-center justify-center py-3 px-7 text-center text-base font-medium text-white hover:bg-[#0BB489] hover:border-[#0BB489] disabled:bg-gray-3 disabled:border-gray-3 disabled:text-dark-5'>
+        <div className="m-2">
+          <button
+            style={{ width: '100px' }}
+            onClick={() => {
+              nextPage();
+              console.log(formData);
+              setSubmit(true);
+            }}
+            className="m-1 w-full md:w-1/2 xl:w-1/4 bg-secondary border-secondary border rounded-md text-base font-medium text-white hover:bg-[#0BB489] hover:border-[#0BB489]"
+          >
             Next
           </button>
         </div>
@@ -51,14 +86,56 @@ function Step3({ formData, setFormData, prevPage, nextPage }) {
 
 export default Step3;
 
-const CustomInput = ({ handleChange, gsm, size, title }) => {
+const CustomInput = ({ handleChange, size, gsm, color, title, showGSM }) => {
   return (
-    <div style={{backgroundColor:"#1F2A37", margin:'10px', }} className="m-10 lg:w-1/4 w-full  bg-transparent rounded-md border border-stroke dark:border-dark-3 py-[10px] px-5 text-dark-6 outline-none transition focus:border-primary active:border-primary">
-      <h1 className="mb-4 block text-xl font-semibold text-dark text-white sm:text-[22px] md:text-xl lg:text-[22px] xl:text-xl 2xl:text-[22px]">{title}</h1>
-      <MultiSelectButtons title={'Sizes'} data={size} handleChange={handleChange} />
-      <TextInput type={'text'} title={'GSM'} name={'gsm'} placeholder={'180,200,200,etc'} onChange={(e) => handleChange('gsm', e.target.value)} />
-      <TextInput type={'text'} title="Color" name="color" placeholder="White, Black, Etc" onChange={(e) => handleChange('color', e.target.value)} />
-      <TextInput type={'text'} title="Price per piece" name="price" placeholder="Price (145-200)" onChange={(e) => handleChange('price', e.target.value)} />
+    <div
+      style={{ backgroundColor: '#1F2A37', margin: '10px' }}
+      className="pb-10 m-10 lg:w-1/4 w-full rounded-md border border-stroke dark:border-dark-3 py-4 px-5 text-white"
+    >
+      <h1 className="mb-4 text-xl font-semibold">
+        {title}
+      </h1>
+
+      {/* Size Selection */}
+      <MultiSelectButtons
+        title="Size"
+        data={size}
+        handleChange={handleChange}
+      />
+
+      {/* GSM Selection (conditionally rendered) */}
+      {showGSM && (
+        <MultiSelectButtons
+          title="GSM"
+          data={gsm}
+          handleChange={handleChange}
+        />
+      )}
+
+      {/* Color Selection */}
+      <MultiSelectButtons
+        title="Color"
+        data={color}
+        handleChange={handleChange}
+      />
+
+      {/* Price Input */}
+      <TextInput
+        type="text"
+        title="Price per piece"
+        name="price"
+        placeholder="Price"
+        onChange={(e) => handleChange('price', e.target.value)}
+      />
+
+      {/* Quantity Input */}
+      <TextInput
+        type="number"
+        title="Quantity"
+        name="quantity"
+        placeholder="Quantity (e.g., 50, 100, 200)"
+        onChange={(e) => handleChange('quantity', e.target.value)}
+      />
     </div>
   );
 };
@@ -67,8 +144,8 @@ const MultiSelectButtons = ({ title, data, handleChange }) => {
   const [selectedItems, setSelectedItems] = useState([]);
 
   const handleItemClick = (item) => {
-    let newSelectedItems = selectedItems.includes(item)
-      ? selectedItems.filter(selected => selected !== item)
+    const newSelectedItems = selectedItems.includes(item)
+      ? selectedItems.filter((selected) => selected !== item)
       : [...selectedItems, item];
     setSelectedItems(newSelectedItems);
     handleChange(title.toLowerCase(), newSelectedItems);
@@ -76,10 +153,20 @@ const MultiSelectButtons = ({ title, data, handleChange }) => {
 
   return (
     <div>
-      <label className="mb-[10px] block text-base font-medium text-dark text-white">{title}</label>
+      <label className="mb-2 block text-base font-medium">
+        {title}
+      </label>
       <div className="flex flex-wrap">
         {data.map((item, index) => (
-          <button key={index} onClick={() => handleItemClick(item)} className={`m-3 p-2 border ${selectedItems.includes(item) ? 'bg-primary text-white' : 'bg-transparent text-white'}`}>
+          <button
+            key={index}
+            onClick={() => handleItemClick(item)}
+            className={`m-2 px-4 py-2 rounded-md border ${
+              selectedItems.includes(item)
+                ? 'bg-primary text-white'
+                : 'bg-transparent text-white'
+            }`}
+          >
             {item}
           </button>
         ))}
@@ -88,11 +175,19 @@ const MultiSelectButtons = ({ title, data, handleChange }) => {
   );
 };
 
-const TextInput = ({ title, name, placeholder, onChange,type }) => {
+const TextInput = ({ title, name, placeholder, onChange, type }) => {
   return (
     <div>
-      <label className="mb-[10px] block text-base font-medium text-dark text-white">{title}</label>
-      <input type={type} name={name} onChange={onChange} placeholder={placeholder} className="w-full bg-transparent rounded-md border border-stroke dark:border-dark-3 py-[10px] px-5 text-dark-6 outline-none transition focus:border-primary active:border-primary" />
+      <label className="mb-2 block text-base font-medium">
+        {title}
+      </label>
+      <input
+        type={type}
+        name={name}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="w-full bg-transparent rounded-md border border-stroke dark:border-dark-3 py-2 px-4 text-white focus:border-primary"
+      />
     </div>
   );
 };
