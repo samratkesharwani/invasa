@@ -3,7 +3,7 @@ import { supabase } from '../../utils/supabase';
 import { useNavigate } from "react-router-dom";
 import Logo from '../../imgs/logo.png';
 import '../../css/tailwind.css';
-import { User, Loader } from "lucide-react";
+import { User, Loader, AlertCircle } from "lucide-react";
 import Error from '../../component/element/Error';
 
 const Signin = () => {
@@ -13,26 +13,54 @@ const Signin = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [formErrors, setFormErrors] = useState({});
+  const [verificationMessage, setVerificationMessage] = useState('');
   const navigate = useNavigate();
 
+  // Check for hash parameters that might indicate a redirect from email verification
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      const { data: user, error: userError } = await supabase.auth.getUser();
-      if (userError || !user?.user) return;
+    const hash = window.location.hash;
+    if (hash && hash.includes('access_token')) {
+      setVerificationMessage('Email verification successful! You can now log in.');
+      
+      // Extract email from hash if possible
+      const params = new URLSearchParams(hash.substring(1));
+      const decodedHash = decodeURIComponent(hash);
+      if (decodedHash.includes('email=')) {
+        const emailMatch = decodedHash.match(/email=([^&]*)/);
+        if (emailMatch && emailMatch[1]) {
+          setEmail(decodeURIComponent(emailMatch[1]));
+        }
+      }
+    }
+  }, []);
 
-      const { data: userProfile, error } = await supabase
-        .from("profile")
-        .select("role")
-        .eq("id", user.user.id)
-        .single();
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (data?.session) {
+          console.log("User already has an active session:", data.session);
+          
+          // Fetch user profile to get role
+          const { data: userProfile, error: profileError } = await supabase
+            .from("profile") // Changed from "profiles" to "profile" to match actual table name
+            .select("role")
+            .eq("id", data.session.user.id)
+            .single();
 
-      if (!error && userProfile) {
-        setRole(userProfile.role);
-        navigate('/');
+          if (!profileError && userProfile) {
+            console.log("User profile found:", userProfile);
+            navigate('/');
+          } else {
+            console.error("Error fetching user profile:", profileError);
+          }
+        }
+      } catch (err) {
+        console.error("Error checking session:", err);
       }
     };
 
-    fetchUserProfile();
+    checkSession();
   }, [navigate]);
 
   useEffect(() => {
@@ -43,6 +71,15 @@ const Signin = () => {
       return () => clearTimeout(timer);
     }
   }, [error]);
+
+  useEffect(() => {
+    if (verificationMessage) {
+      const timer = setTimeout(() => {
+        setVerificationMessage('');
+      }, 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [verificationMessage]);
 
   const validateForm = () => {
     const errors = {};
@@ -72,20 +109,54 @@ const Signin = () => {
     setError('');
 
     try {
+      console.log("Attempting login with:", { email, password });
+      
       const { data, error } = await supabase.auth.signInWithPassword({ 
         email, 
         password 
       });
 
       if (error) {
-        setError(error.message);
+        console.error("Login error:", error);
+        
+        // Handle specific error cases
+        if (error.message.includes("Email not confirmed")) {
+          setError("Please verify your email before logging in. Check your inbox for the verification link.");
+        } else if (error.message.includes("Invalid login credentials")) {
+          setError("Invalid email or password. Please try again.");
+        } else {
+          setError(error.message);
+        }
+      } else if (data?.user) {
+        console.log("Login successful:", data);
+        
+        // Fetch user profile to get role
+        try {
+          const { data: userProfile, error: profileError } = await supabase
+            .from("profile") // Changed from "profiles" to "profile" to match actual table name
+            .select("*")
+            .eq("id", data.user.id)
+            .single();
+
+          if (profileError) {
+            console.error("Error fetching profile:", profileError);
+          } else {
+            console.log("User profile:", userProfile);
+          }
+          
+          // Navigate to home page regardless of profile fetch success
+          navigate('/');
+        } catch (profileErr) {
+          console.error("Profile fetch exception:", profileErr);
+          // Still navigate to home page even if profile fetch fails
+          navigate('/');
+        }
       } else {
-        console.log("Logged in user:", data);
-        navigate(`/`);
+        setError("Login failed. Please try again.");
       }
     } catch (err) {
+      console.error("Login exception:", err);
       setError("An unexpected error occurred. Please try again.");
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -109,12 +180,14 @@ const Signin = () => {
       });
       
       if (error) {
+        console.error("Password reset error:", error);
         setError(error.message);
       } else {
         setError('');
         alert("Password reset link sent to your email!");
       }
     } catch (err) {
+      console.error("Password reset exception:", err);
       setError("Failed to send reset password email. Please try again.");
     } finally {
       setLoading(false);
@@ -124,6 +197,14 @@ const Signin = () => {
   return (
     <>
       {error && <Error error={error} />}
+      
+      {verificationMessage && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-md shadow-lg flex items-center z-50">
+          <AlertCircle className="mr-2 h-5 w-5" />
+          {verificationMessage}
+        </div>
+      )}
+      
       <section className="bg-dark min-h-screen flex items-center justify-center">
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap justify-center">

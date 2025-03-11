@@ -75,33 +75,64 @@ const Signin = () => {
     setError("");
 
     try {
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      // First, sign up the user
+      const { data, error: signUpError } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          data: {
+            name,
+            brandName,
+            role
+          }
+        }
+      });
 
-      if (error) {
-        setError(error.message);
+      if (signUpError) {
+        console.error("Sign up error:", signUpError);
+        setError(signUpError.message);
         setLoading(false);
         return;
       }
 
+      console.log("Sign up response:", data);
+
+      // If user was created successfully, create profile entry
       if (data?.user) {
-        const { error: profileError } = await supabase
-          .from("profile")
-          .insert([{ id: data.user.id, email, role, name, brandName }]);
+        try {
+          // Create profile entry
+          const { error: profileError } = await supabase
+            .from("profile") // Changed from "profiles" to "profile" to match actual table name
+            .insert([{ 
+              id: data.user.id, 
+              email, 
+              role, 
+              name, 
+              brandName: brandName // Changed from brand_name to brandName to match actual column name
+            }]);
 
-        if (profileError) {
-          setError(profileError.message);
+          if (profileError) {
+            console.error("Profile creation error:", profileError);
+            setError(`Profile creation failed: ${profileError.message}`);
+            setLoading(false);
+            return;
+          }
+          
+          console.log("Profile created successfully!");
           setLoading(false);
-          return;
+          setSuccess(true);
+        } catch (profileErr) {
+          console.error("Profile creation exception:", profileErr);
+          setError("Failed to create profile. Please contact support.");
+          setLoading(false);
         }
+      } else {
+        setError("User registration failed. Please try again.");
+        setLoading(false);
       }
-
-      console.log("Signup successful!");
-      setLoading(false);
-      setSuccess(true);
-      // navigate("/login");
     } catch (err) {
+      console.error("Registration exception:", err);
       setError("An unexpected error occurred. Please try again.");
-      console.error(err);
       setLoading(false);
     }
   };

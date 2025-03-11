@@ -6,15 +6,18 @@ import avatar from '../imgs/avatar.jpg';
 
 function SellerProfile() {
   const navigate = useNavigate();
-  const [onboardedBrandData, setOnboardedBrandsData] = useState({});
-  const [onboardedSellerData, setOnboardedSellerData] = useState([]);
+  const [onboardedBrandData, setOnboardedBrandsData] = useState(null);
+  const [onboardedSellerData, setOnboardedSellerData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
+      setLoading(true);
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
       if (sessionError || !session || !session.user) {
         console.error("No user session found.");
+        setLoading(false);
         return;
       }
 
@@ -27,24 +30,27 @@ function SellerProfile() {
           .eq("id", userId)
           .single();
 
-        if (onboardedBrandsError) {
-          throw onboardedBrandsError;
+        if (onboardedBrandsError && onboardedBrandsError.code !== 'PGRST116') {
+          console.error("Error fetching brand data:", onboardedBrandsError.message);
         }
 
-        const { data: onboardedSeller, error: onboardedSelleError } = await supabase
+        const { data: onboardedSeller, error: onboardedSellerError } = await supabase
           .from("businessOnboardForm")
           .select("*")
           .eq("id", userId)
           .single();
 
-        if (onboardedSelleError) {
-          throw onboardedSelleError;
+        if (onboardedSellerError && onboardedSellerError.code !== 'PGRST116') {
+          console.error("Error fetching seller data:", onboardedSellerError.message);
         }
 
-        setOnboardedSellerData(onboardedSeller);
-        setOnboardedBrandsData(onboardedBrands);
+        setOnboardedSellerData(onboardedSeller || null);
+        setOnboardedBrandsData(onboardedBrands || null);
+        console.log("Fetched data:", { seller: onboardedSeller, brand: onboardedBrands });
       } catch (error) {
         console.error("Error fetching user data:", error.message);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -83,25 +89,42 @@ function SellerProfile() {
                   </div>
                 </div>
 
-                {onboardedBrandData ? (
-                  <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <ProfileItem label="Name" value={onboardedBrandData.ownerName} />
-                    <ProfileItem label="Brand Name" value={onboardedBrandData.brandName} />
-                    <ProfileItem label="Brand Theme" value={onboardedBrandData.theme} />
-                    <ProfileItem label="Mobile" value={onboardedBrandData.contactNumber} />
-                    <ProfileItem label="Email" value={onboardedBrandData.email} fullWidth />
-                  </div>
-                ) : onboardedSellerData ? (
-                  <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <ProfileItem label="Name" value={onboardedSellerData.ownerName} />
-                    <ProfileItem label="Business Name" value={onboardedSellerData.businessName} />
-                    <ProfileItem label="Mobile" value={onboardedSellerData.contactNumber} />
-                    <ProfileItem label="Email" value={(onboardedSellerData.email || "").slice(0, 10) + "..."} />
-                    <ProfileItem label="City" value={onboardedSellerData.city} />
-                    <ProfileItem label="Profile Status" value={onboardedSellerData.status} />
-                  </div>
+                {loading ? (
+                  <div className="text-center mt-8 text-gray-400">Loading profile data...</div>
                 ) : (
-                  <div className="text-center mt-8 text-gray-400">Please login to view your profile</div>
+                  <>
+                    {onboardedBrandData && Object.keys(onboardedBrandData).length > 0 && (
+                      <>
+                        <h2 className="text-white text-xl font-bold mt-6 mb-4 text-center">Brand Information</h2>
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <ProfileItem label="Name" value={onboardedBrandData.ownerName} />
+                          <ProfileItem label="Brand Name" value={onboardedBrandData.brandName} />
+                          <ProfileItem label="Brand Theme" value={onboardedBrandData.theme} />
+                          <ProfileItem label="Mobile" value={onboardedBrandData.contactNumber} />
+                          <ProfileItem label="Email" value={onboardedBrandData.email} fullWidth />
+                        </div>
+                      </>
+                    )}
+                    
+                    {onboardedSellerData && Object.keys(onboardedSellerData).length > 0 && (
+                      <>
+                        <h2 className="text-white text-xl font-bold mt-6 mb-4 text-center">Business Information</h2>
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <ProfileItem label="Name" value={onboardedSellerData.ownerName} />
+                          <ProfileItem label="Business Name" value={onboardedSellerData.businessName} />
+                          <ProfileItem label="Mobile" value={onboardedSellerData.contactNumber} />
+                          <ProfileItem label="Email" value={onboardedSellerData.email ? `${onboardedSellerData.email.slice(0, 10)}...` : 'N/A'} />
+                          <ProfileItem label="City" value={onboardedSellerData.city} />
+                          <ProfileItem label="Profile Status" value={onboardedSellerData.status} />
+                        </div>
+                      </>
+                    )}
+                    
+                    {(!onboardedBrandData || Object.keys(onboardedBrandData).length === 0) && 
+                     (!onboardedSellerData || Object.keys(onboardedSellerData).length === 0) && (
+                      <div className="text-center mt-8 text-gray-400">No profile data found. Please complete your onboarding.</div>
+                    )}
+                  </>
                 )}
 
                 <div className="mt-8 flex justify-center">

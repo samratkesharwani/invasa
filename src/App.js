@@ -27,6 +27,7 @@ import InventorySetup from './component/form/InventorySetup';
 import AdminRoutes from './component/admin/AdminRoutes';
 import AdminLogin from './component/admin/pages/Login';
 import Header from './component/Header';
+import Profile from './component/Profile';
 const ProtectedRoute = ({ children }) => {
   const user = useAuth();
   return user ? children : <Navigate to="/login" />;
@@ -56,7 +57,7 @@ function App() {
             } />
             <Route path="profile" element={
               <Wrapper>
-                <SellerProfile/>
+                <Profile/>
               </Wrapper>
             }/>
             <Route path="order" element={
