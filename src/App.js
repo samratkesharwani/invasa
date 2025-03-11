@@ -15,7 +15,6 @@ import './app.css'
 import BrandsDashboard from "./component/brands/BrandsDashboard";
 import SellerDashboard from "./component/seller/SellerDashboard";
 import SellerProfile from "./component/Profile";
-import Header from './component/Header'
 import Order from "./component/seller/order/Order"
 import FullAddress from "./component/seller/order/FullAddress";
 import SelectProduct from "./component/seller/order/SelectProduct";
@@ -37,7 +36,6 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Header/>
         <Routes>
           <Route path="/" element={<Layout/>} />
           <Route path="/explore-products" element={<ExploreProducts />} />
