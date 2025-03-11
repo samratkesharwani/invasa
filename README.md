@@ -1,70 +1,83 @@
-# Getting Started with Create React App
+# Invasa - Print on Demand Application
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This is a print-on-demand application that allows users to upload designs, customize them, and place orders for printed products.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- Product selection and customization
+- Design upload and positioning
+- Print area calculation
+- Order management
+- Payment integration with Razorpay
 
-### `npm start`
+## Setup and Installation
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+1. Clone the repository
+2. Install dependencies:
+   ```
+   npm install
+   ```
+3. Start the development server and the image upload server:
+   ```
+   npm run dev
+   ```
+   This will start both the React application on port 3000 and the image upload server on port 3001.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Image Upload Server
 
-### `npm test`
+The application includes a server for handling image uploads. The server:
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+1. Accepts image uploads via POST requests to `/upload`
+2. Stores images in the `uploads` directory
+3. Returns a URL that can be used to access the uploaded image
 
-### `npm run build`
+### Running the Server Separately
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+If you want to run the server separately:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```
+npm run server
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+The server will run on port 3001 by default. You can change this by setting the `PORT` environment variable.
 
-### `npm run eject`
+## Development
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+- React application: http://localhost:3000
+- Image upload server: http://localhost:3001
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Order Process
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+1. Select a product
+2. Choose size, color, and quantity
+3. Upload and position designs
+4. Review order details
+5. Make payment
+6. Order is saved to the database
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## Print Design
 
-## Learn More
+The print design tool allows users to:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+1. Upload images for different sides of the product (front, back, left sleeve, right sleeve)
+2. Position and resize designs
+3. See real-time calculations of print area and pricing
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Payment
 
-### Code Splitting
+Payment is handled through Razorpay. The application:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+1. Calculates the total amount based on product price and print area
+2. Creates a payment order
+3. Processes the payment
+4. Saves the order details to the database
 
-### Analyzing the Bundle Size
+## Troubleshooting
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+- If image uploads are not working, make sure the server is running on port 3001
+- Check the console for any error messages
+- Ensure that the `uploads` directory exists and is writable
 
-### Making a Progressive Web App
+## License
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+This project is licensed under the MIT License - see the LICENSE file for details.

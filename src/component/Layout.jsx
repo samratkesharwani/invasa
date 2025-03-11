@@ -1,4 +1,4 @@
-import React,{useState,useEffect} from 'react'
+import React, { useState, useEffect } from 'react'
 import Hero from "../component/Hero";
 import Header from "../component/Header";
 import Card from "../component/Card";
@@ -7,28 +7,30 @@ import About from "../component/About";
 import Footer from './Footer';
 import { supabase } from '../utils/supabase';
 import { useNavigate } from 'react-router-dom';
+
 function Layout() {
   const navigate = useNavigate();
   const [role, setRole] = useState("");
-   const [loggedIn,setLoggedIn] =useState(false);
-    useEffect(() => {
-      const fetchUserProfile = async () => {
-        const { data, error } = await supabase.auth.getSession();
-        if (error || !data?.session?.user) {
-          console.error("No user session found.");
-          return;
-        }
-        setLoggedIn(!!data.session.user.id);
-      };
-      
-     
-      fetchUserProfile();
-    }, []);
-    const navigateTo = ()=>{
-      // const role='seller'
-      navigate(`/dashboard-${role}`)
-    }
-useEffect(() => {
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error || !data?.session?.user) {
+        console.error("No user session found.");
+        return;
+      }
+      setLoggedIn(!!data.session.user.id);
+    };
+    
+    fetchUserProfile();
+  }, []);
+
+  const navigateTo = () => {
+    navigate(`/dashboard-${role}`);
+  };
+
+  useEffect(() => {
     const fetchUserProfile = async () => {
       const { data: user, error: userError } = await supabase.auth.getUser();
       if (userError || !user?.user) return;
@@ -48,14 +50,28 @@ useEffect(() => {
   }, []);
 
   return (
-    <>
-     <Hero navigateTo={navigateTo} loggedIn={loggedIn} />
-     <Card />
-     <Milestone />
-     <About  navigateTo={navigateTo} loggedIn={loggedIn}/>
-     <Footer />
-    </>
-  )
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black">
+      <div className="relative">
+        <div className="absolute inset-0 bg-[#00E0A4] opacity-5 blur-3xl rounded-full"></div>
+        {/* <Header /> */}
+        <main className="relative z-10">
+          <Hero navigateTo={navigateTo} loggedIn={loggedIn} />
+          <div className="container mx-auto px-6 py-16">
+            <Card />
+          </div>
+          <div className="bg-black bg-opacity-60 backdrop-blur-lg">
+            <div className="container mx-auto px-6 py-16">
+              <Milestone />
+            </div>
+          </div>
+          <div className="container mx-auto px-6 py-16">
+            <About navigateTo={navigateTo} loggedIn={loggedIn} />
+          </div>
+        </main>
+        <Footer />
+      </div>
+    </div>
+  );
 }
 
-export default Layout
+export default Layout;

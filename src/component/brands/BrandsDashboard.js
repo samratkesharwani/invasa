@@ -4,19 +4,22 @@ import { supabase } from "../../utils/supabase";
 import ExploreProducts from '../../component/form/ExploreProducts';
 import Modal from '../../component/element/Modal';
 import Seller from '../../component/form/Seller';
-import OrdersComponent from './OrdersComponent'; // Make sure to import the OrdersComponent
+import OrdersComponent from './OrdersComponent';
+import Inventory from "./Inventory";
+import { FaBox, FaClock, FaCheck, FaPlus } from 'react-icons/fa';
 
 function BrandsDashboard() {
   const [name, setName] = useState("");
+  const [orders, setOrders] = useState([]);
   const [role, setRole] = useState("");
   const [form, setForm] = useState(false);
-  const [session, setSession] = useState(null); // Define session state
+  const [session, setSession] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserProfile = async () => {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      setSession(session); // Set session state
+      setSession(session);
 
       if (sessionError || !session || !session.user) {
         console.error("No user session found.");
@@ -50,6 +53,16 @@ function BrandsDashboard() {
           setForm(true);
         }
 
+        const { data: ordersData, error: ordersDataError } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('sellerId', userId);
+        
+        if (ordersDataError) {
+          throw ordersDataError;
+        }
+
+        setOrders(ordersData);
         setName(userProfile.name);
         setRole(userProfile.role);
       } catch (error) {
@@ -61,70 +74,99 @@ function BrandsDashboard() {
   }, []);
 
   return (
-    <>
-      <div className="container">
-        <div className="flex justify-evenly items-center">
-          <h1 className="text-lg text-white mt-10">{!form ? `Please fill out the onboarding form so we can onboard you` : "Welcome! So glad you're here"}, {name}</h1>
-        </div>
-        {!form ? <Seller /> : ''}
-
-        {session && <OrdersComponent sellerId={session.user.id} />} {/* Ensure session is set */}
-
-        <div className="border-primary">
-          <div className="container mt-10 rounded-lg dark:bg-dark-2 p-5 mb-10">
-            <b>Orders</b>
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black">
+      <div className="container mx-auto px-6 py-8">
+        {!form ? (
+          <div className="bg-black bg-opacity-60 backdrop-blur-lg rounded-2xl p-10 mb-12 shadow-2xl border border-gray-800">
+            <div className="flex items-center mb-8">
+              <div className="relative mr-6">
+                <div className="absolute inset-0 bg-[#00E0A4] opacity-20 blur-xl rounded-full"></div>
+                <div className="relative bg-black bg-opacity-50 p-4 rounded-full border border-[#00E0A4]">
+                  <FaPlus className="text-[#00E0A4] text-2xl" />
+                </div>
+              </div>
+              <div>
+                <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+                  Complete Your Profile
+                </h2>
+                <p className="text-gray-400 text-lg mt-2">
+                  Please fill out the onboarding form so we can onboard you, {name}
+                </p>
+              </div>
+            </div>
+            <Seller />
           </div>
-          <div className="rounded-lg dark:bg-dark p-5 mt-5 w-full flex items-center justify-evenly dark:bg-dark-2">
-            <div className="rounded-lg p-3 grid place-items-center w-1/3 m-2 dark:bg-dark-3">
-              <b className="text-sm">Total orders</b>
-              <br />
-              <b>3</b>
+        ) : (
+          <>
+            <div className="bg-black bg-opacity-60 backdrop-blur-lg rounded-2xl p-8 mb-12 shadow-2xl border border-gray-800">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent mb-8">
+                Welcome back, {name}!
+              </h1>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <StatsCard
+                  icon={<FaBox />}
+                  label="Total Orders"
+                  value={orders.length}
+                />
+                <StatsCard
+                  icon={<FaClock />}
+                  label="Pending Orders"
+                  value={orders.filter(order => order.status === "pending").length}
+                />
+                <StatsCard
+                  icon={<FaCheck />}
+                  label="Completed Orders"
+                  value={orders.filter(order => order.status === "completed").length}
+                />
+              </div>
             </div>
-            <div className="rounded-lg p-3 grid place-items-center w-1/3 m-2 dark:bg-dark-3">
-              <b className="text-sm">Pending orders</b>
-              <br />
-              <b>3</b>
+
+            <div className="bg-black bg-opacity-60 backdrop-blur-lg rounded-2xl p-8 mb-12 shadow-2xl border border-gray-800">
+              <div className="flex items-center mb-8">
+                <div className="relative mr-6">
+                  <div className="absolute inset-0 bg-[#00E0A4] opacity-20 blur-xl rounded-full"></div>
+                  <div className="relative bg-black bg-opacity-50 p-4 rounded-full border border-[#00E0A4]">
+                    <FaBox className="text-[#00E0A4] text-2xl" />
+                  </div>
+                </div>
+                <div>
+                  <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Orders</h2>
+                  <p className="text-gray-400 text-lg mt-2">Manage your customer orders</p>
+                </div>
+              </div>
+              {session && <OrdersComponent sellerId={session.user.id} />}
             </div>
-            <div className="rounded-lg p-3 grid place-items-center w-1/3 m-2 dark:bg-dark-3">
-              <b className="text-sm">Completed orders</b>
-              <br />
-              <b>3</b>
+
+            <div className="bg-black bg-opacity-60 backdrop-blur-lg rounded-2xl p-8 shadow-2xl border border-gray-800">
+              <Inventory />
             </div>
-          </div>
-        </div>
-        <Transaction />
+          </>
+        )}
       </div>
-    </>
+    </div>
   );
 }
 
-export default BrandsDashboard;
-const Transaction = () => {
+const StatsCard = ({ icon, label, value }) => {
   return (
-    <>
-      <div className="container mt-10 rounded-lg dark:bg-dark-2 p-5">
-        <b>Transactions</b>
-        <div className="">
-          <div className="flex items-center justify-center bg-dark-3 mt-4 p-3 rounded-lg">
-            <b className="w-1/4 p-2 text-sm m-2">Product</b>
-            <b className="w-1/4 p-2 text-sm m-2">Order Status</b>
-            <b className="w-1/4 p-2 text-sm m-2">Date</b>
-            <b className="w-1/4 p-2 text-sm m-2">Amount</b>
-          </div>
-          <div className="flex items-center justify-center bg-dark-3 mt-2 p-1 rounded-lg">
-            <b className="w-1/4 text-sm p-2 m-2">T-shirt</b>
-            <b className="w-1/4 text-sm p-2 m-2">Pending</b>
-            <b className="w-1/4 text-sm p-2 m-2">22/01/2025</b>
-            <b className="w-1/4 text-sm p-2 m-2">566</b>
-          </div>
-          <div className="flex items-center justify-center bg-dark-3 mt-2 p-1 rounded-lg">
-            <b className="w-1/4 text-sm p-2 m-2">T-shirt</b>
-            <b className="w-1/4 text-sm p-2 m-2">Pending</b>
-            <b className="w-1/4 text-sm p-2 m-2">22/01/2025</b>
-            <b className="w-1/4 text-sm p-2 m-2">566</b>
+    <div className="bg-black bg-opacity-50 rounded-xl p-6 border border-gray-800 transition-all duration-300 hover:border-[#00E0A4] group">
+      <div className="flex items-center">
+        <div className="relative">
+          <div className="absolute inset-0 bg-[#00E0A4] opacity-20 blur-xl rounded-full group-hover:opacity-30 transition-opacity"></div>
+          <div className="relative bg-black bg-opacity-50 p-4 rounded-full border border-[#00E0A4]">
+            <div className="text-[#00E0A4] text-2xl">
+              {icon}
+            </div>
           </div>
         </div>
+        <div className="ml-6">
+          <p className="text-gray-400 text-lg">{label}</p>
+          <h3 className="text-4xl font-bold text-white mt-2">{value}</h3>
+        </div>
       </div>
-    </>
+    </div>
   );
 };
+
+export default BrandsDashboard;

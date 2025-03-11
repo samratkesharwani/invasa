@@ -1,7 +1,7 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, BrowserRouter } from "react-router-dom";
-import AuthProvider ,{useAuth } from "../src/component/AuthProvider";
-import Signup from "../src/component/SignUp";
-import Dashboard from "../src/component/Dashboard";
+import { BrowserRouter, Routes, Route, Navigate } from "./utils/router";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import Signup from "./component/SignUp";
+import Dashboard from "./component/Dashboard";
 import Wrapper from "./component/Wrapper";
 import AdminPanel from "./component/AdminPanel";
 import GeneralPosts from "./component/GeneralPosts";
@@ -9,31 +9,35 @@ import Layout from "./component/Layout";
 import ExploreProducts from "./component/form/ExploreProducts";
 import Seller from "./component/form/Seller";
 import Thanks from "./component/Thanks";
-import Login from "../src/component/auth/Login";
-import Register from "../src/component/auth/Register";
+import Login from "./component/auth/Login";
+import Register from "./component/auth/Register";
 import './app.css'
 import BrandsDashboard from "./component/brands/BrandsDashboard";
 import SellerDashboard from "./component/seller/SellerDashboard";
-import SellerProfile from "./component/seller/SellerProfile";
+import SellerProfile from "./component/Profile";
 import Header from './component/Header'
 import Order from "./component/seller/order/Order"
 import FullAddress from "./component/seller/order/FullAddress";
 import SelectProduct from "./component/seller/order/SelectProduct";
 import SelectOptions from "./component/seller/order/SelectOptions";
-import AdminDashboard from './component/admin/AdminDashboard'
 import Payment from "./component/Payment";
 import Location from './component/Location'
+import Print from './component/seller/Print'
+import Test from './component/seller/Test'
+import InventorySetup from './component/form/InventorySetup';
+import AdminRoutes from './component/admin/AdminRoutes';
+import AdminLogin from './component/admin/pages/Login';
+
 const ProtectedRoute = ({ children }) => {
   const user = useAuth();
   return user ? children : <Navigate to="/login" />;
 };
-const h = <Header/>
+
 function App() {
   return (
-    
-<>
-      <Router>
-          <Header/>
+    <AuthProvider>
+      <BrowserRouter>
+        <Header/>
         <Routes>
           <Route path="/" element={<Layout/>} />
           <Route path="/explore-products" element={<ExploreProducts />} />
@@ -72,17 +76,20 @@ function App() {
                 </Wrapper>
             }/>
              <Route path="/order/options" element={
-                            <Wrapper>
-                              <SelectOptions />
-                            </Wrapper>
-                        }/>
-            <Route path="/admin-A7bC3x9Z" element={<AdminDashboard/>}/>
-        <Route path="/pay" element={<Payment/>}/>
-        <Route path="/location" element={<Location/>}/> 
+                <Wrapper>
+                  <SelectOptions />
+                </Wrapper>
+            }/>
+          <Route path="/admin/*" element={<AdminRoutes />} />
+          <Route path="/admin-login" element={<AdminLogin />} />
+          <Route path="/pay" element={<Payment/>}/>
+          <Route path="/location" element={<Location/>}/> 
+          <Route path="/print"  element={<Print/>}/>
+          <Route path='/test' element={<Test/>}/>  
+          <Route path="/inventory-setup" element={<InventorySetup />} />
         </Routes>
-
-      </Router>
-      </>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
