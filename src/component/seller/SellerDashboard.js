@@ -136,9 +136,9 @@ function BuyerDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 mt-10 grid place-items-center mx-auto to-black">
       {/* Enhanced Header Section with Glass Effect */}
-      <div className="bg-black bg-opacity-60 backdrop-blur-lg border-b border-gray-800">
+      <div className="bg-black bg-opacity-60 backdrop-blur-lg border-b w-[90%] rounded-2xl border-gray-800">
         <div className="container mx-auto px-6 py-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center mb-4 md:mb-0">

@@ -26,7 +26,7 @@ import Test from './component/seller/Test'
 import InventorySetup from './component/form/InventorySetup';
 import AdminRoutes from './component/admin/AdminRoutes';
 import AdminLogin from './component/admin/pages/Login';
-
+import Header from './component/Header';
 const ProtectedRoute = ({ children }) => {
   const user = useAuth();
   return user ? children : <Navigate to="/login" />;
@@ -36,6 +36,7 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <Header/>
         <Routes>
           <Route path="/" element={<Layout/>} />
           <Route path="/explore-products" element={<ExploreProducts />} />

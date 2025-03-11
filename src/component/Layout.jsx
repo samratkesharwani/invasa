@@ -53,7 +53,6 @@ function Layout() {
     <div className="min-h-screen dark:bg-dark">
       <div className="relative">
         <div className=" blur-3xl rounded-full"></div>
-        <Header />
         <main className="relative z-10">
           <Hero navigateTo={navigateTo} loggedIn={loggedIn} />
           <div className="container mx-auto px-6 py-16">

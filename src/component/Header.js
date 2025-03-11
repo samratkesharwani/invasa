@@ -32,7 +32,7 @@ const Navbar = () => {
   };
 
   return (
-    <div className="bg-black sticky top-0 z-50 shadow-md shadow-gray-900/20">
+    <div className="bg-[#1A1F2E] sticky top-0 z-50 shadow-md shadow-gray-900/20">
       <div className="container mx-auto px-4 sm:px-6">
         <div className="flex justify-between items-center h-16">
           {/* Logo Section */}
