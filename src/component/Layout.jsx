@@ -27,7 +27,24 @@ function Layout() {
   }, []);
 
   const navigateTo = () => {
-    navigate(`/dashboard-${role}`);
+    // Check if role is set and navigate to the appropriate dashboard
+    if (role) {
+      // Map the role from database to the actual route path
+      const dashboardRoutes = {
+        'seller': '/dashboard-seller',
+        'brands': '/dashboard-brands',
+        // Add other role mappings if needed
+      };
+      
+      // Use the mapped route or fallback to the original format if not found in the mapping
+      const route = dashboardRoutes[role.toLowerCase()] || `/dashboard-${role}`;
+      navigate(route);
+    } else {
+      // If role is not set yet, navigate to a default dashboard or show an error
+      console.warn("User role not determined yet");
+      // You could navigate to a default dashboard or show a loading state
+      navigate('/profile'); // Fallback to profile page if role is not determined
+    }
   };
 
   useEffect(() => {

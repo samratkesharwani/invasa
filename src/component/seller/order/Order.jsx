@@ -323,40 +323,53 @@ const Order = () => {
 };
 
 const ChooseCity = ({ stepInc, setOrderData, orderData }) => {
-  const handleCitySelection = (city) => {
-    setOrderData({ ...orderData, selectedCity: city });
-    stepInc(); // Move to next step after selecting a city
-  };
-
   const [cities, setCities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const handleCitySelection = (city) => {
+    setOrderData((prevState) => ({
+      ...prevState,
+      selectedCity: city,
+    }));
+    stepInc();
+  };
 
   useEffect(() => {
     const fetchCities = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase
-          .from("businessOnboardForm")
-          .select("city, status")
-          .neq("status", "pending"); // Only get cities from approved sellers
+        // Fetch cities from businessOnboardForm
+        const { data: cityData, error } = await supabase
+          .from('businessOnboardForm')
+          .select('city');
 
-        if (error) {
-          throw error;
+        if (error) throw error;
+
+        if (cityData && cityData.length > 0) {
+          // Process cities to lowercase and remove duplicates
+          const processedCities = cityData
+            .map(item => item.city ? item.city.toLowerCase().trim() : null)
+            .filter(city => city) // Remove null/empty values
+            .reduce((unique, city) => {
+              // Add city to unique array only if it's not already included
+              if (!unique.includes(city)) {
+                unique.push(city);
+              }
+              return unique;
+            }, [])
+            .sort(); // Sort alphabetically for better UX
+
+          setCities(processedCities);
         }
-        
-        // Filter out null or empty cities and get unique values
-        const validCities = data
-          .filter(item => item.city && item.city.trim() !== '')
-          .map(item => item.city);
-        
-        setCities([...new Set(validCities)]);
-        console.log("Approved cities:", validCities);
-      } catch (error) {
-        console.log("Error fetching cities:", error.message);
+      } catch (err) {
+        console.error('Error fetching cities:', err);
+        setError('Failed to load cities. Please try again.');
       } finally {
         setLoading(false);
       }
     };
+
     fetchCities();
   }, []);
 

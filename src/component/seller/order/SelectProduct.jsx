@@ -8,6 +8,8 @@ function SelectProduct({ setOrderData, orderData, handleChange, stepDec, stepInc
   const navigate = useNavigate();
   const [error, setError] = useState(null);
   const [products, setProducts] = useState([]);
+  const [sellerInfo, setSellerInfo] = useState(null);
+  const [debugInfo, setDebugInfo] = useState(null); // For debugging purposes
 
   // Hardcoded product images - this ensures we always have images for each product type
   const productImages = {
@@ -37,33 +39,77 @@ function SelectProduct({ setOrderData, orderData, handleChange, stepDec, stepInc
     const fetchInventoryProducts = async () => {
       setLoading(true);
       try {
-        // Get user session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        // Check if we have a closest seller ID from the previous step
+        if (!orderData.closestSellerId && !orderData.sellerId) {
+          setError("No seller information found. Please go back and complete the address step.");
+          setLoading(false);
+          return;
+        }
+
+        // Get the seller ID from the order data
+        const sellerId = orderData.closestSellerId || orderData.sellerId;
+        console.log("Loading inventory for seller ID:", sellerId);
         
-        if (sessionError || !session || !session.user) {
-          console.error("No user session found.");
-          setError("Authentication error. Please log in again.");
+        // Fetch seller information
+        const { data: sellerData, error: sellerError } = await supabase
+          .from('businessOnboardForm')
+          .select('*')
+          .eq('id', sellerId)
+          .single();
+          
+        if (sellerError) {
+          console.error("Error fetching seller details:", sellerError);
+          setError("Could not find seller information. Please try again.");
           setLoading(false);
           return;
         }
         
-        // Get the current user's ID
-        const userId = session.user.id;
-        
-        // Fetch inventory data for the current user
-        const { data: inventoryData, error: inventoryError } = await supabase
-          .from('inventory')
-          .select('*')
-          .eq('brand_id', userId);
-          
-        if (inventoryError) {
-          throw inventoryError;
+        if (!sellerData) {
+          setError("Seller information not found.");
+          setLoading(false);
+          return;
         }
         
-        console.log("Inventory data for current user:", inventoryData);
+        setSellerInfo(sellerData);
+        console.log("Seller Info:", sellerData);
+        
+        // First try to fetch by seller_id
+        let { data: inventoryData, error: inventoryError } = await supabase
+          .from('inventory')
+          .select('*')
+          .eq('seller_id', sellerId);
+          
+        // If no results or error, try with brand_id as fallback
+        if ((inventoryError || !inventoryData || inventoryData.length === 0)) {
+          console.log("No inventory found with seller_id, trying with brand_id instead");
+          const { data: brandInventory, error: brandError } = await supabase
+            .from('inventory')
+            .select('*')
+            .eq('brand_id', sellerId);
+            
+          if (!brandError && brandInventory && brandInventory.length > 0) {
+            inventoryData = brandInventory;
+            inventoryError = null;
+          }
+        }
+        
+        if (inventoryError) {
+          console.error("Error fetching inventory:", inventoryError);
+          setError('Failed to load inventory. Please try again.');
+          setLoading(false);
+          return;
+        }
+        
+        console.log("Inventory data for selected seller:", inventoryData);
+        
+        // Store the raw inventory data for debugging
+        setDebugInfo({
+          sellerId,
+          rawInventory: inventoryData
+        });
         
         if (!inventoryData || inventoryData.length === 0) {
-          setError("No inventory found for your account. Please add inventory first.");
+          setError("No inventory found for the selected seller.");
           setLoading(false);
           return;
         }
@@ -72,8 +118,13 @@ function SelectProduct({ setOrderData, orderData, handleChange, stepDec, stepInc
         const availableProducts = [];
         
         inventoryData.forEach(item => {
+          console.log("Processing inventory item:", item);
+          
           // Check if the product has any stock
-          if (!Array.isArray(item.data)) return;
+          if (!Array.isArray(item.data)) {
+            console.log("Item data is not an array:", item.data);
+            return;
+          }
           
           let hasStock = false;
           let totalStock = 0;
@@ -89,7 +140,11 @@ function SelectProduct({ setOrderData, orderData, handleChange, stepDec, stepInc
             }
           });
           
-          if (hasStock) {
+          console.log(`Product ${item.product_name || 'Unknown'}: hasStock=${hasStock}, totalStock=${totalStock}`);
+          
+          // Even if no stock is found, still show the product for debugging
+          // Remove this condition for production or comment it out if needed
+          // if (hasStock) {
             // Get price from the price field if available
             let price = 0;
             if (item.price !== undefined && item.price !== null) {
@@ -109,7 +164,7 @@ function SelectProduct({ setOrderData, orderData, handleChange, stepDec, stepInc
             }
             
             // Get the correct image for this product
-            const productName = item.product_name;
+            const productName = item.product_name || "Unknown Product";
             const imageUrl = productImages[productName] || 
                             productImages[productName.toLowerCase()] || 
                             `/images/${productName.toLowerCase().replace(/\s+/g, '-')}.jpg`;
@@ -117,19 +172,27 @@ function SelectProduct({ setOrderData, orderData, handleChange, stepDec, stepInc
             availableProducts.push({
               id: item.id,
               name: productName,
-              base_price: price,
-              price: price, // Add explicit price field
+              base_price: price || 0,
+              price: price || 0,
               image_url: imageUrl,
               inventory_id: item.id,
               inventory_data: item.data,
-              inStock: true,
+              seller_id: sellerId,
+              inStock: hasStock,
               totalStock: totalStock
             });
-          }
+          // }
         });
         
-        console.log("Available products:", availableProducts);
+        console.log("Available products from closest seller:", availableProducts);
         setProducts(availableProducts);
+
+        // Update order data with seller information
+        setOrderData(prev => ({
+          ...prev,
+          sellerId: sellerId,
+          sellerName: sellerData.business_name || 'Unknown Seller'
+        }));
       } catch (error) {
         console.error('Error fetching inventory products:', error);
         setError('Failed to load products. Please try again.');
@@ -139,7 +202,7 @@ function SelectProduct({ setOrderData, orderData, handleChange, stepDec, stepInc
     };
     
     fetchInventoryProducts();
-  }, []);
+  }, [orderData.closestSellerId, orderData.sellerId, setOrderData]);
 
   const imgStyle = 'w-full h-32 object-contain';
   const divImgStyle =
@@ -153,9 +216,10 @@ function SelectProduct({ setOrderData, orderData, handleChange, stepDec, stepInc
         ...prevState.productData,
         selectedProduct: product.name,
         selectedProductPrice: Number(product.base_price),
-        price: Number(product.price), // Add the price field
+        price: Number(product.price),
         inventory_id: product.inventory_id,
         inventory_data: product.inventory_data,
+        seller_id: product.seller_id,
         // Reset other selections when product changes
         selectedSize: '',
         selectedGSM: '',
@@ -195,6 +259,26 @@ function SelectProduct({ setOrderData, orderData, handleChange, stepDec, stepInc
           </h1>
         </div>
         
+        {sellerInfo && (
+          <div className="bg-gray-900 dark:bg-dark-1 text-white px-4 py-3 rounded mx-10 mb-6">
+            <h2 className="text-lg font-medium">Selected Seller</h2>
+            <p className="text-sm text-gray-400">
+              {/* {sellerInfo.businessName || 'Unknown'} -  */}
+              {sellerInfo.city ? sellerInfo.city.charAt(0).toUpperCase() + sellerInfo.city.slice(1).toLowerCase() : 'Unknown Location'}
+            </p>
+            {orderData.coordinates && sellerInfo.coordinates && (
+              <p className="text-xs text-gray-400 mt-1">
+                Distance: {calculateDistance(
+                  orderData.coordinates.lat,
+                  orderData.coordinates.lng,
+                  sellerInfo.coordinates.lat,
+                  sellerInfo.coordinates.lng
+                ).toFixed(2)} km
+              </p>
+            )}
+          </div>
+        )}
+        
         {error && (
           <div className="bg-gray-900 dark:bg-dark-1 border border-red-500 text-red-400 px-4 py-3 rounded relative mb-6 mx-10" role="alert">
             <span className="block sm:inline">{error}</span>
@@ -209,11 +293,18 @@ function SelectProduct({ setOrderData, orderData, handleChange, stepDec, stepInc
         ) : products.length === 0 ? (
           <div className="text-white text-center p-10">
             <h2 className="text-xl font-bold mb-4">No Products Available</h2>
-            <p className="mb-6">There are currently no products in your inventory. Please add inventory items first.</p>
+            <p className="mb-6">The selected seller doesn't have any inventory items available.</p>
+            
+            <button 
+              onClick={stepDec}
+              className="bg-secondary hover:bg-[#0BB489] text-white font-medium py-2 px-4 rounded mr-2"
+            >
+              Go Back
+            </button>
             
             <button 
               onClick={() => navigate('/')}
-              className="bg-secondary hover:bg-[#0BB489] text-white font-medium py-2 px-4 rounded"
+              className="bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded ml-2"
             >
               Return to Home
             </button>
@@ -238,24 +329,49 @@ function SelectProduct({ setOrderData, orderData, handleChange, stepDec, stepInc
                   <br />
                   <b className={bImg + " text-secondary"}>Price: {formatCurrency(item.price)}</b>
                   <br />
-                  <span className="text-xs text-green-400">
-                    In Stock: {item.totalStock}
+                  <span className={item.inStock ? "text-xs text-green-400" : "text-xs text-red-400"}>
+                    {item.inStock ? `In Stock: ${item.totalStock}` : "Out of Stock"}
                   </span>
                 </div>
               ))}
             </div>
           </div>
         )}
-        <button
-          onClick={stepDec}
-          className="mr-10 ml-10 mt-10 p-2 w-1/4 bg-secondary border-secondary border rounded-md inline-flex items-center justify-center py-3 px-7 text-center text-base font-medium text-white hover:bg-[#0BB489] hover:border-[#0BB489]"
-          disabled={loading}
-        >
-          Prev
-        </button>
+        
+        {/* {debugInfo && process.env.NODE_ENV === 'development' && (
+          <div className="bg-gray-900 dark:bg-dark-1 text-white text-xs mt-8 p-4 mx-10 rounded overflow-auto" style={{maxHeight: '200px'}}>
+            <h3 className="font-bold mb-2">Debug Information:</h3>
+            <p>Seller ID: {debugInfo.sellerId}</p>
+            <p>Raw Inventory Count: {debugInfo.rawInventory?.length || 0}</p>
+            <p>Products Count: {products.length}</p>
+          </div>
+        )} */}
+        
+        <div className="flex justify-center mt-6">
+          <button
+            onClick={stepDec}
+            className="bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded mr-4"
+          >
+            Back
+          </button>
+        </div>
       </div>
     </>
   );
+}
+
+// Helper function to calculate distance between two points
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Radius of the Earth in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c; // Distance in km
+  return distance;
 }
 
 export default SelectProduct;

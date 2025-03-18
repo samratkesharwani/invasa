@@ -309,7 +309,7 @@ const Inventory = () => {
         <DeleteConfirmationModal
           item={itemToDelete}
           closeModal={closeDeleteConfirmation}
-          confirmDelete={() => deleteInventoryItem(itemToDelete.id)}
+          confirmDelete={deleteInventoryItem}
           isLoading={deleteLoading}
         />
       )}
@@ -399,25 +399,24 @@ const InventoryCard = ({ item, openModal, openDeleteConfirmation }) => {
 
 const DeleteConfirmationModal = ({ item, closeModal, confirmDelete, isLoading }) => {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50">
-      <div className="bg-gray-800 dark:bg-dark-2 rounded-lg p-6 max-w-md w-full">
-        <h2 className="text-xl font-bold text-white mb-4">Confirm Deletion</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-gray-800 bg-opacity-75">
+      <div className="bg-gray-900 rounded-lg shadow-lg w-full max-w-md p-6">
+        <h3 className="text-xl font-bold text-white mb-4">Confirm Deletion</h3>
         <p className="text-gray-300 mb-6">
-          Are you sure you want to delete <span className="font-semibold">{item.product_name}</span> from your inventory? This action cannot be undone.
+          Are you sure you want to delete <span className="font-semibold">{item.product_name}</span>? This action cannot be undone.
         </p>
-        
-        <div className="flex justify-end space-x-3">
-          <button 
+        <div className="flex justify-end space-x-4">
+          <button
             onClick={closeModal}
             disabled={isLoading}
-            className="bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded"
+            className="px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 disabled:opacity-50"
           >
             Cancel
           </button>
-          <button 
-            onClick={confirmDelete}
+          <button
+            onClick={() => confirmDelete(item.id)}
             disabled={isLoading}
-            className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded flex items-center"
+            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 flex items-center"
           >
             {isLoading ? (
               <>
@@ -427,7 +426,7 @@ const DeleteConfirmationModal = ({ item, closeModal, confirmDelete, isLoading })
                 </svg>
                 Deleting...
               </>
-            ) : 'Delete'}
+            ) : "Delete"}
           </button>
         </div>
       </div>
