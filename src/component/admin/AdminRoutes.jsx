@@ -6,6 +6,8 @@ import Dashboard from './pages/Dashboard';
 import Sellers from './pages/Sellers';
 import Orders from './pages/Orders';
 import Settings from './pages/Settings';
+import BlogList from '../../admin/pages/BlogList';
+import BlogPostEditor from '../../admin/components/BlogPostEditor';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -42,6 +44,11 @@ const AdminRoutes = () => {
                 <Route path="sellers" element={<Sellers />} />
                 <Route path="orders" element={<Orders />} />
                 <Route path="settings" element={<Settings />} />
+                
+                {/* Blog Management Routes */}
+                <Route path="blog" element={<BlogList />} />
+                <Route path="blog/new" element={<BlogPostEditor />} />
+                <Route path="blog/edit/:id" element={<BlogPostEditor />} />
               </Routes>
             </AdminLayout>
           </ProtectedRoute>

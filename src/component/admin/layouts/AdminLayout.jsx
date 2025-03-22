@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { FiMenu, FiX, FiUsers, FiShoppingBag, FiSettings, FiBarChart2, FiCheckSquare } from 'react-icons/fi';
+import { FiMenu, FiX, FiUsers, FiShoppingBag, FiSettings, FiBarChart2, FiCheckSquare, FiBook } from 'react-icons/fi';
 
 const AdminLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -11,6 +11,7 @@ const AdminLayout = ({ children }) => {
     { path: '/admin/sellers', name: 'Sellers', icon: <FiUsers /> },
     { path: '/admin/orders', name: 'Orders', icon: <FiShoppingBag /> },
     { path: '/admin/approvals', name: 'Approvals', icon: <FiCheckSquare /> },
+    { path: '/admin/blog', name: 'Blog', icon: <FiBook /> },
     { path: '/admin/settings', name: 'Settings', icon: <FiSettings /> },
   ];
 
@@ -37,7 +38,7 @@ const AdminLayout = ({ children }) => {
               key={item.path}
               to={item.path}
               className={`flex items-center px-4 py-3 ${
-                location.pathname === item.path
+                location.pathname.startsWith(item.path)
                   ? 'bg-secondary text-white'
                   : 'text-gray-300 hover:bg-gray-800 hover:text-white'
               } transition-colors duration-200`}
@@ -54,7 +55,7 @@ const AdminLayout = ({ children }) => {
         <header className="bg-dark-2 shadow-md">
           <div className="flex items-center justify-between px-6 py-4">
             <h2 className="text-xl font-semibold text-white">
-              {menuItems.find(item => item.path === location.pathname)?.name || 'Dashboard'}
+              {menuItems.find(item => location.pathname.startsWith(item.path))?.name || 'Dashboard'}
             </h2>
             <div className="flex items-center space-x-4">
               <button className="text-gray-300 hover:text-white">
