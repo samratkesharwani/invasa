@@ -42,8 +42,16 @@ const BlogPostEditor = () => {
           const post = await blogService.getBlogPost(id);
           if (post) {
             setFormData({
-              ...post,
+              title: post.title || '',
+              slug: post.slug || '',
+              content: post.content || '',
+              excerpt: post.excerpt || '',
+              featured_image: post.featured_image || '',
+              status: post.status || 'draft',
               published_at: post.published_at ? format(new Date(post.published_at), "yyyy-MM-dd'T'HH:mm:ss") : format(new Date(), "yyyy-MM-dd'T'HH:mm:ss"),
+              meta_title: post.meta_title || '',
+              meta_description: post.meta_description || '',
+              meta_keywords: Array.isArray(post.meta_keywords) ? post.meta_keywords.join(', ') : (post.meta_keywords || ''),
               category_ids: post.categories?.map(c => c.category.id) || [],
               tag_ids: post.tags?.map(t => t.tag.id) || []
             });
@@ -62,29 +70,47 @@ const BlogPostEditor = () => {
     e.preventDefault();
     setLoading(true);
     try {
+      console.log('Form data before submission:', formData);
+      
+      // Generate a slug if not provided
+      let slug = formData.slug;
+      if (!slug && formData.title) {
+        slug = formData.title.toLowerCase()
+          .replace(/[^\w\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-');
+      }
+      
       const postData = {
         title: formData.title,
+        slug: slug,
         content: formData.content,
         excerpt: formData.excerpt,
         meta_description: formData.meta_description,
+        meta_title: formData.meta_title,
+        meta_keywords: formData.meta_keywords ? formData.meta_keywords.split(',').map(k => k.trim()).filter(k => k) : [],
         status: formData.status,
         featured_image: formData.featured_image,
-        category_ids: formData.category_ids,
-        tag_ids: formData.tag_ids,
+        category_ids: formData.category_ids || [],
+        tag_ids: formData.tag_ids || [],
         published_at: formData.published_at ? new Date(formData.published_at).toISOString() : null
       };
+      
+      console.log('Prepared post data:', postData);
 
       if (id) {
+        console.log('Updating post with ID:', id);
         await blogService.updateBlogPost(id, postData);
         toast.success('Blog post updated successfully');
       } else {
+        console.log('Creating new post');
         await blogService.createBlogPost(postData);
         toast.success('Blog post created successfully');
       }
       navigate('/admin/blog');
     } catch (error) {
       console.error('Error saving post:', error);
-      toast.error(error.response?.data?.message || 'Failed to save blog post');
+      toast.error(error.message || 'Failed to save blog post');
     } finally {
       setLoading(false);
     }
@@ -116,22 +142,24 @@ const BlogPostEditor = () => {
   };
 
   const handleCategoryChange = (e) => {
-    const categoryId = parseInt(e.target.value);
+    const categoryId = e.target.value;
+    console.log('Category changed:', categoryId, e.target.checked);
     setFormData(prev => ({
       ...prev,
       category_ids: e.target.checked
-        ? [...prev.category_ids, categoryId]
-        : prev.category_ids.filter(id => id !== categoryId)
+        ? [...(prev.category_ids || []), categoryId]
+        : (prev.category_ids || []).filter(id => id !== categoryId)
     }));
   };
 
   const handleTagChange = (e) => {
-    const tagId = parseInt(e.target.value);
+    const tagId = e.target.value;
+    console.log('Tag changed:', tagId, e.target.checked);
     setFormData(prev => ({
       ...prev,
       tag_ids: e.target.checked
-        ? [...prev.tag_ids, tagId]
-        : prev.tag_ids.filter(id => id !== tagId)
+        ? [...(prev.tag_ids || []), tagId]
+        : (prev.tag_ids || []).filter(id => id !== tagId)
     }));
   };
 
