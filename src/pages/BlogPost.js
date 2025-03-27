@@ -161,7 +161,7 @@ const BlogPost = () => {
             {/* Blog Content */}
             <div className="mx-auto mt-8 px-4 sm:px-6 max-w-none">
               <div 
-                className="blog-content prose prose-lg max-w-none prose-headings:text-primary prose-a:text-primary-light prose-a:no-underline hover:prose-a:underline prose-img:rounded-lg"
+                className="blog-content prose prose-lg max-w-none prose-invert prose-headings:text-white prose-a:text-purple-300 prose-a:no-underline hover:prose-a:underline prose-p:text-gray-200 prose-li:text-gray-200 prose-img:rounded-lg"
                 dangerouslySetInnerHTML={{ __html: post.content }} 
               />
             </div>
@@ -332,116 +332,7 @@ const BlogPost = () => {
 
       {/* Custom styles for blog content */}
       <style jsx="true">{`
-        .blog-content h1 {
-          font-size: 2.5rem;
-          font-weight: 800;
-          margin-top: 2rem;
-          margin-bottom: 1rem;
-          line-height: 1.2;
-          color: var(--text-primary);
-        }
-        
-        .blog-content h2 {
-          font-size: 2rem;
-          font-weight: 700;
-          margin-top: 1.75rem;
-          margin-bottom: 0.75rem;
-          line-height: 1.3;
-          color: var(--text-primary);
-        }
-        
-        .blog-content h3 {
-          font-size: 1.75rem;
-          font-weight: 700;
-          margin-top: 1.5rem;
-          margin-bottom: 0.75rem;
-          line-height: 1.4;
-          color: var(--text-primary);
-        }
-        
-        .blog-content h4 {
-          font-size: 1.5rem;
-          font-weight: 600;
-          margin-top: 1.25rem;
-          margin-bottom: 0.75rem;
-          line-height: 1.5;
-          color: var(--text-primary);
-        }
-        
-        .blog-content h5 {
-          font-size: 1.25rem;
-          font-weight: 600;
-          margin-top: 1.25rem;
-          margin-bottom: 0.5rem;
-          line-height: 1.5;
-          color: var(--text-primary);
-        }
-        
-        .blog-content h6 {
-          font-size: 1.1rem;
-          font-weight: 600;
-          margin-top: 1.25rem;
-          margin-bottom: 0.5rem;
-          line-height: 1.5;
-          color: var(--text-primary);
-        }
-        
-        .blog-content p {
-          margin-top: 1.25rem;
-          margin-bottom: 1.25rem;
-          line-height: 1.7;
-          color: var(--text-secondary);
-        }
-        
-        .blog-content a {
-          color: var(--primary-light);
-          text-decoration: underline;
-        }
-        
-        .blog-content ul, .blog-content ol {
-          margin-top: 1rem;
-          margin-bottom: 1rem;
-          padding-left: 2rem;
-          color: var(--text-secondary);
-        }
-        
-        .blog-content ul {
-          list-style-type: disc;
-        }
-        
-        .blog-content ol {
-          list-style-type: decimal;
-        }
-        
-        .blog-content img {
-          margin-top: 1.5rem;
-          margin-bottom: 1.5rem;
-          border-radius: 0.5rem;
-          max-width: 100%;
-        }
-        
-        .blog-content blockquote {
-          border-left: 4px solid var(--primary-light);
-          padding-left: 1rem;
-          font-style: italic;
-          margin: 1.5rem 0;
-          color: var(--text-muted);
-        }
-        
-        .blog-content pre {
-          background-color: var(--bg-secondary);
-          padding: 1rem;
-          border-radius: 0.5rem;
-          overflow-x: auto;
-          margin: 1.5rem 0;
-        }
-        
-        .blog-content code {
-          background-color: var(--bg-secondary);
-          padding: 0.2rem 0.4rem;
-          border-radius: 0.25rem;
-          font-family: monospace;
-        }
+        /* Removing all custom styles as they are now handled by Tailwind Typography */
       `}</style>
     </div>
   );
