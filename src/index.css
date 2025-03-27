@@ -1,3 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #8b5cf6;
+  --primary-light: #a78bfa;
+  --primary-dark: #7c3aed;
+  --accent: #f97316;
+  --accent-light: #fdba74;
+  --accent-dark: #ea580c;
+}
+
+.dark {
+  --bg-primary: #000000;
+  --bg-secondary: #111827;
+  --bg-card: rgba(17, 24, 39, 0.6);
+  --bg-card-hover: rgba(31, 41, 55, 0.8);
+  --text-primary: #ffffff;
+  --text-secondary: #d1d5db;
+  --text-muted: #9ca3af;
+  --border-color: rgba(75, 85, 99, 0.3);
+}
+
+.light {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f3f4f6;
+  --bg-card: rgba(255, 255, 255, 0.8);
+  --bg-card-hover: rgba(243, 244, 246, 0.9);
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --border-color: rgba(209, 213, 219, 0.4);
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -5,7 +40,9 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
+  transition: background-color 0.3s ease, color 0.3s ease;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 code {
@@ -17,4 +54,27 @@ code {
   padding: 0;
   margin: 0;
   box-sizing: 0;
+}
+
+.prose {
+  --tw-prose-headings: var(--text-primary) !important;
+  --tw-prose-body: var(--text-secondary) !important;
+  --tw-prose-links: var(--primary-light) !important;
+}
+
+/* Additional B2B-focused styling */
+.b2b-gradient {
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+}
+
+.b2b-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+.b2b-card:hover {
+  background-color: var(--bg-card-hover);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
 }

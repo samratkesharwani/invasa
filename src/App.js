@@ -32,6 +32,7 @@ import AdminLogin from './component/admin/pages/Login';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
 import './app.css';
+import { ThemeProvider } from './context/ThemeContext';
 
 const ProtectedRoute = ({ children }) => {
   const user = useAuth();
@@ -40,71 +41,73 @@ const ProtectedRoute = ({ children }) => {
 
 function App() {
   return (
-    <HelmetProvider>
-      <AuthProvider>
-        <Router>
-          <div className="flex flex-col min-h-screen">
-            <Header />
-            <main className="flex-grow">
-              <Routes>
-                <Route path="/" element={<Layout />} />
-                <Route path="/explore-products" element={<ExploreProducts />} />
-                <Route path="/seller" element={<Seller />} />
-                <Route path="/thanks" element={<Thanks />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/dashboard-seller" element={
-                  <Wrapper>
-                    <BrandsDashboard />
-                  </Wrapper>
-                } />
-                <Route path="/dashboard-brands" element={
-                  <Wrapper>
-                    <SellerDashboard />
-                  </Wrapper>
-                } />
-                <Route path="/profile" element={
-                  <Wrapper>
-                    <Profile />
-                  </Wrapper>
-                } />
-                <Route path="/order" element={
-                  <Wrapper>
-                    <Order />
-                  </Wrapper>
-                } />
-                <Route path="/order/address" element={
-                  <Wrapper>
-                    <FullAddress />
-                  </Wrapper>
-                } />
-                <Route path="/order/products" element={
-                  <Wrapper>
-                    <SelectProduct />
-                  </Wrapper>
-                } />
-                <Route path="/order/options" element={
-                  <Wrapper>
-                    <SelectOptions />
-                  </Wrapper>
-                } />
-                <Route path="/admin/*" element={<AdminRoutes />} />
-                <Route path="/admin-login" element={<AdminLogin />} />
-                <Route path="/pay" element={<Payment />} />
-                <Route path="/location" element={<Location />} />
-                <Route path="/print" element={<Print />} />
-                <Route path="/test" element={<Test />} />
-                <Route path="/inventory-setup" element={<InventorySetup />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="/blog/:slug" element={<BlogPost />} />
-                <Route path="*" element={<Navigate to="/" />} />
-              </Routes>
-            </main>
-            <Toaster position="top-right" />
-          </div>
-        </Router>
-      </AuthProvider>
-    </HelmetProvider>
+    <ThemeProvider>
+      <HelmetProvider>
+        <AuthProvider>
+          <Router>
+            <div className="flex flex-col min-h-screen">
+              <Header />
+              <main className="flex-grow">
+                <Routes>
+                  <Route path="/" element={<Layout />} />
+                  <Route path="/explore-products" element={<ExploreProducts />} />
+                  <Route path="/seller" element={<Seller />} />
+                  <Route path="/thanks" element={<Thanks />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/dashboard-seller" element={
+                    <Wrapper>
+                      <BrandsDashboard />
+                    </Wrapper>
+                  } />
+                  <Route path="/dashboard-brands" element={
+                    <Wrapper>
+                      <SellerDashboard />
+                    </Wrapper>
+                  } />
+                  <Route path="/profile" element={
+                    <Wrapper>
+                      <Profile />
+                    </Wrapper>
+                  } />
+                  <Route path="/order" element={
+                    <Wrapper>
+                      <Order />
+                    </Wrapper>
+                  } />
+                  <Route path="/order/address" element={
+                    <Wrapper>
+                      <FullAddress />
+                    </Wrapper>
+                  } />
+                  <Route path="/order/products" element={
+                    <Wrapper>
+                      <SelectProduct />
+                    </Wrapper>
+                  } />
+                  <Route path="/order/options" element={
+                    <Wrapper>
+                      <SelectOptions />
+                    </Wrapper>
+                  } />
+                  <Route path="/admin/*" element={<AdminRoutes />} />
+                  <Route path="/admin-login" element={<AdminLogin />} />
+                  <Route path="/pay" element={<Payment />} />
+                  <Route path="/location" element={<Location />} />
+                  <Route path="/print" element={<Print />} />
+                  <Route path="/test" element={<Test />} />
+                  <Route path="/inventory-setup" element={<InventorySetup />} />
+                  <Route path="/blog" element={<Blog />} />
+                  <Route path="/blog/:slug" element={<BlogPost />} />
+                  <Route path="*" element={<Navigate to="/" />} />
+                </Routes>
+              </main>
+              <Toaster position="top-right" />
+            </div>
+          </Router>
+        </AuthProvider>
+      </HelmetProvider>
+    </ThemeProvider>
   );
 }
 
