@@ -38,31 +38,6 @@ module.exports = {
       borderColor: {
         DEFAULT: 'var(--border-color)',
       },
-      typography: (theme) => ({
-        DEFAULT: {
-          css: {
-            color: 'var(--text-secondary)',
-            h1: {
-              color: 'var(--text-primary)',
-            },
-            h2: {
-              color: 'var(--text-primary)',
-            },
-            h3: {
-              color: 'var(--text-primary)',
-            },
-            h4: {
-              color: 'var(--text-primary)',
-            },
-            a: {
-              color: 'var(--primary-light)',
-            },
-            strong: {
-              color: 'var(--text-primary)',
-            },
-          },
-        },
-      }),
     },
   },
   plugins: [

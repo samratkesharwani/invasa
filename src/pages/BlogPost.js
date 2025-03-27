@@ -159,9 +159,9 @@ const BlogPost = () => {
             </div>
 
             {/* Blog Content */}
-            <div className="prose prose-lg mx-auto mt-8 px-4 sm:px-6 max-w-none">
+            <div className="mx-auto mt-8 px-4 sm:px-6 max-w-none">
               <div 
-                className="blog-content"
+                className="blog-content prose prose-lg max-w-none prose-headings:text-primary prose-a:text-primary-light prose-a:no-underline hover:prose-a:underline prose-img:rounded-lg"
                 dangerouslySetInnerHTML={{ __html: post.content }} 
               />
             </div>
