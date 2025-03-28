@@ -1,11 +1,11 @@
 {
   "short_name": "Invasa Link",
   "name": "Invasa Link",
-  "description": "A convenient link to access Invasa services.",
+  "description": "Clothing under hours using print on demand. At Invasa Link, we revolutionize the way brands connect with printing service providers.",
   "icons": [
     {
       "src": "/favicon.ico",
-      "sizes": "48x48",
+      "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/x-icon"
     },
     {
@@ -16,10 +16,21 @@
     {
       "src": "/favicon-512.png",
       "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/mstile-144x144.png",
+      "sizes": "144x144",
       "type": "image/png"
     }
   ],
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
   "theme_color": "#000000",
   "background_color": "#ffffff"
