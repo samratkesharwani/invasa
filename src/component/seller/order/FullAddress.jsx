@@ -69,37 +69,60 @@ function FullAddress({ setOrderData, orderData, handleChange, stepDec, stepInc }
                 return;
             }
 
-            // Check if we have sellers with inventory
-            if (sellersWithInventory.length === 0) {
-                setError('No sellers with active inventory available in this city. Please try a different city.');
+            // Use only city sellers (already filtered by city in useEffect)
+            const sellersToUse = citySellers;
+            const displayCity = orderData.cityDisplayName || orderData.selectedCity;
+
+            if (!sellersToUse || sellersToUse.length === 0) {
+                setError(`No sellers available in ${displayCity}. Please select a different city.`);
                 setIsLoading(false);
                 return;
             }
 
-            // Find closest seller with inventory based on coordinates
-            const closest = findClosestSellerWithInventory(coords);
-            if (!closest) {
-                setError('No sellers with inventory available in this location. Please try a different city.');
+            // Calculate distances and sort sellers from the selected city
+            const sellersWithDistances = sellersToUse.map(seller => {
+                const distance = seller.coordinates ? calculateDistance(
+                    coords.lat,
+                    coords.lng,
+                    seller.coordinates.lat,
+                    seller.coordinates.lng
+                ) : Infinity; // Use Infinity for sellers without coordinates
+                
+                return {
+                    ...seller,
+                    distance: distance
+                };
+            }).sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity));
+
+            // Filter sellers by distance - only include those within 10km
+            const MAX_DISTANCE_KM = 10;
+            const nearbySellers = sellersWithDistances.filter(seller => 
+                seller.distance !== Infinity && seller.distance <= MAX_DISTANCE_KM
+            );
+            
+            console.log(`Found ${nearbySellers.length} sellers within ${MAX_DISTANCE_KM}km radius`);
+            
+            if (nearbySellers.length === 0) {
+                setError(`No sellers available within ${MAX_DISTANCE_KM}km of your location in ${displayCity}. Please try a different address.`);
                 setIsLoading(false);
                 return;
             }
 
-            // Update order data with coordinates and seller info
+            // Update order data with coordinates and nearby sellers only
             const updatedOrderData = {
                 ...orderData,
                 coordinates: coords,
-                sellerId: closest.id,
-                closestSellerId: closest.id, // Store this explicitly for SelectProduct
-                closestSellerInfo: {
-                    distance: closest.distance,
-                    business_name: closest.business_name || 'Unknown',
-                    city: closest.city || orderData.selectedCity
+                availableSellers: nearbySellers,
+                maxDistance: MAX_DISTANCE_KM,
+                fullAddress: {
+                    ...orderData.fullAddress,
+                    address: address,
+                    pincode: orderData.fullAddress.pincode
                 }
             };
-            setOrderData(updatedOrderData);
             
-            console.log('Customer coordinates:', coords);
-            console.log('Closest seller with inventory:', closest);
+            console.log('Updated order data with nearby sellers:', updatedOrderData);
+            setOrderData(updatedOrderData);
             
             // Move to next step
             stepInc();
@@ -186,64 +209,56 @@ function FullAddress({ setOrderData, orderData, handleChange, stepDec, stepInc }
                 
                 if (!orderData.selectedCity) {
                     setError("Please select a city first");
-                    navigate('/order'); // Redirect back to order page to select city
+                    navigate('/order');
                     setIsPageLoading(false);
                     return;
                 }
 
-                // Fetch all sellers in the selected city
+                // Ensure selectedCity is normalized to lowercase for comparison
+                const selectedCity = orderData.selectedCity.toLowerCase().trim();
+                const displayCity = orderData.cityDisplayName || orderData.selectedCity;
+                
+                console.log(`Fetching sellers for city: "${selectedCity}" (display: "${displayCity}")`);
+
+                // Fetch all sellers using exact city match (case insensitive)
                 const { data: sellersData, error: sellersError } = await supabase
                     .from('businessOnboardForm')
                     .select('*')
-                    .ilike('city', orderData.selectedCity.toLowerCase())
-                    .eq('status', 'approved'); // Only get approved sellers
+                    .eq('status', 'approved');
+                
+                console.log("All approved sellers:", sellersData);
                     
                 if (sellersError) {
+                    console.error("Error fetching sellers:", sellersError);
                     throw sellersError;
                 }
                 
                 if (!sellersData || sellersData.length === 0) {
-                    setError("No sellers found in this city. Please select a different city.");
+                    console.log("No approved sellers found");
+                    setError("No approved sellers found in the system.");
                     setIsPageLoading(false);
                     return;
                 }
                 
-                console.log("All approved sellers in city:", sellersData);
-                setCitySellers(sellersData);
+                // Strictly filter only sellers from the exact city (ignoring case)
+                const citySellersList = sellersData.filter(seller => {
+                    const sellerCity = (seller.city || '').toLowerCase().trim();
+                    const isMatch = sellerCity === selectedCity;
+                    console.log(`Seller ID: ${seller.id}, City: "${sellerCity}" - Match with "${selectedCity}": ${isMatch}`);
+                    return isMatch;
+                });
+                
+                console.log(`Found ${citySellersList.length} sellers in city "${selectedCity}"`);
+                
+                if (citySellersList.length === 0) {
+                    setError(`No sellers found in ${displayCity}. Please select a different city.`);
+                    setIsPageLoading(false);
+                    return;
+                }
+                
+                setCitySellers(citySellersList);
+                setSellersWithInventory(citySellersList);
 
-                // Now check which sellers have inventory
-                const sellersWithActiveInventory = [];
-                
-                // Check each seller for inventory
-                for (const seller of sellersData) {
-                    const { data: inventoryData, error: inventoryError } = await supabase
-                        .from('inventory')
-                        .select('*')
-                        .eq('seller_id', seller.id);
-                    
-                    // If no data with seller_id, try with brand_id
-                    if (!inventoryData || inventoryData.length === 0) {
-                        const { data: brandInventory, error: brandError } = await supabase
-                            .from('inventory')
-                            .select('*')
-                            .eq('brand_id', seller.id);
-                            
-                        if (!brandError && brandInventory && brandInventory.length > 0) {
-                            sellersWithActiveInventory.push(seller);
-                            console.log(`Seller ${seller.business_name} has inventory as brand`);
-                        }
-                    } else {
-                        sellersWithActiveInventory.push(seller);
-                        console.log(`Seller ${seller.business_name} has inventory`);
-                    }
-                }
-                
-                console.log("Sellers with active inventory:", sellersWithActiveInventory);
-                setSellersWithInventory(sellersWithActiveInventory);
-                
-                if (sellersWithActiveInventory.length === 0) {
-                    setError("No sellers with active inventory found in this city. Please select a different city.");
-                }
             } catch (error) {
                 console.error("Error loading city data:", error);
                 setError("Error loading city data. Please try again.");
@@ -255,6 +270,8 @@ function FullAddress({ setOrderData, orderData, handleChange, stepDec, stepInc }
         fetchCityData();
     }, [orderData.selectedCity, navigate]);
 
+    // Calculate distance is a pure function that doesn't need component state - can be moved outside
+    // This function can be shared across components
     const calculateDistance = (lat1, lon1, lat2, lon2) => {
         const R = 6371; // Radius of the Earth in km
         const dLat = (lat2 - lat1) * (Math.PI / 180);

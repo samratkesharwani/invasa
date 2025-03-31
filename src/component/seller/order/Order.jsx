@@ -17,6 +17,8 @@ const Order = () => {
     sellerId:"",
     brandId:"",
     selectedCity: "",
+    cityDisplayName: "",
+    maxDistance: 10, // Maximum distance in km for seller selection
     customerInfo: { 
       customerName: "",
       customerContact: "",
@@ -328,9 +330,12 @@ const ChooseCity = ({ stepInc, setOrderData, orderData }) => {
   const [error, setError] = useState(null);
 
   const handleCitySelection = (city) => {
+    // Normalize city to lowercase for consistent matching
+    const normalizedCity = city.toLowerCase().trim();
     setOrderData((prevState) => ({
       ...prevState,
-      selectedCity: city,
+      selectedCity: normalizedCity,
+      cityDisplayName: city, // Keep original city name for display
     }));
     stepInc();
   };
@@ -399,7 +404,8 @@ const ChooseCity = ({ stepInc, setOrderData, orderData }) => {
               onClick={() => handleCitySelection(city)}
               className="w-[100px] h-[100px] bg-dark-3 p-5 rounded-lg m-4 text-center text-sm text-white hover:bg-[#1F2A37]"
             >
-              {city}
+              {/* Display with first letter capitalized */}
+              {city.charAt(0).toUpperCase() + city.slice(1)}
             </button>
           ))}
         </div>

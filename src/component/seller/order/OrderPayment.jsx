@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../../../utils/supabase';
 import QRCode from "react-qr-code";
 import Payment from '../../../component/Payment';
@@ -12,17 +12,44 @@ function OrderPayment({ handleOrderSubmit, setOrderData, orderData, handleChange
   const [validationErrors, setValidationErrors] = useState([]);
   const [isValid, setIsValid] = useState(false);
   const [printImages, setPrintImages] = useState([]);
+  const [isLoadingPayment, setIsLoadingPayment] = useState(false);
 
-  // Calculate print price based on total print area
-  const calculatePrintPrice = () => {
+  // Memoize product price calculation
+  const productPrice = useMemo(() => {
+    // Use price from inventory if available
+    if (orderData.productData?.price !== undefined) {
+      return Number(orderData.productData.price);
+    }
+    // Fallback to selectedProductPrice
+    return Number(orderData.productData?.selectedProductPrice) || 0;
+  }, [orderData.productData]);
+
+  // Get safe print data - memoized for performance
+  const safePrintData = useMemo(() => {
+    if (!orderData.printData || !Array.isArray(orderData.printData)) return [];
+    
+    return orderData.printData.map(print => ({
+      image: print.image || '',
+      area: typeof print.area === 'number' ? print.area : 0,
+      position: print.position || 'Front',
+      width: typeof print.width === 'number' ? print.width : 0,
+      height: typeof print.height === 'number' ? print.height : 0,
+      x: typeof print.x === 'number' ? print.x : 0,
+      y: typeof print.y === 'number' ? print.y : 0,
+      rotation: typeof print.rotation === 'number' ? print.rotation : 0,
+      scale: typeof print.scale === 'number' ? print.scale : 1
+    }));
+  }, [orderData.printData]);
+
+  // Calculate print price based on total print area - converted to useCallback
+  const calculatePrintPrice = useCallback(() => {
     if (!orderData || !orderData.printData || orderData.printData.length === 0) {
       return 0;
     }
     
     // If we have a total print area, use that for calculation
     if (orderData.totalPrintArea && orderData.totalPrintArea > 0) {
-      const printPrice = orderData.totalPrintArea * printingPricePerSqInch;
-      return printPrice;
+      return orderData.totalPrintArea * printingPricePerSqInch;
     }
     
     // Fallback: calculate based on individual print areas
@@ -30,22 +57,15 @@ function OrderPayment({ handleOrderSubmit, setOrderData, orderData, handleChange
       const area = print.area || 0;
       return total + (area * printingPricePerSqInch);
     }, 0);
-  };
+  }, [orderData, printingPricePerSqInch]);
 
-  // Calculate total amount
-  const calculateAmount = () => {
-    // Get product price first
-    const productPrice = getProductPrice();
+  // Extract numeric price value from string - converted to pure function
+  const extractPriceValue = (priceString) => {
+    if (!priceString) return null;
     
-    // Calculate print price
-    const printPrice = calculatePrintPrice();
-    
-    // Update total print price state
-    setTotalPrintPrice(printPrice);
-    
-    // Then calculate total amount using all components
-    const total = productPrice + printPrice + shippingCost;
-    return total;
+    // Try to extract a number from the string
+    const match = priceString.match(/[+-]?([0-9]*[.])?[0-9]+/);
+    return match ? parseFloat(match[0]) : null;
   };
 
   // Fetch pricing from seller settings
@@ -82,28 +102,6 @@ function OrderPayment({ handleOrderSubmit, setOrderData, orderData, handleChange
     fetchPricing();
   }, [orderData.sellerId]);
 
-  // Extract numeric price value from string (e.g., "0.75 paise")
-  const extractPriceValue = (priceString) => {
-    if (!priceString) return null;
-    
-    // Try to extract a number from the string
-    const match = priceString.match(/[+-]?([0-9]*[.])?[0-9]+/);
-    if (match) {
-      return parseFloat(match[0]);
-    }
-    return null;
-  };
-
-  // Get product price display
-  const getProductPrice = () => {
-    // Use price from inventory if available
-    if (orderData.productData?.price !== undefined) {
-      return Number(orderData.productData.price);
-    }
-    // Fallback to selectedProductPrice
-    return Number(orderData.productData?.selectedProductPrice) || 0;
-  };
-
   // Update total amount and print price when relevant data changes
   useEffect(() => {
     // Calculate print price first
@@ -111,20 +109,26 @@ function OrderPayment({ handleOrderSubmit, setOrderData, orderData, handleChange
     setTotalPrintPrice(printPrice);
     
     // Then calculate and set total amount
-    const newTotalAmount = calculateAmount();
+    const newTotalAmount = productPrice + printPrice + shippingCost;
     setTotalAmount(newTotalAmount);
-  }, [orderData, printingPricePerSqInch, shippingCost, orderData.totalPrintArea, orderData.printData]);
+  }, [calculatePrintPrice, productPrice, shippingCost]);
 
-  // Add a useEffect to log changes in print price calculation
-  useEffect(() => {
-    console.log('Print Price Calculation:', {
-      printingPricePerSqInch,
-      totalPrintArea: orderData.totalPrintArea,
-      printData: orderData.printData,
-      calculatedPrice: calculatePrintPrice(),
-      totalPrintPrice
-    });
-  }, [printingPricePerSqInch, orderData.totalPrintArea, orderData.printData, totalPrintPrice]);
+  // Get print details summary
+  const getPrintDetailsSummary = useCallback(() => {
+    if (!orderData || !orderData.printData || orderData.printData.length === 0) {
+      return "No prints added";
+    }
+    
+    const printCount = orderData.printData.length;
+    const totalArea = orderData.totalPrintArea || 0;
+    
+    return `${printCount} print${printCount > 1 ? 's' : ''} (${totalArea.toFixed(1)} sq in total)`;
+  }, [orderData]);
+
+  // Format currency
+  const formatCurrency = (amount) => {
+    return `₹${Number(amount).toFixed(2)}`;
+  };
 
   // Validate order data
   useEffect(() => {
@@ -173,220 +177,36 @@ function OrderPayment({ handleOrderSubmit, setOrderData, orderData, handleChange
     
   }, [orderData, totalAmount]);
 
-  // Format currency
-  const formatCurrency = (amount) => {
-    return `₹${amount.toFixed(2)}`;
-  };
-
-  // Get print details summary
-  const getPrintDetailsSummary = () => {
-    if (!orderData || !orderData.printData || orderData.printData.length === 0) {
-      return "No prints added";
-    }
-    
-    const printCount = orderData.printData.length;
-    const totalArea = orderData.totalPrintArea || 0;
-    const calculatedPrice = calculatePrintPrice();
-    
-    console.log('Print Details:', {
-      printCount,
-      totalArea,
-      pricePerSqInch: printingPricePerSqInch,
-      calculatedPrice
-    });
-    
-    return `${printCount} print${printCount > 1 ? 's' : ''} (${totalArea.toFixed(1)} sq in total)`;
-  };
-
-  // Validate print price calculation
-  const validatePrintPrice = () => {
-    const calculatedPrice = calculatePrintPrice();
-    if (calculatedPrice !== totalPrintPrice) {
-      console.warn('Print price mismatch:', {
-        calculated: calculatedPrice,
-        current: totalPrintPrice
-      });
-      setTotalPrintPrice(calculatedPrice);
-    }
-  };
-
-  // Add validation to the useEffect
-  useEffect(() => {
-    validatePrintPrice();
-  }, [orderData.printData, orderData.totalPrintArea, printingPricePerSqInch]);
-
-  // Handle order submission for payment
-  const handlePaymentOrderSubmit = async () => {
-    // Validate again before submission
-    if (!isValid) {
-      alert("Please fix the validation errors before proceeding with payment");
-      return;
-    }
-    
-    try {
-      // Create a safe version of the order data with all objects stringified
-      const safeOrderData = {
-        ...orderData,
-        paymentAmount: totalAmount,
-        printPrice: totalPrintPrice,
-        productPrice: getProductPrice(),
-        shippingCost: shippingCost,
-        printingPricePerSqInch: printingPricePerSqInch,
-        // Use the safe print data we've already processed
-        printData: safePrintData,
-        // Ensure processedPrints is properly formatted
-        processedPrints: orderData.processedPrints || []
-      };
-      
-      // Store order details in orderData before submitting
-      if (setOrderData) {
-        setOrderData(safeOrderData);
-      }
-      
-      // Call the parent's handleOrderSubmit function
-      if (handleOrderSubmit) {
-        await handleOrderSubmit();
-      }
-    } catch (error) {
-      console.error("Error in handlePaymentOrderSubmit:", error);
-      alert("An error occurred while processing your order. Please try again.");
-    }
-  };
-
-  // Add this function to handle image upload completion
-  const handleImageUpload = (imageUrl) => {
-    setPrintImages(prev => [...prev, {
-      imageUrl,
-      area: orderData.totalPrintArea || 0,
-      position: 'Front', // You might want to make this dynamic
-    }]);
-
-    // Update order data with the new print image
-    if (setOrderData) {
-      setOrderData({
-        ...orderData,
-        printImages: [...printImages, {
-          imageUrl,
-          area: orderData.totalPrintArea || 0,
-          position: 'Front',
-        }],
-      });
-    }
-  };
-
   // Update the processedPrints mapping
   useEffect(() => {
     if (orderData.printData && orderData.printData.length > 0) {
       try {
-        const processedPrints = orderData.printData.map(print => {
-          // Ensure all properties are primitive values, not objects
-          return {
-            imageUrl: String(print.image || ''),
-            area: typeof print.area === 'number' ? Number(print.area) : 0,
-            position: String(print.position || 'Front'),
-            designDetails: {
-              width: typeof print.width === 'number' ? String(print.width) : '0',
-              height: typeof print.height === 'number' ? String(print.height) : '0',
-              x: typeof print.x === 'number' ? String(print.x) : '0',
-              y: typeof print.y === 'number' ? String(print.y) : '0',
-              rotation: typeof print.rotation === 'number' ? String(print.rotation) : '0',
-              scale: typeof print.scale === 'number' ? String(print.scale) : '1'
-            }
-          };
-        });
+        const processedPrints = orderData.printData.map(print => ({
+          imageUrl: String(print.image || ''),
+          area: typeof print.area === 'number' ? Number(print.area) : 0,
+          position: String(print.position || 'Front'),
+          designDetails: {
+            width: typeof print.width === 'number' ? String(print.width) : '0',
+            height: typeof print.height === 'number' ? String(print.height) : '0',
+            x: typeof print.x === 'number' ? String(print.x) : '0',
+            y: typeof print.y === 'number' ? String(print.y) : '0',
+            rotation: typeof print.rotation === 'number' ? String(print.rotation) : '0',
+            scale: typeof print.scale === 'number' ? String(print.scale) : '1'
+          }
+        }));
 
         if (setOrderData) {
           setOrderData(prevData => ({
             ...prevData,
-            processedPrints: processedPrints,
-            // Also store the safe print data
-            safePrintData: getSafePrintData()
+            processedPrints,
+            safePrintData
           }));
         }
       } catch (error) {
         console.error("Error processing print data:", error);
       }
     }
-  }, [orderData.printData]);
-
-  // Add a debug function to safely stringify objects
-  const safeStringify = (obj) => {
-    try {
-      if (obj === null || obj === undefined) return 'null';
-      if (typeof obj === 'string') return obj;
-      if (typeof obj === 'number' || typeof obj === 'boolean') return String(obj);
-      if (typeof obj === 'object') {
-        // Handle special cases
-        if (obj.x !== undefined && obj.y !== undefined) {
-          return `X: ${obj.x}, Y: ${obj.y}`;
-        }
-        return JSON.stringify(obj);
-      }
-      return String(obj);
-    } catch (e) {
-      return 'Error stringifying object';
-    }
-  };
-
-  // Process print data to ensure all values are safe for rendering
-  const getSafePrintData = () => {
-    if (!orderData.printData || !Array.isArray(orderData.printData)) return [];
-    
-    return orderData.printData.map(print => {
-      // Create a new object with safe values
-      return {
-        image: print.image || '',
-        area: typeof print.area === 'number' ? print.area : 0,
-        position: print.position || 'Front',
-        width: typeof print.width === 'number' ? print.width : 0,
-        height: typeof print.height === 'number' ? print.height : 0,
-        x: typeof print.x === 'number' ? print.x : 0,
-        y: typeof print.y === 'number' ? print.y : 0,
-        rotation: typeof print.rotation === 'number' ? print.rotation : 0,
-        scale: typeof print.scale === 'number' ? print.scale : 1
-      };
-    });
-  };
-
-  // Get safe print data
-  const safePrintData = getSafePrintData();
-
-  // Add debug logging for print data
-  useEffect(() => {
-    if (orderData.printData && orderData.printData.length > 0) {
-      try {
-        // Log the first print object to see its structure
-        const firstPrint = orderData.printData[0];
-        console.log('Print data structure:', {
-          keys: Object.keys(firstPrint),
-          types: Object.entries(firstPrint).reduce((acc, [key, value]) => {
-            acc[key] = typeof value;
-            return acc;
-          }, {})
-        });
-        
-        // Check for nested objects that might cause rendering issues
-        Object.entries(firstPrint).forEach(([key, value]) => {
-          if (typeof value === 'object' && value !== null) {
-            console.log(`Found nested object in print.${key}:`, value);
-          }
-        });
-      } catch (error) {
-        console.error("Error in debug logging:", error);
-      }
-    }
-  }, [orderData.printData]);
-
-  // Load Razorpay script
-  const loadRazorpayScript = () => {
-    return new Promise((resolve) => {
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
-    });
-  };
+  }, [orderData.printData, safePrintData, setOrderData]);
 
   // Function to update inventory after successful payment
   const updateInventory = async () => {
@@ -444,8 +264,24 @@ function OrderPayment({ handleOrderSubmit, setOrderData, orderData, handleChange
     } catch (error) {
       console.error("Error updating inventory:", error);
       // Don't throw error here, just log it
-      // We don't want to prevent order completion if inventory update fails
     }
+  };
+
+  // Load Razorpay script - converted to promise-based function
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      // Check if Razorpay is already loaded
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
+      
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
   };
 
   // Handle direct payment
@@ -455,40 +291,42 @@ function OrderPayment({ handleOrderSubmit, setOrderData, orderData, handleChange
       return;
     }
 
-    const scriptLoaded = await loadRazorpayScript();
-
-    if (!scriptLoaded) {
-      alert('Razorpay SDK failed to load. Are you online?');
-      return;
-    }
+    setIsLoadingPayment(true);
 
     try {
-      // Create a safe version of the order data
+      const scriptLoaded = await loadRazorpayScript();
+
+      if (!scriptLoaded) {
+        alert('Razorpay SDK failed to load. Are you online?');
+        return;
+      }
+
+      // Create and store the order data
       const safeOrderData = {
         ...orderData,
         paymentAmount: totalAmount,
         printPrice: totalPrintPrice,
-        productPrice: getProductPrice(),
-        shippingCost: shippingCost,
-        printingPricePerSqInch: printingPricePerSqInch,
+        productPrice,
+        shippingCost,
+        printingPricePerSqInch,
         printData: safePrintData
       };
       
-      // Store order details in orderData before submitting
       if (setOrderData) {
         setOrderData(safeOrderData);
       }
 
+      // Create order in Razorpay
       const response = await fetch('https://backendforinvasa.vercel.app/create-order', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ amount: calculateAmount() }), // Use actual amount instead of 1 rupee
+        body: JSON.stringify({ amount: totalAmount }),
       });
 
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error('Payment server error: ' + (await response.text()));
       }
 
       const order = await response.json();
@@ -501,26 +339,36 @@ function OrderPayment({ handleOrderSubmit, setOrderData, orderData, handleChange
         description: 'Print on demand order transaction',
         order_id: order.id,
         handler: async function (response) {
-          alert('Payment Successful!')
-          
-          // Update inventory after successful payment
-          await updateInventory();
-          
-          if (handleOrderSubmit) {
-            await handleOrderSubmit();
+          try {
+            // Update inventory after successful payment
+            await updateInventory();
+            
+            if (handleOrderSubmit) {
+              await handleOrderSubmit();
+            }
+            alert('Payment Successful!');
+          } catch (error) {
+            console.error('Error after payment:', error);
+            alert('Payment was successful, but there was an error updating our records. Our team will contact you.');
           }
-          console.log(response);
         },
         theme: {
-          color: '#F37254',
+          color: '#0BB489',
         },
+        modal: {
+          ondismiss: function() {
+            setIsLoadingPayment(false);
+          }
+        }
       };
 
       const rzp1 = new window.Razorpay(options);
       rzp1.open();
     } catch (error) {
-      alert('Oops! Something went wrong.\nPayment Failed');
       console.error('Payment Error:', error);
+      alert('Payment failed: ' + (error.message || 'Unknown error'));
+    } finally {
+      setIsLoadingPayment(false);
     }
   };
 
@@ -559,17 +407,17 @@ function OrderPayment({ handleOrderSubmit, setOrderData, orderData, handleChange
         {/* Product and Shipping */}
         <div className="flex justify-between items-center p-2">
           <span className="text-white">Product Price:</span>
-          <span className="text-white">{formatCurrency(getProductPrice())}</span>
+          <span className="text-white">{formatCurrency(productPrice)}</span>
         </div>
         <div className="flex justify-between items-center p-2 mb-2">
-            <span className="text-white">Shipping Charges:</span>
+          <span className="text-white">Shipping Charges:</span>
           <span className="text-white">{formatCurrency(shippingCost)}</span>
-          </div>
+        </div>
         
         {/* Total */}
-          <div className="border-t border-gray-300 my-4"></div>
+        <div className="border-t border-gray-300 my-4"></div>
         <div className="flex justify-between items-center font-bold p-2">
-            <span className="text-white">Total Amount:</span>
+          <span className="text-white">Total Amount:</span>
           <span className="text-white">{formatCurrency(totalAmount)}</span>
         </div>
         
@@ -594,26 +442,40 @@ function OrderPayment({ handleOrderSubmit, setOrderData, orderData, handleChange
         </div>
 
         {/* Print Preview Section */}
-        {orderData.printData && orderData.printData.length > 0 && (
+        {safePrintData.length > 0 && (
           <div className="mt-6 border-t border-gray-700 pt-4">
             <h4 className="text-white font-medium mb-4">Print Designs</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {safePrintData.map((print, index) => (
                 <div key={index} className="bg-gray-800 rounded-lg p-4">
-                  <img
-                    src={print.image}
-                    alt={`Print ${index + 1}`}
-                    className="w-full h-48 object-contain rounded-lg mb-2"
-                  />
-                  <div className="text-white space-y-1">
-                    <p>Area: {typeof print.area === 'number' ? `${print.area.toFixed(2)} sq inches` : 'N/A'}</p>
-                    <p>Position: {print.position || 'Front'}</p>
-                    <p>Size: {typeof print.width === 'number' && typeof print.height === 'number' ? 
-                      `${print.width}x${print.height}` : 'N/A'}</p>
-                    <p>Coordinates: {typeof print.x === 'number' && typeof print.y === 'number' ? 
-                      `X: ${print.x.toFixed(0)}, Y: ${print.y.toFixed(0)}` : 'N/A'}</p>
-                    <p>Rotation: {typeof print.rotation === 'number' ? `${print.rotation}°` : 'N/A'}</p>
-                    <p>Scale: {typeof print.scale === 'number' ? `${print.scale.toFixed(2)}x` : 'N/A'}</p>
+                  <div className="relative pb-2">
+                    <img
+                      src={print.image}
+                      alt={`Print ${index + 1}`}
+                      className="w-full h-48 object-contain rounded-lg mb-2"
+                      loading="lazy"
+                    />
+                    <div className="absolute top-1 right-1 bg-gray-900 text-xs text-white px-2 py-1 rounded-full">
+                      {print.position || 'Front'}
+                    </div>
+                  </div>
+                  <div className="text-white text-xs space-y-1">
+                    <div className="grid grid-cols-2 gap-1">
+                      <p>Area:</p>
+                      <p>{print.area.toFixed(2)} sq in</p>
+                      
+                      <p>Size:</p>
+                      <p>{print.width.toFixed(0)}×{print.height.toFixed(0)}</p>
+                      
+                      <p>Position:</p>
+                      <p>X: {print.x.toFixed(0)}, Y: {print.y.toFixed(0)}</p>
+                      
+                      <p>Rotation:</p>
+                      <p>{print.rotation.toFixed(0)}°</p>
+                      
+                      <p>Scale:</p>
+                      <p>{print.scale.toFixed(2)}×</p>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -623,36 +485,25 @@ function OrderPayment({ handleOrderSubmit, setOrderData, orderData, handleChange
       </div>
       
       {/* Direct Payment Button */}
-      <div className="mt-6">
+      <div className="mt-6 mb-10">
         <button
-          className='bg-secondary border-secondary border rounded-md inline-flex items-center justify-center py-3 px-7 text-center text-base font-medium text-white hover:bg-[#0BB489] hover:border-[#0BB489] disabled:bg-gray-3 disabled:border-gray-3 disabled:text-dark-5'
+          className='bg-secondary border-secondary border rounded-md inline-flex items-center justify-center py-3 px-7 text-center text-base font-medium text-white hover:bg-[#0BB489] hover:border-[#0BB489] disabled:bg-gray-700 disabled:border-gray-700 disabled:text-gray-400'
           onClick={handleDirectPayment}
-          disabled={!isValid}
+          disabled={!isValid || isLoadingPayment}
         >
-          Pay Now
+          {isLoadingPayment ? (
+            <>
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Processing...
+            </>
+          ) : (
+            'Pay Now'
+          )}
         </button>
       </div>
-
-      {/* Comment out the Payment component for now */}
-      {/* 
-      <Payment 
-        amount={totalAmount} 
-        handleOrderSubmit={handlePaymentOrderSubmit}
-        orderDetails={{
-          product: String(orderData.productData?.selectedProduct || ''),
-          size: String(orderData.productData?.selectedSize || ''),
-          color: String(orderData.productData?.selectedColor || ''),
-          quantity: String(orderData.productData?.quantity || '0'),
-          price: String(getProductPrice()),
-          printDetails: getPrintDetailsSummary(),
-          printPrice: String(totalPrintPrice),
-          shippingCost: String(shippingCost),
-          printingPricePerSqInch: String(printingPricePerSqInch),
-          processedPrints: '[]'
-        }}
-        disabled={!isValid}
-      />
-      */}
     </div>
   );
 }
