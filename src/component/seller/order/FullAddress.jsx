@@ -340,7 +340,7 @@ function FullAddress({ setOrderData, orderData, handleChange, stepDec, stepInc, 
     // Function to calculate total print size
     const calculateTotalPrintSize = () => {
         // Add logic to calculate total print size if needed
-        return 0;
+            return 0;
     };
 
     // Add a function to handle back navigation with state preservation
@@ -384,8 +384,8 @@ function FullAddress({ setOrderData, orderData, handleChange, stepDec, stepInc, 
                 <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                     Enter Delivery Address
                 </h2>
-            </div>
-
+                    </div>
+                    
             {error && (
                 <div className={`p-4 mb-6 rounded-lg ${isDarkMode ? 'bg-red-900 bg-opacity-20 border border-red-800 text-red-300' : 'bg-red-50 border border-red-200 text-red-700'}`}>
                     {error}
@@ -395,9 +395,9 @@ function FullAddress({ setOrderData, orderData, handleChange, stepDec, stepInc, 
             <div className={`p-4 rounded-lg mb-6 ${isDarkMode ? 'bg-dark-3' : 'bg-gray-100'}`}>
                 <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Please enter delivery details for {orderData.cityDisplayName || orderData.selectedCity || 'your city'}.
-                </p>
-            </div>
-
+                        </p>
+                    </div>
+                    
             <div className={`p-6 rounded-lg mb-6 ${isDarkMode ? 'bg-dark-3' : 'bg-white border border-gray-200'}`}>
                 <h3 className={`text-lg font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                     Customer Information
@@ -408,10 +408,10 @@ function FullAddress({ setOrderData, orderData, handleChange, stepDec, stepInc, 
                         <label className={`block mb-1 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                             Customer Name
                         </label>
-                        <input
-                            type="text"
+                    <input 
+                        type="text" 
                             name="customerName"
-                            value={orderData.customerInfo.customerName || ''}
+                        value={orderData.customerInfo.customerName || ''} 
                             onChange={handleChange}
                             className={`w-full px-3 py-2 rounded-lg ${
                                 isDarkMode 
@@ -427,11 +427,11 @@ function FullAddress({ setOrderData, orderData, handleChange, stepDec, stepInc, 
                         <label className={`block mb-1 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                             Contact Number
                         </label>
-                        <input
+                    <input 
                             type="tel"
                             name="customerContact"
                             value={orderData.customerInfo.customerContact || ''}
-                            onChange={handleChange}
+                        onChange={handleChange} 
                             className={`w-full px-3 py-2 rounded-lg ${
                                 isDarkMode 
                                     ? 'bg-dark-4 border-gray-700 text-white placeholder-gray-500 focus:border-secondary' 
@@ -450,7 +450,7 @@ function FullAddress({ setOrderData, orderData, handleChange, stepDec, stepInc, 
                     </label>
                     <textarea
                         name="address"
-                        value={orderData.fullAddress.address || ''}
+                        value={orderData.fullAddress.address || ''} 
                         onChange={(e) => setOrderData(prev => ({
                             ...prev,
                             fullAddress: { ...prev.fullAddress, address: e.target.value }
@@ -471,10 +471,10 @@ function FullAddress({ setOrderData, orderData, handleChange, stepDec, stepInc, 
                     <label className={`block mb-1 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                         Pincode
                     </label>
-                    <input
-                        type="text"
+                    <input 
+                        type="text" 
                         name="pincode"
-                        value={orderData.fullAddress.pincode || ''}
+                        value={orderData.fullAddress.pincode || ''} 
                         onChange={(e) => setOrderData(prev => ({
                             ...prev,
                             fullAddress: { ...prev.fullAddress, pincode: e.target.value }
@@ -489,18 +489,18 @@ function FullAddress({ setOrderData, orderData, handleChange, stepDec, stepInc, 
                         placeholder="Enter pincode"
                         maxLength="6"
                     />
-                </div>
-            </div>
+                        </div>
+                        </div>
 
             <div className="flex justify-between mt-8">
-                <button
+                    <button 
                     onClick={handleBackClick}
                     className={`px-6 py-2 rounded-lg ${isDarkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-                >
+                    >
                     Back
-                </button>
-                <button
-                    onClick={handleNextClick}
+                    </button>
+                    <button 
+                        onClick={handleNextClick} 
                     disabled={isLoading}
                     className={`px-6 py-2 rounded-lg ${isLoading 
                         ? isDarkMode 
@@ -510,19 +510,19 @@ function FullAddress({ setOrderData, orderData, handleChange, stepDec, stepInc, 
                             ? 'bg-secondary text-black hover:bg-green-600' 
                             : 'bg-blue-600 text-white hover:bg-blue-700'
                     } inline-flex items-center`}
-                >
-                    {isLoading ? (
-                        <>
+                    >
+                        {isLoading ? (
+                            <>
                             <svg className={`animate-spin -ml-1 mr-2 h-4 w-4 ${isDarkMode ? 'text-gray-400' : 'text-white'}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Processing...
-                        </>
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Processing...
+                            </>
                     ) : 'Continue'}
-                </button>
+                    </button>
+                </div>
             </div>
-        </div>
     );
 }
 

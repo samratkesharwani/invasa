@@ -11,7 +11,7 @@ import { useTheme } from '../contexts/ThemeContext';
 const Navbar = () => {
   const { isDarkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const [role, setRole] = useState("");
+   const [role, setRole] = useState("");
   const [loggedIn, setLoggedIn] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -25,7 +25,7 @@ const Navbar = () => {
         if (error) {
           console.error("Error fetching session:", error.message);
           setLoggedIn(false);
-          return;
+        return;
         }
         
         setLoggedIn(!!session);
@@ -104,7 +104,9 @@ const Navbar = () => {
       await supabase.auth.signOut();
       setLoggedIn(false);
       setRole("");
-      navigate('/');
+      
+      // Refresh the page after logout
+      window.location.href = '/';
     } catch (error) {
       console.error("Logout error:", error);
     }
@@ -114,7 +116,7 @@ const Navbar = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   }, [mobileMenuOpen]);
 
-  useEffect(() => {
+useEffect(() => {
     const fetchUserProfile = async () => {
       const { data: user, error: userError } = await supabase.auth.getUser();
       if (userError || !user?.user) return;
@@ -236,21 +238,21 @@ const Navbar = () => {
                   </div>
                 </button>
                 <div className="flex items-center space-x-2">
-                  <button
-                    onClick={navigateToProfile}
+                <button
+                  onClick={navigateToProfile}
                     className={`flex items-center justify-center ${
-                      isDarkMode ? 'bg-gray-900 hover:bg-gray-800 text-white' : 'bg-gray-100 hover:bg-gray-200 text-black'
+                    isDarkMode ? 'bg-gray-900 hover:bg-gray-800 text-white' : 'bg-gray-100 hover:bg-gray-200 text-black'
                     } px-4 py-2 rounded-full transition-all duration-300 border border-[#00E0A4] hover:border-[#0BB489]`}
-                  >
-                    <div className="flex items-center">
-                      <IconContainer 
-                        icon={<FaUserCircle className="text-xl" />} 
-                        size="xs" 
-                        color="teal" 
-                      />
+                >
+                  <div className="flex items-center">
+                    <IconContainer 
+                      icon={<FaUserCircle className="text-xl" />} 
+                      size="xs" 
+                      color="teal" 
+                    />
                       <span className={`${isDarkMode ? 'text-white' : 'text-black'} text-sm font-medium m-1`}>Profile</span>
-                    </div>
-                  </button>
+                  </div>
+                </button>
                   <button
                     onClick={handleLogout}
                     className={`flex items-center justify-center ${
@@ -285,20 +287,20 @@ const Navbar = () => {
               >
                 {isDarkMode ? (
                   <div className="flex items-center space-x-1">
-                    <IconContainer 
-                      icon={<FaSun />} 
+                  <IconContainer 
+                    icon={<FaSun />} 
                       size="xs" 
-                      color="yellow" 
-                    />
+                    color="yellow" 
+                  />
                     <span className="text-sm text-gray-300">Light Mode</span>
                   </div>
                 ) : (
                   <div className="flex items-center space-x-1">
-                    <IconContainer 
+                  <IconContainer 
                       icon={<FaMoon className=" p-0.5" />} 
                       size="xs" 
-                      color="blue" 
-                    />
+                    color="blue" 
+                  />
                     <span className="text-sm text-gray-600">Dark Mode</span>
                   </div>
                 )}
@@ -310,23 +312,23 @@ const Navbar = () => {
                 <div className="h-10 w-full rounded-lg bg-gray-200 animate-pulse"></div>
               ) : loggedIn ? (
                 <div className="flex flex-col space-y-3">
-                  <button
-                    onClick={navigateToProfile}
-                    className={`flex w-full items-center space-x-2 ${
-                      isDarkMode 
-                        ? 'bg-gradient-to-r from-[#1A2435] to-[#19212D] text-white border border-[#00E0A4]/40' 
-                        : 'bg-gradient-to-r from-[#e6f7f2]/40 to-[#d9f2ea]/40 text-black border border-[#0BB489]/30'
-                    } px-4 py-3 rounded-lg transition-all duration-300`}
-                  >
-                    <div className="flex items-center justify-center w-6">
-                      <IconContainer 
-                        icon={<FaUserCircle className="text-xl p-1" />} 
+                <button
+                  onClick={navigateToProfile}
+                  className={`flex w-full items-center space-x-2 ${
+                    isDarkMode 
+                      ? 'bg-gradient-to-r from-[#1A2435] to-[#19212D] text-white border border-[#00E0A4]/40' 
+                      : 'bg-gradient-to-r from-[#e6f7f2]/40 to-[#d9f2ea]/40 text-black border border-[#0BB489]/30'
+                  } px-4 py-3 rounded-lg transition-all duration-300`}
+                >
+                  <div className="flex items-center justify-center w-6">
+                    <IconContainer 
+                      icon={<FaUserCircle className="text-xl p-1" />} 
                         size="sm" 
-                        color="teal" 
-                      />
-                    </div>
-                    <span className={`${isDarkMode ? 'text-white' : 'text-black'} text-sm font-medium`}>Profile</span>
-                  </button>
+                      color="teal" 
+                    />
+                  </div>
+                  <span className={`${isDarkMode ? 'text-white' : 'text-black'} text-sm font-medium`}>Profile</span>
+                </button>
                   <button
                     onClick={handleLogout}
                     className={`flex w-full items-center space-x-2 ${
@@ -337,12 +339,12 @@ const Navbar = () => {
                   >
                     <span className={`${isDarkMode ? 'text-white' : 'text-black'} text-sm font-medium`}>Logout</span>
                   </button>
-                </div>
-              ) : (
-                <div className="flex flex-col space-y-3 py-2">
+              </div>
+            ) : (
+              <div className="flex flex-col space-y-3 py-2">
                   <LoginOptions setMobileMenuOpen={setMobileMenuOpen} />
-                </div>
-              )}
+              </div>
+            )}
             </div>
           </div>
         </div>

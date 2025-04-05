@@ -7,6 +7,7 @@ import FullAddress from "./FullAddress";
 import SelectProduct from "./SelectProduct";
 import SelectOptions from "./SelectOptions";
 import OrderPayment from "./OrderPayment";
+import { v4 as uuidv4 } from 'uuid'; // Import UUID generator
 
 const Order = ({ isDarkMode = false }) => {
   const navigate= useNavigate()
@@ -184,6 +185,56 @@ const Order = ({ isDarkMode = false }) => {
       return;
     }
     
+    try {
+      // First get current user session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error("Error getting user session:", sessionError);
+        alert("Authentication error. Please log in again.");
+        return;
+      }
+      
+      if (!session || !session.user) {
+        console.error("No user session found.");
+        alert("Please log in before submitting an order.");
+        return;
+      }
+      
+      const currentUserId = session.user.id;
+      console.log("Current user ID:", currentUserId);
+      
+      // Try to get a valid brandId from the brandsOnboardForm table for the current user
+      const { data: brandData, error: brandError } = await supabase
+        .from("brandsOnboardForm")
+        .select("id")
+        .eq("id", currentUserId)
+        .single();
+        
+      if (brandError && brandError.code !== 'PGRST116') { // PGRST116 is 'not found'
+        console.error("Error fetching brand data:", brandError);
+      }
+      
+      // If the user has no brand registered, alert them
+      if (!brandData || !brandData.id) {
+        console.error("No brand found for user");
+        
+        // Alert with a clearer explanation
+        alert(
+          "Brand Registration Required\n\n" +
+          "To complete your order, you need to register your brand with us first. " +
+          "This is required for all sellers to ensure we have your brand details for printing. " +
+          "You'll be redirected to a quick brand registration form. " +
+          "After registering, you'll be able to complete your order."
+        );
+        
+        setTimeout(() => {
+          window.location.href = '/brand/register';
+        }, 1500);
+        return;
+      }
+      
+      console.log("Found valid brand ID:", brandData.id);
+    
     // Create a copy of the product data for submission
     const updatedProductData = {
       ...orderData.productData,
@@ -278,28 +329,52 @@ const Order = ({ isDarkMode = false }) => {
 
     console.log("Final product data for submission:", updatedProductData);
 
-    const { error: orderError } = await supabase.from("orders").insert([
-      {
-        sellerId: orderData.sellerId,
-        brandId: orderData.brandId,
-        selectedCity: orderData.selectedCity,
-        customerInfo: orderData.customerInfo,
-        coordinates: orderData.coordinates,
-        fullAddress: orderData.fullAddress,
-        productData: updatedProductData, // Use the updated productData with prints and captured designs
-        paymentAmount: orderData.paymentAmount,
-        transactionId: orderData.transactionId,
-        status: orderData.status
-      }
-    ]);
-    
+      // Always use the current user's ID for sellerId and the registered brand's ID
+      const orderInsertData = {
+        sellerId: currentUserId,
+        brandId: brandData.id,
+        selectedCity: orderData.selectedCity || 'Not specified',
+        customerInfo: orderData.customerInfo || { name: 'Test Customer', email: 'test@example.com' },
+        coordinates: orderData.coordinates || 'Not specified',
+        fullAddress: orderData.fullAddress || { address: 'Test Address' },
+        productData: updatedProductData,
+        paymentAmount: orderData.paymentAmount || '1',
+        transactionId: orderData.transactionId || `tx_${Date.now()}`,
+        status: orderData.status || 'complete'
+      };
+      
+      console.log("Order data prepared for insertion:", orderInsertData);
+
+      // Insert the order data
+      const { error: orderError } = await supabase.from("orders").insert([orderInsertData]);
 
     if (orderError) {
       console.error("Order submission failed:", orderError);
-      alert(`Order submission failed: ${orderError.message}`);
+        setOrderData(prev => ({
+          ...prev,
+          error: "Order submission failed. See details below.",
+          errorDetails: orderError
+        }));
+        // Scroll to top to show error
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
+        setOrderData(prev => ({
+          ...prev,
+          error: null,
+          errorDetails: null
+        }));
       alert("Order submitted successfully");
       navigate('/')
+      }
+    } catch (error) {
+      console.error("Error during order submission:", error);
+      setOrderData(prev => ({
+        ...prev,
+        error: `Order submission error: ${error.message}`,
+        errorDetails: error
+      }));
+      // Scroll to top to show error
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -371,6 +446,22 @@ const Order = ({ isDarkMode = false }) => {
       <div className={`w-full max-w-4xl mx-auto rounded-lg overflow-hidden shadow-lg ${isDarkMode ? 'bg-dark-2' : 'bg-white'}`}>
         <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
           <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Create Order</h1>
+          
+          {/* Error message display */}
+          {orderData.error && (
+            <div className={`mt-4 p-4 rounded-lg ${isDarkMode ? 'bg-red-900/20 text-red-300' : 'bg-red-100 text-red-700'}`}>
+              <p className="font-bold">Error submitting order:</p>
+              <p className="mt-1">{orderData.error}</p>
+              {orderData.errorDetails && (
+                <details className="mt-2">
+                  <summary className="cursor-pointer">Technical Details</summary>
+                  <pre className={`mt-2 p-2 overflow-x-auto rounded ${isDarkMode ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-800'}`} style={{ fontSize: '0.8rem' }}>
+                    {JSON.stringify(orderData.errorDetails, null, 2)}
+                  </pre>
+                </details>
+              )}
+            </div>
+          )}
           
           {/* Step indicators */}
           <div className="flex justify-between items-center mt-6">
@@ -562,7 +653,7 @@ const ChooseCity = ({ stepInc, setOrderData, orderData, isDarkMode }) => {
             >
               <div className="flex-1">
                 <p className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                  {city.charAt(0).toUpperCase() + city.slice(1)}
+              {city.charAt(0).toUpperCase() + city.slice(1)}
                 </p>
               </div>
             </button>

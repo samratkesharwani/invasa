@@ -628,23 +628,22 @@ const OrdersComponent = ({ sellerId, isDarkMode = true }) => {
 
   // Format date
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
     });
   };
 
   // Get status badge class
   const getStatusBadgeClass = (status) => {
-    if (!status) return 'px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-800';
-    
-    const baseClasses = 'px-2 py-1 rounded-full text-xs font-medium';
-    switch (status.toLowerCase()) {
+    const baseClasses = "px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full";
+    switch(status?.toLowerCase()) {
       case 'pending':
         return `${baseClasses} bg-yellow-200 text-yellow-800`;
-      case 'ready_to_deliver':
+      case 'processing':
         return `${baseClasses} bg-blue-200 text-blue-800`;
       case 'completed':
         return `${baseClasses} bg-green-200 text-green-800`;
@@ -654,6 +653,39 @@ const OrdersComponent = ({ sellerId, isDarkMode = true }) => {
         return `${baseClasses} bg-green-200 text-green-800`;
       default:
         return `${baseClasses} bg-gray-200 text-gray-800`;
+    }
+  };
+
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      setLoading(true);
+      
+      const { data, error } = await supabase
+        .from('orders')
+        .update({ status: newStatus })
+        .eq('id', orderId);
+      
+      if (error) throw error;
+      
+      // Update the local state
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order.id === orderId ? { ...order, status: newStatus } : order
+        )
+      );
+      
+      // If currently viewing this order in the modal, update the selected order as well
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder(prev => ({ ...prev, status: newStatus }));
+      }
+      
+      alert(`Order status updated to ${newStatus}`);
+      
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      alert('Failed to update order status. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -689,7 +721,8 @@ const OrdersComponent = ({ sellerId, isDarkMode = true }) => {
         </div>
       ) : (
         <div className={isDarkMode ? "bg-dark-2 rounded-lg overflow-hidden" : "bg-white rounded-lg shadow overflow-hidden"}>
-          <div className="overflow-x-auto">
+          {/* Desktop view - table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className={`min-w-full divide-y ${isDarkMode ? 'divide-gray-700 text-gray-300' : 'divide-gray-200 text-gray-700'}`}>
               <thead className={isDarkMode ? "bg-dark-3" : "bg-gray-50"}>
                 <tr>
@@ -750,6 +783,69 @@ const OrdersComponent = ({ sellerId, isDarkMode = true }) => {
               </tbody>
             </table>
           </div>
+
+          {/* Mobile view - cards */}
+          <div className="block md:hidden">
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              {orders.map((order) => (
+                <div 
+                  key={order.id} 
+                  className={`p-4 ${isDarkMode ? 'hover:bg-dark-4' : 'hover:bg-gray-50'}`}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex-1">
+                      <div className="font-medium text-secondary">#{order.id}</div>
+                      <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{formatDate(order.date)}</div>
+                    </div>
+                    <span className={getStatusBadgeClass(order.status)}>
+                      {order.status || 'Unknown'}
+                    </span>
+                  </div>
+                  
+                  <div className={`mb-3 mt-3 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <div className="flex items-center">
+                      <span className={`w-24 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Customer:</span>
+                      <span className="flex-1 truncate">{order.customerInfo?.customerName || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center mt-1">
+                      <span className={`w-24 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Product:</span>
+                      <span className="flex-1">{order.productData?.selectedProduct || 'N/A'}</span>
+                    </div>
+                    {order.printImages && order.printImages.length > 0 && (
+                      <div className="flex items-center mt-1">
+                        <span className={`w-24 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Prints:</span>
+                        <div className="flex space-x-2">
+                          {order.printImages.slice(0, 3).map((print, index) => (
+                            <div key={index} className="relative">
+                              <img 
+                                src={print.image} 
+                                alt={`${print.position}`} 
+                                className={`h-8 w-8 object-cover rounded border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'}`}
+                              />
+                            </div>
+                          ))}
+                          {order.printImages.length > 3 && (
+                            <div className={`h-8 w-8 ${isDarkMode ? 'bg-dark-3' : 'bg-gray-200'} rounded flex items-center justify-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-xs`}>
+                              +{order.printImages.length - 3}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => openModal(order)}
+                      className="text-secondary hover:text-[#0BB489] transition-colors duration-200 text-sm font-medium"
+                    >
+                      View Details
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
@@ -759,14 +855,14 @@ const OrdersComponent = ({ sellerId, isDarkMode = true }) => {
         onClose={closeModal}
         className="fixed inset-0 z-50 overflow-y-auto"
       >
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="flex items-center justify-center min-h-screen p-4">
           <Dialog.Overlay className="fixed inset-0 bg-black opacity-50" />
 
-          <div className={isDarkMode ? "bg-dark-2 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto relative z-10" : "bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto relative z-10 shadow-xl"}>
+          <div className={isDarkMode ? "bg-dark-2 rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto relative z-10" : "bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto relative z-10 shadow-xl"}>
             {selectedOrder && (
               <>
                 <div className="flex justify-between items-center mb-6">
-                  <Dialog.Title className={isDarkMode ? "text-2xl font-bold text-white" : "text-2xl font-bold text-gray-900"}>
+                  <Dialog.Title className={isDarkMode ? "text-xl md:text-2xl font-bold text-white" : "text-xl md:text-2xl font-bold text-gray-900"}>
                     Order Details
                   </Dialog.Title>
                   <button
@@ -780,22 +876,22 @@ const OrdersComponent = ({ sellerId, isDarkMode = true }) => {
                 </div>
 
                 {/* Order Information */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6">
                   <div className={isDarkMode ? "bg-dark-3 p-4 rounded-lg" : "bg-gray-50 p-4 rounded-lg"}>
-                    <h3 className={isDarkMode ? "text-lg font-semibold text-white mb-4" : "text-lg font-semibold text-gray-900 mb-4"}>Order Information</h3>
-                    <div className="space-y-2">
+                    <h3 className={isDarkMode ? "text-lg font-semibold text-white mb-3" : "text-lg font-semibold text-gray-900 mb-3"}>Order Information</h3>
+                    <div className="space-y-2 text-sm md:text-base">
                       <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Order ID: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.id}</span></p>
                       <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Date: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{formatDate(selectedOrder.date)}</span></p>
                       <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Status: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.status || 'Unknown'}</span></p>
                       <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>City: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.selectedCity}</span></p>
                       <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Payment: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.paymentAmount || 'N/A'}</span></p>
-                      <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Transaction ID: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.transactionId || 'N/A'}</span></p>
+                      <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Transaction ID: <span className={isDarkMode ? "text-white font-mono text-xs md:text-sm" : "text-gray-900 font-mono text-xs md:text-sm"}>{selectedOrder.transactionId || 'N/A'}</span></p>
                     </div>
                   </div>
 
                   <div className={isDarkMode ? "bg-dark-3 p-4 rounded-lg" : "bg-gray-50 p-4 rounded-lg"}>
-                    <h3 className={isDarkMode ? "text-lg font-semibold text-white mb-4" : "text-lg font-semibold text-gray-900 mb-4"}>Customer Information</h3>
-                    <div className="space-y-2">
+                    <h3 className={isDarkMode ? "text-lg font-semibold text-white mb-3" : "text-lg font-semibold text-gray-900 mb-3"}>Customer Information</h3>
+                    <div className="space-y-2 text-sm md:text-base">
                       <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Name: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.customerInfo?.customerName}</span></p>
                       <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Contact: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.customerInfo?.customerContact}</span></p>
                       <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Address: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.fullAddress?.address}</span></p>
@@ -806,18 +902,30 @@ const OrdersComponent = ({ sellerId, isDarkMode = true }) => {
 
                 {/* Product Details */}
                 <div className={isDarkMode ? "bg-dark-3 p-4 rounded-lg mb-6" : "bg-gray-50 p-4 rounded-lg mb-6"}>
-                  <h3 className={isDarkMode ? "text-lg font-semibold text-white mb-4" : "text-lg font-semibold text-gray-900 mb-4"}>Product Details</h3>
-                  <div className="space-y-2">
-                    <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Product: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.productData?.selectedProduct}</span></p>
-                    <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Color: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.productData?.selectedColor}</span></p>
-                    <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Size: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.productData?.selectedSize}</span></p>
-                    <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Quantity: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.productData?.quantity}</span></p>
+                  <h3 className={isDarkMode ? "text-lg font-semibold text-white mb-3" : "text-lg font-semibold text-gray-900 mb-3"}>Product Details</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm md:text-base">
+                    <div>
+                      <p className={isDarkMode ? "text-gray-400 text-xs" : "text-gray-500 text-xs"}>Product</p>
+                      <p className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.productData?.selectedProduct || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className={isDarkMode ? "text-gray-400 text-xs" : "text-gray-500 text-xs"}>Color</p>
+                      <p className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.productData?.selectedColor || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className={isDarkMode ? "text-gray-400 text-xs" : "text-gray-500 text-xs"}>Size</p>
+                      <p className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.productData?.selectedSize || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className={isDarkMode ? "text-gray-400 text-xs" : "text-gray-500 text-xs"}>Quantity</p>
+                      <p className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.productData?.quantity || 'N/A'}</p>
+                    </div>
                   </div>
                 </div>
 
                 {/* Print Designs */}
                 <div className={isDarkMode ? "bg-dark-3 p-4 rounded-lg mb-6" : "bg-gray-50 p-4 rounded-lg mb-6"}>
-                  <h3 className={isDarkMode ? "text-lg font-semibold text-white mb-4" : "text-lg font-semibold text-gray-900 mb-4"}>Print Designs</h3>
+                  <h3 className={isDarkMode ? "text-lg font-semibold text-white mb-3" : "text-lg font-semibold text-gray-900 mb-3"}>Print Designs</h3>
                   
                   {/* Add the DesignPreview component */}
                   {selectedOrder.printImages && selectedOrder.printImages.length > 0 ? (
@@ -830,51 +938,77 @@ const OrdersComponent = ({ sellerId, isDarkMode = true }) => {
                     </div>
                   ) : null}
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {selectedOrder.printImages && selectedOrder.printImages.length > 0 ? (
                       selectedOrder.printImages.map((print, index) => (
                         <div key={index} className={isDarkMode ? "bg-dark-4 p-4 rounded-lg" : "bg-gray-100 p-4 rounded-lg"}>
                           <h4 className={isDarkMode ? "text-white font-medium mb-2" : "text-gray-900 font-medium mb-2"}>{print.position}</h4>
                           
                           {/* Print Preview Component */}
-                          <PrintPreview 
-                            print={print} 
-                            productType={print.productType} 
-                            isDarkMode={isDarkMode}
-                          />
+                          <div className="aspect-w-1 aspect-h-1">
+                            <PrintPreview 
+                              print={print} 
+                              productType={print.productType} 
+                              isDarkMode={isDarkMode}
+                            />
+                          </div>
                           
                           <button
                             onClick={() => downloadPrintImage(print.image, print.position)}
-                            className="w-full mt-4 bg-secondary hover:bg-[#0BB489] text-white px-4 py-2 rounded transition-colors duration-200"
+                            className="w-full mt-4 bg-secondary hover:bg-[#0BB489] text-white px-3 py-2 text-sm md:text-base rounded transition-colors duration-200 flex items-center justify-center"
                           >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
                             Download Print
                           </button>
                         </div>
                       ))
                     ) : (
                       <div className="col-span-2 text-center py-8">
-                        <p className={isDarkMode ? "text-gray-400" : "text-gray-500"}>No print designs for this order</p>
+                        <p className={isDarkMode ? "text-gray-400" : "text-gray-500"}>No print designs available for this order</p>
                       </div>
                     )}
                   </div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex justify-end space-x-4 mt-6">
+                <div className="flex flex-col sm:flex-row justify-between gap-3 mt-6">
                   <button
-                    onClick={closeModal}
-                    className={isDarkMode ? "px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors" : "px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors"}
+                    onClick={() => updateOrderStatus(selectedOrder.id, 'processing')}
+                    disabled={selectedOrder.status === 'processing' || selectedOrder.status === 'completed' || selectedOrder.status === 'cancelled'}
+                    className={`px-4 py-2 rounded font-medium text-sm md:text-base ${
+                      selectedOrder.status === 'processing' || selectedOrder.status === 'completed' || selectedOrder.status === 'cancelled'
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-yellow-500 hover:bg-yellow-600 text-white'
+                    }`}
                   >
-                    Close
+                    Mark as Processing
                   </button>
-                  {selectedOrder.status === 'pending' && (
-                    <button
-                      onClick={markAsReadyToDeliver}
-                      className="px-4 py-2 bg-secondary hover:bg-[#0BB489] text-white rounded transition-colors"
-                    >
-                      Mark as Ready to Deliver
-                    </button>
-                  )}
+                  
+                  <button
+                    onClick={() => updateOrderStatus(selectedOrder.id, 'completed')}
+                    disabled={selectedOrder.status === 'completed' || selectedOrder.status === 'cancelled'}
+                    className={`px-4 py-2 rounded font-medium text-sm md:text-base ${
+                      selectedOrder.status === 'completed' || selectedOrder.status === 'cancelled'
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-green-500 hover:bg-green-600 text-white'
+                    }`}
+                  >
+                    Mark as Completed
+                  </button>
+                  
+                  <button
+                    onClick={() => updateOrderStatus(selectedOrder.id, 'cancelled')}
+                    disabled={selectedOrder.status === 'completed' || selectedOrder.status === 'cancelled'}
+                    className={`px-4 py-2 rounded font-medium text-sm md:text-base ${
+                      selectedOrder.status === 'completed' || selectedOrder.status === 'cancelled'
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-red-500 hover:bg-red-600 text-white'
+                    }`}
+                  >
+                    Cancel Order
+                  </button>
                 </div>
               </>
             )}

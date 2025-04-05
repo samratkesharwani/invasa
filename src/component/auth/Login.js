@@ -144,12 +144,15 @@ const Signin = ({ isDarkMode }) => {
             console.log("User profile:", userProfile);
           }
           
-          // Navigate to home page regardless of profile fetch success
-          navigate('/');
+          // Set login success in localStorage temporarily to indicate we need to reload
+          localStorage.setItem('loginSuccess', 'true');
+          
+          // Navigate to home page and refresh the entire page
+          window.location.href = '/';
         } catch (profileErr) {
           console.error("Profile fetch exception:", profileErr);
           // Still navigate to home page even if profile fetch fails
-          navigate('/');
+          window.location.href = '/';
         }
       } else {
         setError("Login failed. Please try again.");

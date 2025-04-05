@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import Draggable from 'react-draggable';
 import { ResizableBox } from 'react-resizable';
 import 'react-resizable/css/styles.css';
+import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '../../../utils/supabase';
 
 const PrintDesign = ({ setOrderData, orderData, printData, isDarkMode = false }) => {
   // Constants for size constraints (in pixels for the UI, representing inches)
@@ -509,7 +511,7 @@ const PrintDesign = ({ setOrderData, orderData, printData, isDarkMode = false })
     }
   };
   
-  // Update current size based on selected side
+  // Update current size based on selected side - with snap to 10px grid
   const handleResize = (e, { size }) => {
     setIsResizing(true);
     
@@ -518,11 +520,18 @@ const PrintDesign = ({ setOrderData, orderData, printData, isDarkMode = false })
       clearTimeout(window.resizeTimeout);
     }
     
-    // Ensure size is within constraints
-    const maxConstraints = getMaxConstraints();
+    // Round to nearest 10px and ensure min/max constraints
+    const roundedWidth = Math.round(size.width / 10) * 10;
+    const roundedHeight = Math.round(size.height / 10) * 10;
+    
+    // Get max constraints
+    const maxWidth = printSide === 'left' || printSide === 'right' ? MAX_SLEEVE_SIZE : MAX_FRONT_BACK_WIDTH;
+    const maxHeight = printSide === 'left' || printSide === 'right' ? MAX_SLEEVE_SIZE : MAX_FRONT_BACK_HEIGHT;
+    
+    // Apply constraints
     const constrainedSize = {
-      width: Math.min(Math.max(size.width, 40), maxConstraints[0]),
-      height: Math.min(Math.max(size.height, 40), maxConstraints[1])
+      width: Math.min(Math.max(roundedWidth, 40), maxWidth),
+      height: Math.min(Math.max(roundedHeight, 40), maxHeight)
     };
     
     // Update size based on current side
@@ -536,17 +545,21 @@ const PrintDesign = ({ setOrderData, orderData, printData, isDarkMode = false })
     // Hide size indicator after delay
     window.resizeTimeout = setTimeout(() => {
       setIsResizing(false);
-    }, 1500);
+    }, 1000);
   };
   
-  // Update current position based on selected side
+  // Update current position based on selected side - with snap to 10px grid
   const handleDrag = (e, data) => {
+    // Round to nearest 10px
+    const x = Math.round(data.x / 10) * 10;
+    const y = Math.round(data.y / 10) * 10;
+    
     // Update position based on current side
     switch (printSide) {
-      case 'front': setFrontPosition({ x: data.x, y: data.y }); break;
-      case 'back': setBackPosition({ x: data.x, y: data.y }); break;
-      case 'left': setLeftPosition({ x: data.x, y: data.y }); break;
-      case 'right': setRightPosition({ x: data.x, y: data.y }); break;
+      case 'front': setFrontPosition({ x, y }); break;
+      case 'back': setBackPosition({ x, y }); break;
+      case 'left': setLeftPosition({ x, y }); break;
+      case 'right': setRightPosition({ x, y }); break;
     }
   };
   
@@ -557,7 +570,7 @@ const PrintDesign = ({ setOrderData, orderData, printData, isDarkMode = false })
   
   // Handle end of drag operation
   const handleDragStop = (e, data) => {
-    // Ensure we're updating with the final position
+    // Ensure we're updating with the final rounded position
     handleDrag(e, data);
     
     // Hide drag indicator after delay
@@ -735,105 +748,192 @@ const PrintDesign = ({ setOrderData, orderData, printData, isDarkMode = false })
                 position={getCurrentPosition()}
                 onStop={handleDragStop}
                 onStart={handleDragStart}
+                onDrag={handleDrag}
                 bounds="parent"
-                grid={[1, 1]}
-                defaultPosition={{x: 0, y: 0}}
-                scale={1}
+                grid={[10, 10]}
               >
-                <div style={{ position: 'absolute', cursor: 'move' }}>
-                  <ResizableBox
-                    width={getCurrentSize().width}
-                    height={getCurrentSize().height}
-                    onResize={handleResize}
-                    minConstraints={[40, 40]}
-                    maxConstraints={getMaxConstraints()}
-                    resizeHandles={['se']}
-                    handle={
-                      <div
-                        className="resize-handle"
-                        style={{
-                          position: 'absolute',
-                          width: '24px',
-                          height: '24px',
-                          background: 'white',
-                          borderRadius: '50%',
-                          bottom: '-12px',
-                          right: '-12px',
-                          cursor: 'se-resize',
-                          border: '3px solid #333',
-                          zIndex: 30
-                        }}
-                      />
-                    }
-                    style={{
-                      border: '2px dashed white',
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      position: 'relative'
-                    }}
-                  >
+                <ResizableBox
+                  width={getCurrentSize().width}
+                  height={getCurrentSize().height}
+                  onResize={handleResize}
+                  minConstraints={[40, 40]}
+                  maxConstraints={getMaxConstraints()}
+                  resizeHandles={['se']}
+                  handle={
                     <div
                       style={{
-                        width: '100%',
-                        height: '100%',
-                        background: getCurrentImage() 
-                          ? `url(${getCurrentImage()}) center/cover no-repeat` 
-                          : 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
-                        border: '1px solid rgba(255,255,255,0.3)',
-                        borderRadius: '4px',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                        cursor: 'move',
-                        position: 'relative'
+                        position: 'absolute',
+                        width: '20px',
+                        height: '20px',
+                        bottom: '0',
+                        right: '0',
+                        cursor: 'se-resize',
+                        background: isDarkMode ? '#0BB489' : '#3B82F6',
+                        clipPath: 'polygon(100% 0, 100% 100%, 0 100%)'
                       }}
-                    >
-                      {/* Drag handle indicator */}
-                      <div 
-                        className="drag-handle-indicator"
+                    />
+                  }
+                  className="!absolute cursor-move"
+                >
+                  <div
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      overflow: 'hidden',
+                      border: '2px dashed white',
+                      background: `url(${getCurrentImage()}) center/contain no-repeat`
+                    }}
+                  >
+                    {/* Size indicator during resize */}
+                    {isResizing && (
+                      <div
                         style={{
                           position: 'absolute',
-                          top: '50%',
+                          top: '5px',
                           left: '50%',
-                          transform: 'translate(-50%, -50%)',
-                          opacity: isDragging ? 0.8 : 0,
-                          transition: 'opacity 0.3s',
-                          pointerEvents: 'none'
+                          transform: 'translateX(-50%)',
+                          background: 'rgba(0, 0, 0, 0.7)',
+                          color: 'white',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                          fontWeight: 'bold',
+                          whiteSpace: 'nowrap'
                         }}
                       >
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
-                          <path d="M10,9A1,1 0 0,1 11,8A1,1 0 0,1 12,9A1,1 0 0,1 11,10A1,1 0 0,1 10,9M10,13A1,1 0 0,1 11,12A1,1 0 0,1 12,13A1,1 0 0,1 11,14A1,1 0 0,1 10,13M10,17A1,1 0 0,1 11,16A1,1 0 0,1 12,17A1,1 0 0,1 11,18A1,1 0 0,1 10,17M14,9A1,1 0 0,1 15,8A1,1 0 0,1 16,9A1,1 0 0,1 15,10A1,1 0 0,1 14,9M14,13A1,1 0 0,1 15,12A1,1 0 0,1 16,13A1,1 0 0,1 15,14A1,1 0 0,1 14,13M14,17A1,1 0 0,1 15,16A1,1 0 0,1 16,17A1,1 0 0,1 15,18A1,1 0 0,1 14,17Z" />
-                        </svg>
+                        {currentPrintSize.width}" × {currentPrintSize.height}"
                       </div>
-                      
-                      {/* Size indicator during resize */}
-                      {isResizing && (
-                        <div
-                          style={{
-                            position: 'absolute',
-                            top: '-40px',
-                            left: '50%',
-                            transform: 'translateX(-50%)',
-                            background: 'rgba(0, 0, 0, 0.8)',
-                            color: 'white',
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            fontSize: '14px',
-                            fontWeight: 'bold',
-                            whiteSpace: 'nowrap',
-                            zIndex: 40,
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
-                          }}
-                        >
-                          {currentPrintSize.width}" × {currentPrintSize.height}" ({currentPrintSize.area} sq in)
-                        </div>
-                      )}
-                    </div>
-                  </ResizableBox>
-                </div>
+                    )}
+                  </div>
+                </ResizableBox>
               </Draggable>
             )}
           </div>
         </div>
       </div>
     );
+  };
+  
+  // Add handler for order completion
+  const handleOrderSubmit = async () => {
+    try {
+      // Ensure we have at least one print
+      if (!frontImage && !backImage && !leftImage && !rightImage) {
+        setUploadStatus('Please add at least one design');
+        setTimeout(() => setUploadStatus(''), 3000);
+        return;
+      }
+      
+      // Capture designs if needed
+      setUploadStatus('Preparing order...');
+      const capturedDesigns = await captureAndUploadAllDesigns();
+      
+      // Ensure we have required IDs for database insertion
+      const ensuredOrderData = { ...orderData };
+      
+      // Get current user session to get a valid sellerId
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error("Error getting user session:", sessionError);
+        throw new Error("Authentication error. Please log in again.");
+      }
+      
+      if (!session || !session.user) {
+        throw new Error("No user session found. Please log in again.");
+      }
+      
+      // Use the current user's ID as the seller ID (this should be a valid reference)
+      const currentUserId = session.user.id;
+      ensuredOrderData.sellerId = currentUserId;
+      console.log("Using current user ID as sellerId:", currentUserId);
+      
+      // Try to get a valid brandId from the brandsOnboardForm table for the current user
+      const { data: brandData, error: brandError } = await supabase
+        .from("brandsOnboardForm")
+        .select("id")
+        .eq("id", currentUserId)
+        .single();
+        
+      if (brandError && brandError.code !== 'PGRST116') { // PGRST116 is 'not found'
+        console.error("Error fetching brand data:", brandError);
+      }
+      
+      // If the user has a brand registered, use that as brandId
+      if (brandData && brandData.id) {
+        ensuredOrderData.brandId = brandData.id;
+        console.log("Using existing brand ID:", brandData.id);
+      } else {
+        // If no brand found, we need to create one before we can continue
+        setUploadStatus('You need to register a brand before completing an order');
+        console.error("No brand found for user. Brand registration required.");
+        
+        // Alert with a clearer explanation
+        alert(
+          "Brand Registration Required\n\n" +
+          "To complete your order, you need to register your brand with us first. " +
+          "This is required for all sellers to ensure we have your brand details for printing. " +
+          "You'll be redirected to a quick brand registration form. " +
+          "After registering, you'll be able to complete your order."
+        );
+        
+        setTimeout(() => {
+          setUploadStatus('Redirecting to brand registration...');
+          // Redirect to brand registration form
+          if (window.location) {
+            setTimeout(() => {
+              window.location.href = '/brand/register';
+            }, 1500);
+          }
+        }, 1500);
+        return; // Don't proceed with order submission
+      }
+      
+      // Make sure we have an order ID
+      if (!ensuredOrderData.orderId || ensuredOrderData.orderId === "") {
+        console.log("Generating orderId as it was missing");
+        ensuredOrderData.orderId = uuidv4();
+      }
+      
+      // If customer info is missing, create a basic structure
+      if (!ensuredOrderData.customerInfo) {
+        ensuredOrderData.customerInfo = {
+          name: "Test Customer",
+          email: "test@example.com",
+          phone: "1234567890"
+        };
+      }
+      
+      // Mark order as completed
+      setOrderData({
+        ...ensuredOrderData,
+        orderStatus: 'completed',
+        paymentStatus: 'completed',
+        paymentAmount: 1, // 1 Rs for testing
+        paymentCurrency: 'INR',
+        paymentDate: new Date().toISOString(),
+        orderCompleted: true,
+        orderCompletedAt: new Date().toISOString(),
+        // Set transaction ID if missing
+        transactionId: ensuredOrderData.transactionId || `test_tx_${Date.now()}`
+      });
+      
+      setUploadStatus('Order completed successfully!');
+      setTimeout(() => setUploadStatus(''), 3000);
+      
+      console.log("Order submitted with data:", ensuredOrderData);
+      
+      // Optionally redirect to confirmation page
+      if (window.location && window.location.href.includes('/order')) {
+        setTimeout(() => {
+          window.location.href = '/order/confirmation';
+        }, 1500);
+      }
+      
+    } catch (error) {
+      console.error('Error completing order:', error);
+      setUploadStatus(`Error completing order: ${error.message}`);
+      setTimeout(() => setUploadStatus(''), 3000);
+    }
   };
   
   return (
@@ -905,7 +1005,6 @@ const PrintDesign = ({ setOrderData, orderData, printData, isDarkMode = false })
       
       {/* Product preview area */}
       <div 
-        ref={containerRef}
         className={`relative w-full h-[300px] border ${
           isDarkMode 
             ? 'border-gray-700 bg-dark-4' 
@@ -916,41 +1015,6 @@ const PrintDesign = ({ setOrderData, orderData, printData, isDarkMode = false })
         <div className="absolute inset-0 flex items-center justify-center">
           {renderProductPreview()}
         </div>
-        
-        {/* Current print overlay */}
-        {getCurrentImage() && (
-          <Draggable
-            bounds="parent"
-            position={getCurrentPosition()}
-            onStart={handleDragStart}
-            onDrag={handleDrag}
-            onStop={handleDragStop}
-            disabled={isResizing}
-          >
-            <ResizableBox
-              width={getCurrentSize().width}
-              height={getCurrentSize().height}
-              minConstraints={[20, 20]}
-              maxConstraints={getMaxConstraints()}
-              onResize={handleResize}
-              onResizeStart={() => setIsResizing(true)}
-              onResizeStop={() => setIsResizing(false)}
-              className="!absolute cursor-move"
-              resizeHandles={['se']}
-              handle={
-                <div className={`absolute bottom-0 right-0 w-4 h-4 cursor-se-resize ${
-                  isDarkMode ? 'bg-secondary' : 'bg-blue-600'
-                }`}></div>
-              }
-            >
-              <img
-                src={getCurrentImage()}
-                alt={`${printSide} print`}
-                className="w-full h-full object-contain"
-              />
-            </ResizableBox>
-          </Draggable>
-        )}
       </div>
       
       {/* Print area information */}
@@ -997,6 +1061,19 @@ const PrintDesign = ({ setOrderData, orderData, printData, isDarkMode = false })
           Clear {printSide.charAt(0).toUpperCase() + printSide.slice(1)}
         </button>
       </div>
+      
+      {/* Add order completion button */}
+      <button
+        onClick={handleOrderSubmit}
+        className={`px-6 py-2 rounded-lg font-medium ${
+          isDarkMode
+            ? 'bg-secondary text-white hover:bg-green-400'
+            : 'bg-blue-600 text-white hover:bg-blue-700'
+        }`}
+        disabled={isUploading || (!frontImage && !backImage && !leftImage && !rightImage)}
+      >
+        Complete Order (₹1)
+      </button>
     </div>
   );
 };

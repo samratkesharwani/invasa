@@ -270,58 +270,41 @@ function BuyerDashboard({ isDarkMode }) {
                   />
                 </div>
                 
-                {/* Recent Transactions Section */}
-                <div className={`${isDarkMode 
-                  ? 'bg-black bg-opacity-60 backdrop-blur-lg border-gray-800' 
-                  : 'bg-white border-gray-200'} rounded-2xl p-8 mb-12 shadow-lg border`}>
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-                    <div className="flex items-center mb-6 md:mb-0">
-                      <div className="flex items-center justify-center w-12 h-12 mr-6">
-                        <IconContainer
-                          icon={<FaBox className="m-1.5" />}
-                          isDarkMode={isDarkMode}
-                          size="md"
-                          color="teal"
-                        />
-                      </div>
-                      <div>
-                        <h2 className={`text-2xl font-bold ${
-                          isDarkMode ? 'text-white' : 'text-gray-900'
-                        }`}>Recent Orders</h2>
-                        <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-700'} mt-1`}>
-                          Track and manage your recent purchases
-                        </p>
-                      </div>
-                    </div>
+                {/* Transactions Table */}
+                <div className={isDarkMode ? "bg-black bg-opacity-60 backdrop-blur-lg border border-gray-800 rounded-2xl p-6 mt-6 overflow-hidden" : "bg-white border border-gray-200 rounded-2xl p-6 mt-6 shadow-lg overflow-hidden"}>
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                    <h2 className={isDarkMode ? "text-xl md:text-2xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent" : "text-xl md:text-2xl font-bold text-gray-900"}>
+                      Recent Orders
+                    </h2>
                     
-                    <div className="flex flex-col w-full md:w-auto space-y-4 md:space-y-0 md:flex-row md:space-x-4">
-                      <div className={`relative w-full md:w-64 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    <div className="w-full md:w-auto flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                      <div className="relative w-full sm:w-64">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <FaSearch className={`${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+                          <FaSearch className={isDarkMode ? "text-gray-500" : "text-gray-400"} />
                         </div>
                         <input
                           type="text"
-                          className={`block w-full pl-10 pr-3 py-2 rounded-lg ${
-                            isDarkMode 
-                              ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500'
-                              : 'bg-white border-gray-300 text-black placeholder-gray-500'
-                          } border`}
                           placeholder="Search orders..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
+                          className={`pl-10 pr-4 py-2 w-full rounded-xl ${
+                            isDarkMode
+                              ? "bg-dark-1 border-gray-700 text-gray-300 focus:border-[#00E0A4]"
+                              : "bg-gray-50 border-gray-200 text-gray-700 focus:border-[#00E0A4]"
+                          } border outline-none focus:ring-2 focus:ring-[#00E0A4] focus:ring-opacity-50`}
                         />
                       </div>
                       
                       <select
-                        className={`block w-full md:w-auto px-3 py-2 rounded-lg ${
-                          isDarkMode 
-                            ? 'bg-gray-800 border-gray-700 text-white' 
-                            : 'bg-white border-gray-300 text-black'
-                        } border`}
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
+                        className={`py-2 px-4 rounded-xl ${
+                          isDarkMode
+                            ? "bg-dark-1 border-gray-700 text-gray-300"
+                            : "bg-gray-50 border-gray-200 text-gray-700"
+                        } border outline-none focus:ring-2 focus:ring-[#00E0A4] focus:ring-opacity-50 w-full sm:w-auto`}
                       >
-                        <option value="all">All Statuses</option>
+                        <option value="all">All Status</option>
                         <option value="pending">Pending</option>
                         <option value="processing">Processing</option>
                         <option value="completed">Completed</option>
@@ -329,84 +312,149 @@ function BuyerDashboard({ isDarkMode }) {
                       </select>
                     </div>
                   </div>
-                  
-                  {/* Table Component */}
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full">
-                      <thead>
-                        <tr className={`${isDarkMode ? 'border-gray-800' : 'border-gray-200'} border-b`}>
-                          <th className={`px-4 py-3 text-left ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Order ID</th>
-                          <th className={`px-4 py-3 text-left ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Date</th>
-                          <th className={`px-4 py-3 text-left ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>City</th>
-                          <th className={`px-4 py-3 text-left ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Amount</th>
-                          <th className={`px-4 py-3 text-left ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Status</th>
-                          <th className={`px-4 py-3 text-right ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                        {filteredTransactions.length > 0 ? (
-                          filteredTransactions.map((transaction) => (
-                            <tr 
-                              key={transaction.id}
-                              className={`${isDarkMode ? 'hover:bg-gray-900' : 'hover:bg-gray-50'} transition-colors`}
-                            >
-                              <td className={`px-4 py-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>
-                                {transaction.id ? transaction.id.slice(0, 8) : 'N/A'}
-                              </td>
-                              <td className={`px-4 py-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>
-                                {formatDate(transaction.date)}
-                              </td>
-                              <td className={`px-4 py-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>
-                                {transaction.selectedCity || 'N/A'}
-                              </td>
-                              <td className={`px-4 py-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>
-                                {formatCurrency(transaction.paymentAmount)}
-                              </td>
-                              <td className={`px-4 py-4`}>
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                  ${transaction.status?.toLowerCase() === 'completed' 
-                                    ? isDarkMode ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800'
-                                    : transaction.status?.toLowerCase() === 'pending'
-                                    ? isDarkMode ? 'bg-yellow-900 text-yellow-200' : 'bg-yellow-100 text-yellow-800'
-                                    : transaction.status?.toLowerCase() === 'cancelled'
-                                    ? isDarkMode ? 'bg-red-900 text-red-200' : 'bg-red-100 text-red-800'
-                                    : isDarkMode ? 'bg-blue-900 text-blue-200' : 'bg-blue-100 text-blue-800'
-                                  }`}
-                                >
-                                  {transaction.status || 'Processing'}
-                                </span>
-                              </td>
-                              <td className="px-4 py-4 text-right">
-                                <button
-                                  onClick={() => setSelectedOrder(transaction)}
-                                  className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${
-                                    isDarkMode 
-                                      ? 'bg-gray-800 hover:bg-gray-700 text-[#00E0A4] hover:text-white'
-                                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-black'
-                                  } transition-colors`}
-                                >
-                                  <IconContainer
-                                    icon={<FaEye />}
-                                    isDarkMode={isDarkMode}
-                                    size="sm"
-                                    color="teal"
-                                  />
-                                </button>
-                              </td>
+
+                  {filteredTransactions.length === 0 ? (
+                    <div className={isDarkMode ? "text-center py-8 bg-dark-1 bg-opacity-50 rounded-xl" : "text-center py-8 bg-gray-50 rounded-xl"}>
+                      <p className={isDarkMode ? "text-gray-400" : "text-gray-500"}>No orders found matching your criteria</p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Desktop Table View */}
+                      <div className="hidden md:block overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                          <thead>
+                            <tr>
+                              <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                                Order ID
+                              </th>
+                              <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                                Date
+                              </th>
+                              <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                                City
+                              </th>
+                              <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                                Amount
+                              </th>
+                              <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                                Status
+                              </th>
+                              <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                                Actions
+                              </th>
                             </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan="6" className={`px-4 py-8 text-center ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                              {searchTerm || filterStatus !== 'all' 
-                                ? "No orders match your search criteria." 
-                                : "You don't have any orders yet."}
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+                          </thead>
+                          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                            {filteredTransactions.map((transaction) => (
+                              <tr 
+                                key={transaction.id} 
+                                className={isDarkMode ? "hover:bg-gray-900 transition-colors" : "hover:bg-gray-50 transition-colors"}
+                              >
+                                <td className={`px-4 py-4 text-sm ${isDarkMode ? "text-gray-300" : "text-gray-900"}`}>
+                                  #{transaction.id}
+                                </td>
+                                <td className={`px-4 py-4 text-sm ${isDarkMode ? "text-gray-300" : "text-gray-900"}`}>
+                                  {formatDate(transaction.date)}
+                                </td>
+                                <td className={`px-4 py-4 text-sm ${isDarkMode ? "text-gray-300" : "text-gray-900"}`}>
+                                  {transaction.selectedCity || 'N/A'}
+                                </td>
+                                <td className={`px-4 py-4 text-sm font-medium ${isDarkMode ? "text-[#00E0A4]" : "text-[#0BB489]"}`}>
+                                  {formatCurrency(transaction.paymentAmount)}
+                                </td>
+                                <td className="px-4 py-4">
+                                  <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                    transaction.status?.toLowerCase() === 'pending' ? (isDarkMode ? 'bg-yellow-800 text-yellow-200' : 'bg-yellow-100 text-yellow-800') : 
+                                    transaction.status?.toLowerCase() === 'completed' ? (isDarkMode ? 'bg-green-800 text-green-200' : 'bg-green-100 text-green-800') : 
+                                    transaction.status?.toLowerCase() === 'cancelled' ? (isDarkMode ? 'bg-red-800 text-red-200' : 'bg-red-100 text-red-800') :
+                                    transaction.status?.toLowerCase() === 'processing' ? (isDarkMode ? 'bg-blue-800 text-blue-200' : 'bg-blue-100 text-blue-800') :
+                                    (isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800')
+                                  }`}>
+                                    {transaction.status || 'Unknown'}
+                                  </span>
+                                </td>
+                                <td className={`px-4 py-4 text-sm ${isDarkMode ? "text-gray-300" : "text-gray-900"}`}>
+                                  <button
+                                    onClick={() => {
+                                      setSelectedOrder(transaction);
+                                      navigate(`/order/${transaction.id}`);
+                                    }}
+                                    className="text-secondary hover:text-[#0BB489] transition-colors duration-200"
+                                  >
+                                    View Details
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Mobile Card View */}
+                      <div className="md:hidden space-y-4">
+                        {filteredTransactions.map((transaction) => (
+                          <div 
+                            key={transaction.id} 
+                            className={`rounded-xl p-4 ${isDarkMode ? "bg-gray-900 bg-opacity-40" : "bg-gray-50"} transition-all`}
+                          >
+                            <div className="flex justify-between items-start mb-3">
+                              <div>
+                                <span className={`font-medium ${isDarkMode ? "text-white" : "text-gray-900"}`}>
+                                  #{transaction.id}
+                                </span>
+                                <p className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                                  {formatDate(transaction.date)}
+                                </p>
+                              </div>
+                              <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full ${
+                                transaction.status?.toLowerCase() === 'pending' ? (isDarkMode ? 'bg-yellow-800 text-yellow-200' : 'bg-yellow-100 text-yellow-800') : 
+                                transaction.status?.toLowerCase() === 'completed' ? (isDarkMode ? 'bg-green-800 text-green-200' : 'bg-green-100 text-green-800') : 
+                                transaction.status?.toLowerCase() === 'cancelled' ? (isDarkMode ? 'bg-red-800 text-red-200' : 'bg-red-100 text-red-800') :
+                                transaction.status?.toLowerCase() === 'processing' ? (isDarkMode ? 'bg-blue-800 text-blue-200' : 'bg-blue-100 text-blue-800') :
+                                (isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800')
+                              }`}>
+                                {transaction.status || 'Unknown'}
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 mb-3">
+                              <div>
+                                <p className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>City</p>
+                                <p className={`text-sm ${isDarkMode ? "text-gray-300" : "text-gray-900"}`}>
+                                  {transaction.selectedCity || 'N/A'}
+                                </p>
+                              </div>
+                              <div>
+                                <p className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>Amount</p>
+                                <p className={`text-sm font-medium ${isDarkMode ? "text-[#00E0A4]" : "text-[#0BB489]"}`}>
+                                  {formatCurrency(transaction.paymentAmount)}
+                                </p>
+                              </div>
+                            </div>
+
+                            {transaction.customerInfo?.customerName && (
+                              <div className="mb-3">
+                                <p className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>Customer</p>
+                                <p className={`text-sm ${isDarkMode ? "text-gray-300" : "text-gray-900"}`}>
+                                  {transaction.customerInfo.customerName}
+                                </p>
+                              </div>
+                            )}
+
+                            <button
+                              onClick={() => {
+                                setSelectedOrder(transaction);
+                                navigate(`/order/${transaction.id}`);
+                              }}
+                              className="w-full mt-2 py-2 px-4 bg-secondary bg-opacity-10 hover:bg-opacity-20 rounded-lg text-secondary text-sm font-medium transition-colors duration-200 flex items-center justify-center"
+                            >
+                              <FaEye className="mr-2" /> View Details
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
               </>
             )}

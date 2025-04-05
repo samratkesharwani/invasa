@@ -277,14 +277,14 @@ function SelectProduct({ setOrderData, orderData, handleChange, stepDec, stepInc
         <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
           Select Product
         </h2>
-      </div>
-      
+        </div>
+        
       {error && (
         <div className={`p-4 rounded-lg mb-6 ${isDarkMode ? 'bg-red-900 bg-opacity-20 border border-red-800 text-red-300' : 'bg-red-50 border border-red-200 text-red-700'}`}>
           {error}
-        </div>
-      )}
-      
+          </div>
+        )}
+        
       {sellerInfo && (
         <div className={`p-4 rounded-lg mb-6 ${isDarkMode ? 'bg-dark-3' : 'bg-blue-50 border border-blue-200'}`}>
           <h3 className={`font-medium mb-2 ${isDarkMode ? 'text-white' : 'text-blue-700'}`}>Selected Seller</h3>
@@ -292,14 +292,14 @@ function SelectProduct({ setOrderData, orderData, handleChange, stepDec, stepInc
             <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{sellerInfo.businessName}</span> 
             <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}> ({sellerInfo.distance.toFixed(1)} km away)</span>
           </p>
-        </div>
-      )}
-      
-      {loading ? (
+          </div>
+        )}
+        
+        {loading ? (
         <div className="flex justify-center py-8">
           <div className={`inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid ${isDarkMode ? 'border-white border-t-transparent' : 'border-blue-600 border-t-transparent'}`} />
-        </div>
-      ) : products.length === 0 ? (
+          </div>
+        ) : products.length === 0 ? (
         <div className={`p-8 rounded-lg text-center ${isDarkMode ? 'bg-dark-3' : 'bg-gray-50'}`}>
           <p className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>No products available from this seller.</p>
         </div>
@@ -351,7 +351,7 @@ function SelectProduct({ setOrderData, orderData, handleChange, stepDec, stepInc
                   <p className={`font-bold ${isDarkMode ? 'text-secondary' : 'text-blue-600'}`}>
                     {formatCurrency(product.price)}
                   </p>
-                  <button 
+            <button 
                     className={`px-3 py-1 rounded-full text-sm ${
                       orderData.productData?.selectedProduct === product.name 
                         ? isDarkMode 
@@ -363,21 +363,21 @@ function SelectProduct({ setOrderData, orderData, handleChange, stepDec, stepInc
                     }`}
                   >
                     {orderData.productData?.selectedProduct === product.name ? 'Selected' : 'Select'}
-                  </button>
+            </button>
                 </div>
               </div>
             </div>
           ))}
-        </div>
-      )}
-      
+          </div>
+        )}
+        
       <div className="flex justify-between mt-8">
-        <button
-          onClick={stepDec}
+          <button
+            onClick={stepDec}
           className={`px-6 py-2 rounded-lg ${isDarkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-        >
-          Back
-        </button>
+          >
+            Back
+          </button>
         <button
           onClick={stepInc}
           disabled={!orderData.productData?.selectedProduct}

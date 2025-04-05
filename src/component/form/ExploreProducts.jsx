@@ -5,7 +5,7 @@ import { supabase } from "../../utils/supabase";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Header from '../Header'
 
-const FormElementInput = ({ isDarkMode = false }) => {
+const FormElementInput = ({ isDarkMode = false, returnUrl = '/thanks' }) => {
   const navigate = useNavigate();
   const [userId, setUserId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -168,8 +168,11 @@ const FormElementInput = ({ isDarkMode = false }) => {
         throw brandError;
       }
       
-      // Redirect to thanks page
-      navigate('/thanks');
+      // Show success message
+      alert("Brand registration successful! You can now complete your order.");
+      
+      // Redirect to the return URL or thanks page
+      navigate(returnUrl);
     } catch (error) {
       console.error("Brand insert error:", error);
       setError("Error submitting form. Please try again.");

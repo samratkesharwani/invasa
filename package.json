@@ -43,6 +43,7 @@
     "slugify": "^1.6.6",
     "spinners-react": "^1.0.10",
     "supabase": "^1.145.4",
+    "uuid": "^11.1.0",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

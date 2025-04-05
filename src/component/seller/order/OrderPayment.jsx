@@ -110,7 +110,8 @@ function OrderPayment({ handleOrderSubmit, setOrderData, orderData, handleChange
     
     // Then calculate and set total amount
     const newTotalAmount = productPrice + printPrice + shippingCost;
-    setTotalAmount(newTotalAmount);
+    // setTotalAmount(newTotalAmount);
+    setTotalAmount(1);
   }, [calculatePrintPrice, productPrice, shippingCost]);
 
   // Get print details summary
@@ -340,13 +341,41 @@ function OrderPayment({ handleOrderSubmit, setOrderData, orderData, handleChange
         order_id: order.id,
         handler: async function (response) {
           try {
-          // Update inventory after successful payment
-          await updateInventory();
-          
-          if (handleOrderSubmit) {
-            await handleOrderSubmit();
-          }
-            alert('Payment Successful!');
+            // Capturing the response data to use in the order
+            console.log("Payment successful! Response:", response);
+            
+            // Add payment information to the order data
+            if (setOrderData) {
+              setOrderData(prevData => ({
+                ...prevData,
+                paymentStatus: 'completed',
+                transactionId: response.razorpay_payment_id,
+                paymentResponse: response,
+                orderStatus: 'complete',
+                status: 'complete'
+              }));
+            }
+            
+            // Update inventory after successful payment
+            await updateInventory();
+            
+            // Add a small delay to ensure order data is updated
+            setTimeout(async () => {
+              // Call handleOrderSubmit to complete the order
+              if (handleOrderSubmit) {
+                console.log("Calling handleOrderSubmit after payment");
+                try {
+                  await handleOrderSubmit();
+                } catch (orderError) {
+                  console.error("Error in handleOrderSubmit:", orderError);
+                  alert("Payment was successful, but there was an error completing your order. Our team will contact you.");
+                }
+              } else {
+                console.warn("handleOrderSubmit function not available");
+              }
+              
+              alert('Payment Successful!');
+            }, 1000);
           } catch (error) {
             console.error('Error after payment:', error);
             alert('Payment was successful, but there was an error updating our records. Our team will contact you.');

@@ -69,6 +69,11 @@ function App() {
                 <Routes>
                   <Route path="/" element={<Layout isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
                   <Route path="/explore-products" element={<ExploreProducts isDarkMode={isDarkMode} />} />
+                  <Route path="/brand/register" element={
+                    <Wrapper isDarkMode={isDarkMode}>
+                      <ExploreProducts isDarkMode={isDarkMode} returnUrl="/order" />
+                    </Wrapper>
+                  } />
                   <Route path="/seller" element={<Seller isDarkMode={isDarkMode} />} />
                   <Route path="/thanks" element={<Thanks isDarkMode={isDarkMode} />} />
                   <Route path="/login" element={<Login isDarkMode={isDarkMode} />} />
