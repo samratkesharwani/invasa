@@ -9,6 +9,127 @@ import SelectOptions from "./SelectOptions";
 import OrderPayment from "./OrderPayment";
 import { v4 as uuidv4 } from 'uuid'; // Import UUID generator
 
+// Define ChooseCity component before Order component
+const ChooseCity = ({ stepInc, setOrderData, orderData, isDarkMode }) => {
+  const [cities, setCities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const handleCitySelection = (city) => {
+    // Normalize city to lowercase for consistent matching
+    const normalizedCity = city.toLowerCase().trim();
+    setOrderData((prevState) => ({
+      ...prevState,
+      selectedCity: normalizedCity,
+      cityDisplayName: city, // Keep original city name for display
+    }));
+    stepInc();
+  };
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        setLoading(true);
+        // Fetch cities from businessOnboardForm
+        const { data: cityData, error } = await supabase
+          .from('businessOnboardForm')
+          .select('city');
+
+        if (error) throw error;
+
+        if (cityData && cityData.length > 0) {
+          // Process cities to lowercase and remove duplicates
+          const processedCities = cityData
+            .map(item => item.city ? item.city.toLowerCase().trim() : null)
+            .filter(city => city) // Remove null/empty values
+            .reduce((unique, city) => {
+              // Add city to unique array only if it's not already included
+              if (!unique.includes(city)) {
+                unique.push(city);
+              }
+              return unique;
+            }, [])
+            .sort(); // Sort alphabetically for better UX
+
+          setCities(processedCities);
+        }
+      } catch (err) {
+        console.error('Error fetching cities:', err);
+        setError('Failed to load cities. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCities();
+  }, []);
+
+  return (
+    <div className="mx-auto max-w-4xl">
+      <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+        Choose Your City
+      </h2>
+      <div className={`p-4 rounded-lg mb-4 ${isDarkMode ? 'bg-dark-3' : 'bg-gray-100'}`}>
+        <p className={`mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+          Please select your city for the best printing service in your area.
+        </p>
+      </div>
+      
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <div className={`inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid ${isDarkMode ? 'border-white border-t-transparent' : 'border-blue-600 border-t-transparent'}`} />
+        </div>
+      ) : error ? (
+        <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-red-900 bg-opacity-20 text-red-300' : 'bg-red-100 text-red-700'}`}>
+          {error}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {cities.map((city) => (
+            <button
+              key={city}
+              onClick={() => handleCitySelection(city)}
+              className={`p-4 rounded-lg transition-colors ${
+                orderData.selectedCity === city 
+                  ? isDarkMode 
+                    ? 'bg-secondary bg-opacity-30 border-secondary' 
+                    : 'bg-blue-100 border-blue-600'
+                  : isDarkMode 
+                    ? 'bg-dark-3 hover:bg-dark-4' 
+                    : 'bg-white hover:bg-gray-50 border-gray-200'
+              } border flex items-center`}
+            >
+              <div className="flex-1">
+                <p className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {city.charAt(0).toUpperCase() + city.slice(1)}
+                </p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+      
+      <div className="flex justify-end mt-8">
+        <button
+          onClick={stepInc}
+          disabled={!orderData.selectedCity}
+          className={`px-6 py-2 rounded-lg ${
+            !orderData.selectedCity
+              ? isDarkMode 
+                ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
+                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              : isDarkMode 
+                ? 'bg-secondary text-black hover:bg-green-600' 
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
+        >
+          Continue
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const Order = ({ isDarkMode = false }) => {
   const navigate= useNavigate()
   const [step, setStep] = useState(1);
@@ -338,7 +459,7 @@ const Order = ({ isDarkMode = false }) => {
         coordinates: orderData.coordinates || 'Not specified',
         fullAddress: orderData.fullAddress || { address: 'Test Address' },
         productData: updatedProductData,
-        paymentAmount: orderData.paymentAmount || '1',
+        paymentAmount: orderData.paymentAmount,
         transactionId: orderData.transactionId || `tx_${Date.now()}`,
         status: orderData.status || 'complete'
       };
@@ -557,126 +678,6 @@ const Order = ({ isDarkMode = false }) => {
             />
           )}
         </div>
-      </div>
-    </div>
-  );
-};
-
-const ChooseCity = ({ stepInc, setOrderData, orderData, isDarkMode }) => {
-  const [cities, setCities] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const handleCitySelection = (city) => {
-    // Normalize city to lowercase for consistent matching
-    const normalizedCity = city.toLowerCase().trim();
-    setOrderData((prevState) => ({
-      ...prevState,
-      selectedCity: normalizedCity,
-      cityDisplayName: city, // Keep original city name for display
-    }));
-    stepInc();
-  };
-
-  useEffect(() => {
-    const fetchCities = async () => {
-      try {
-        setLoading(true);
-        // Fetch cities from businessOnboardForm
-        const { data: cityData, error } = await supabase
-          .from('businessOnboardForm')
-          .select('city');
-
-        if (error) throw error;
-
-        if (cityData && cityData.length > 0) {
-          // Process cities to lowercase and remove duplicates
-          const processedCities = cityData
-            .map(item => item.city ? item.city.toLowerCase().trim() : null)
-            .filter(city => city) // Remove null/empty values
-            .reduce((unique, city) => {
-              // Add city to unique array only if it's not already included
-              if (!unique.includes(city)) {
-                unique.push(city);
-              }
-              return unique;
-            }, [])
-            .sort(); // Sort alphabetically for better UX
-
-          setCities(processedCities);
-        }
-      } catch (err) {
-        console.error('Error fetching cities:', err);
-        setError('Failed to load cities. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCities();
-  }, []);
-
-  return (
-    <div className="mx-auto max-w-4xl">
-      <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-        Choose Your City
-      </h2>
-      <div className={`p-4 rounded-lg mb-4 ${isDarkMode ? 'bg-dark-3' : 'bg-gray-100'}`}>
-        <p className={`mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-          Please select your city for the best printing service in your area.
-        </p>
-      </div>
-      
-      {loading ? (
-        <div className="flex justify-center py-8">
-          <div className={`inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid ${isDarkMode ? 'border-white border-t-transparent' : 'border-blue-600 border-t-transparent'}`} />
-        </div>
-      ) : error ? (
-        <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-red-900 bg-opacity-20 text-red-300' : 'bg-red-100 text-red-700'}`}>
-          {error}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {cities.map((city) => (
-            <button
-              key={city}
-              onClick={() => handleCitySelection(city)}
-              className={`p-4 rounded-lg transition-colors ${
-                orderData.selectedCity === city 
-                  ? isDarkMode 
-                    ? 'bg-secondary bg-opacity-30 border-secondary' 
-                    : 'bg-blue-100 border-blue-600'
-                  : isDarkMode 
-                    ? 'bg-dark-3 hover:bg-dark-4' 
-                    : 'bg-white hover:bg-gray-50 border-gray-200'
-              } border flex items-center`}
-            >
-              <div className="flex-1">
-                <p className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-              {city.charAt(0).toUpperCase() + city.slice(1)}
-                </p>
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
-      
-      <div className="flex justify-end mt-8">
-        <button
-          onClick={stepInc}
-          disabled={!orderData.selectedCity}
-          className={`px-6 py-2 rounded-lg ${
-            !orderData.selectedCity
-              ? isDarkMode 
-                ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
-                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-              : isDarkMode 
-                ? 'bg-secondary text-black hover:bg-green-600' 
-                : 'bg-blue-600 text-white hover:bg-blue-700'
-          }`}
-        >
-          Continue
-        </button>
       </div>
     </div>
   );

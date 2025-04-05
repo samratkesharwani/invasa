@@ -16,12 +16,24 @@ function OrderPayment({ handleOrderSubmit, setOrderData, orderData, handleChange
 
   // Memoize product price calculation
   const productPrice = useMemo(() => {
+    // Log the available product data for debugging
+    console.log('Product data available:', {
+      productDataExists: !!orderData.productData,
+      price: orderData.productData?.price,
+      selectedProductPrice: orderData.productData?.selectedProductPrice
+    });
+    
     // Use price from inventory if available
     if (orderData.productData?.price !== undefined) {
-      return Number(orderData.productData.price);
+      const priceValue = Number(orderData.productData.price);
+      console.log(`Using inventory price: ${orderData.productData.price} → ${priceValue}`);
+      return priceValue;
     }
+    
     // Fallback to selectedProductPrice
-    return Number(orderData.productData?.selectedProductPrice) || 0;
+    const fallbackPrice = Number(orderData.productData?.selectedProductPrice) || 0;
+    console.log(`Using fallback price: ${orderData.productData?.selectedProductPrice} → ${fallbackPrice}`);
+    return fallbackPrice;
   }, [orderData.productData]);
 
   // Get safe print data - memoized for performance
@@ -49,14 +61,21 @@ function OrderPayment({ handleOrderSubmit, setOrderData, orderData, handleChange
     
     // If we have a total print area, use that for calculation
     if (orderData.totalPrintArea && orderData.totalPrintArea > 0) {
-      return orderData.totalPrintArea * printingPricePerSqInch;
+      const price = parseFloat(orderData.totalPrintArea) * printingPricePerSqInch;
+      console.log(`Calculating print price based on total area: ${orderData.totalPrintArea} sq in * ${printingPricePerSqInch} price/sq in = ${price}`);
+      return price;
     }
     
     // Fallback: calculate based on individual print areas
-    return orderData.printData.reduce((total, print) => {
-      const area = print.area || 0;
-      return total + (area * printingPricePerSqInch);
+    const totalPrice = orderData.printData.reduce((total, print) => {
+      const area = parseFloat(print.area || 0);
+      const printPrice = area * printingPricePerSqInch;
+      console.log(`Print area: ${area} sq in * ${printingPricePerSqInch} price/sq in = ${printPrice}`);
+      return total + printPrice;
     }, 0);
+    
+    console.log(`Total print price from individual areas: ${totalPrice}`);
+    return totalPrice;
   }, [orderData, printingPricePerSqInch]);
 
   // Extract numeric price value from string - converted to pure function
@@ -109,9 +128,24 @@ function OrderPayment({ handleOrderSubmit, setOrderData, orderData, handleChange
     setTotalPrintPrice(printPrice);
     
     // Then calculate and set total amount
-    const newTotalAmount = productPrice + printPrice + shippingCost;
-    // setTotalAmount(newTotalAmount);
-    setTotalAmount(1);
+    let newTotalAmount = productPrice + printPrice + shippingCost;
+    
+    // Ensure minimum amount of ₹1 for Razorpay
+    if (newTotalAmount < 1) {
+      console.log(`Total amount (${newTotalAmount}) is less than minimum required (₹1). Setting to minimum.`);
+      newTotalAmount = 1;
+    }
+    
+    setTotalAmount(newTotalAmount);
+    
+    // Debug log for payment calculation
+    console.log('Payment calculation:', {
+      productPrice,
+      printPrice,
+      shippingCost,
+      calculatedTotal: productPrice + printPrice + shippingCost,
+      finalTotal: newTotalAmount
+    });
   }, [calculatePrintPrice, productPrice, shippingCost]);
 
   // Get print details summary
@@ -318,12 +352,15 @@ function OrderPayment({ handleOrderSubmit, setOrderData, orderData, handleChange
       }
 
       // Create order in Razorpay
+      const paymentAmount = Math.round(totalAmount); // Convert to paisa (cents)
+      console.log(`Sending payment request for amount: ${totalAmount} (INR) → ${paymentAmount} (paisa)`);
+      
       const response = await fetch('https://backendforinvasa.vercel.app/create-order', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ amount: totalAmount }),
+        body: JSON.stringify({ amount: paymentAmount }),
       });
 
       if (!response.ok) {

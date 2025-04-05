@@ -907,17 +907,11 @@ const PrintDesign = ({ setOrderData, orderData, printData, isDarkMode = false })
       setOrderData({
         ...ensuredOrderData,
         orderStatus: 'completed',
-        paymentStatus: 'completed',
-        paymentAmount: 1, // 1 Rs for testing
-        paymentCurrency: 'INR',
-        paymentDate: new Date().toISOString(),
         orderCompleted: true,
-        orderCompletedAt: new Date().toISOString(),
-        // Set transaction ID if missing
-        transactionId: ensuredOrderData.transactionId || `test_tx_${Date.now()}`
+        orderCompletedAt: new Date().toISOString()
       });
       
-      setUploadStatus('Order completed successfully!');
+      setUploadStatus('Order data prepared successfully!');
       setTimeout(() => setUploadStatus(''), 3000);
       
       console.log("Order submitted with data:", ensuredOrderData);
@@ -1061,19 +1055,6 @@ const PrintDesign = ({ setOrderData, orderData, printData, isDarkMode = false })
           Clear {printSide.charAt(0).toUpperCase() + printSide.slice(1)}
         </button>
       </div>
-      
-      {/* Add order completion button */}
-      <button
-        onClick={handleOrderSubmit}
-        className={`px-6 py-2 rounded-lg font-medium ${
-          isDarkMode
-            ? 'bg-secondary text-white hover:bg-green-400'
-            : 'bg-blue-600 text-white hover:bg-blue-700'
-        }`}
-        disabled={isUploading || (!frontImage && !backImage && !leftImage && !rightImage)}
-      >
-        Complete Order (₹1)
-      </button>
     </div>
   );
 };
