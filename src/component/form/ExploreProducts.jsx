@@ -5,7 +5,7 @@ import { supabase } from "../../utils/supabase";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Header from '../Header'
 
-const FormElementInput = ({}) => {
+const FormElementInput = ({ isDarkMode = false }) => {
   const navigate = useNavigate();
   const [userId, setUserId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -184,10 +184,10 @@ const FormElementInput = ({}) => {
 
   if (isPageLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-800 dark:bg-dark-2">
+      <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-dark-2' : 'bg-gray-100'}`}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-secondary mx-auto mb-4"></div>
-          <p className="text-white text-lg">Loading form...</p>
+          <p className={`${isDarkMode ? 'text-white' : 'text-gray-900'} text-lg`}>Loading form...</p>
         </div>
       </div>
     );
@@ -195,30 +195,27 @@ const FormElementInput = ({}) => {
 
   return (
     <>
-      <section className="py-12 bg-gray-800 dark:bg-dark-2 p-5 mt-10 rounded-lg">
+      <section className={`py-12 p-5 mt-10 rounded-lg ${isDarkMode ? 'bg-dark-2' : 'bg-gray-50'}`}>
         <div className="container rounded-md p-4 mx-auto">
           {error && (
-            <div className="bg-gray-900 dark:bg-dark-1 border border-red-500 text-red-400 px-4 py-3 rounded relative mb-6" role="alert">
-              <span className="block sm:inline">{error}</span>
+            <div className="mb-6 p-4 rounded-md bg-red-100 text-red-700 border border-red-400">
+              <p>{error}</p>
             </div>
           )}
           
+          <div className="flex items-center mb-6">
+            <button 
+              onClick={handleBackClick} 
+              className={`mr-4 p-2 rounded-full hover:bg-opacity-10 ${isDarkMode ? 'hover:bg-gray-300' : 'hover:bg-gray-700'}`}
+            >
+              <ArrowBackIcon className={isDarkMode ? 'text-white' : 'text-gray-800'} />
+            </button>
+            <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Brand Onboarding Form</h2>
+          </div>
+          
           <form onSubmit={handleSubmit}>
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-white sm:text-[40px]/[48px]">
-                <span className="ml-4">Onboarding Form</span>
-              </h3>
-              <button 
-                type="button" 
-                onClick={handleBackClick}
-                className="flex items-center text-white hover:text-secondary"
-              >
-                <ArrowBackIcon /> <span className="ml-2">Back</span>
-              </button>
-            </div>
-            
             <div className="-mx-4 flex flex-wrap">
-              <DefaultColumn>
+              <DefaultColumn isDarkMode={isDarkMode}>
                 <TextInput
                   title="Brand Name"
                   name="brandName"
@@ -226,10 +223,11 @@ const FormElementInput = ({}) => {
                   onChange={handleChange}
                   value={formData.brandName}
                   formErrors={formErrors}
+                  isDarkMode={isDarkMode}
                 />
               </DefaultColumn>
 
-              <DefaultColumn>
+              <DefaultColumn isDarkMode={isDarkMode}>
                 <TextInput
                   title="Owner Name"
                   name="ownerName"
@@ -237,60 +235,66 @@ const FormElementInput = ({}) => {
                   onChange={handleChange}
                   value={formData.ownerName}
                   formErrors={formErrors}
+                  isDarkMode={isDarkMode}
                 />
               </DefaultColumn>
 
-              <DefaultColumn>
+              <DefaultColumn isDarkMode={isDarkMode}>
                 <TextInput
                   title="Contact Number"
                   name="contactNumber"
-                  placeholder="Enter contact number"
+                  placeholder="Enter your contact number"
                   onChange={handleChange}
                   value={formData.contactNumber}
                   formErrors={formErrors}
+                  isDarkMode={isDarkMode}
                 />
               </DefaultColumn>
 
-              <DefaultColumn>
+              <DefaultColumn isDarkMode={isDarkMode}>
                 <EmailInput
                   name="email"
-                  placeholder="info@example.com"
+                  placeholder="Enter your email address"
                   onChange={handleChange}
                   value={formData.email}
                   formErrors={formErrors}
+                  isDarkMode={isDarkMode}
                 />
               </DefaultColumn>
 
-              <DefaultColumn>
+              <DefaultColumn isDarkMode={isDarkMode}>
                 <TextInput
-                  title="Website Link"
+                  title="Website Link (optional)"
                   name="websiteLink"
-                  placeholder="Enter website URL"
+                  placeholder="Enter your website URL"
                   onChange={handleChange}
                   value={formData.websiteLink}
                   formErrors={formErrors}
+                  isDarkMode={isDarkMode}
                 />
               </DefaultColumn>
 
-              <DefaultColumn>
+              <DefaultColumn isDarkMode={isDarkMode}>
                 <TextInput
                   title="Theme"
                   name="theme"
-                  placeholder="Enter brand theme"
+                  placeholder="Enter your brand theme"
                   onChange={handleChange}
                   value={formData.theme}
                   formErrors={formErrors}
+                  isDarkMode={isDarkMode}
                 />
               </DefaultColumn>
 
-              <DefaultColumn>
+              <DefaultColumn isDarkMode={isDarkMode}>
                 <TextInput
-                  title="Social Handles"
+                  title="Social Handle"
                   name="socialHandles"
-                  placeholder="Enter social media link (IG)"
+                  placeholder="Enter your Instagram handle"
                   onChange={handleChange}
                   value={formData.socialHandles}
                   formErrors={formErrors}
+                  isDarkMode={isDarkMode}
                 />
               </DefaultColumn>
             </div>
@@ -298,7 +302,7 @@ const FormElementInput = ({}) => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full md:w-1/2 xl:w-1/4 bg-secondary border-secondary border rounded-md inline-flex items-center justify-center py-3 px-7 text-center text-base font-medium text-white hover:bg-[#0BB489] hover:border-[#0BB489] disabled:bg-gray-700 disabled:border-gray-700 disabled:text-gray-400"
+              className={`w-full md:w-1/2 xl:w-1/4 bg-secondary border-secondary border rounded-md inline-flex items-center justify-center py-3 px-7 text-center text-base font-medium text-white hover:bg-[#0BB489] hover:border-[#0BB489] disabled:bg-gray-3 disabled:border-gray-3 disabled:text-dark-5 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
               {isLoading ? (
                 <>
@@ -306,7 +310,7 @@ const FormElementInput = ({}) => {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Processing...
+                  Submitting...
                 </>
               ) : 'Submit'}
             </button>
@@ -319,52 +323,68 @@ const FormElementInput = ({}) => {
 
 export default FormElementInput;
 
-const DefaultColumn = ({ children }) => {
+const DefaultColumn = ({ children, isDarkMode }) => {
   return (
     <div className="w-full px-4 md:w-1/2 lg:w-1/3">
-      <div className="mb-12">{children}</div>
+      <div className={`mb-12 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{children}</div>
     </div>
   );
 };
 
-const TextInput = ({ title, name, placeholder, onChange, value, formErrors }) => {
+const TextInput = ({ title, name, placeholder, onChange, value, formErrors, isDarkMode = false }) => {
   return (
-    <>
-      <label className="mb-[10px] block text-base font-medium text-white">
+    <div>
+      <label
+        htmlFor={name}
+        className={`mb-3 block text-base font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
+      >
         {title}
       </label>
-      <input
-        type="text"
-        name={name}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        className={`w-full bg-gray-700 dark:bg-dark-3 rounded-md border ${formErrors && formErrors[name] ? 'border-red-500' : 'border-gray-600 dark:border-dark-5'} py-[10px] px-5 text-white outline-none transition focus:border-secondary active:border-secondary`}
-      />
-      {formErrors && formErrors[name] && (
-        <p className="mt-1 text-sm text-red-400">{formErrors[name]}</p>
-      )}
-    </>
+      <div className="relative">
+        <input
+          type="text"
+          id={name}
+          name={name}
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+          className={`w-full rounded-md border border-form-stroke py-3 px-5 text-base font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-[#F5F7FD] ${
+            isDarkMode 
+              ? 'bg-dark-3 border-dark-3 text-white placeholder-gray-400' 
+              : 'bg-white border-[#E9EDF4] text-body-color placeholder-body-color'
+          } ${formErrors[name] ? 'border-red-500' : ''}`}
+        />
+      </div>
+      {formErrors[name] && <p className="text-red-500 text-sm mt-1">{formErrors[name]}</p>}
+    </div>
   );
 };
 
-const EmailInput = ({ name, placeholder, onChange, value, formErrors }) => {
+const EmailInput = ({ name, placeholder, onChange, value, formErrors, isDarkMode = false }) => {
   return (
-    <>
-      <label className="mb-[10px] block text-base font-medium text-white">
-        Email
+    <div>
+      <label
+        htmlFor={name}
+        className={`mb-3 block text-base font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
+      >
+        Email Address
       </label>
-      <input
-        type="email"
-        name={name}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        className={`w-full bg-gray-700 dark:bg-dark-3 rounded-md border ${formErrors && formErrors[name] ? 'border-red-500' : 'border-gray-600 dark:border-dark-5'} py-[10px] px-5 text-white outline-none transition focus:border-secondary active:border-secondary`}
-      />
-      {formErrors && formErrors[name] && (
-        <p className="mt-1 text-sm text-red-400">{formErrors[name]}</p>
-      )}
-    </>
+      <div className="relative">
+        <input
+          type="email"
+          id={name}
+          name={name}
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+          className={`w-full rounded-md border border-form-stroke py-3 px-5 text-base font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-[#F5F7FD] ${
+            isDarkMode 
+              ? 'bg-dark-3 border-dark-3 text-white placeholder-gray-400' 
+              : 'bg-white border-[#E9EDF4] text-body-color placeholder-body-color'
+          } ${formErrors[name] ? 'border-red-500' : ''}`}
+        />
+      </div>
+      {formErrors[name] && <p className="text-red-500 text-sm mt-1">{formErrors[name]}</p>}
+    </div>
   );
 };

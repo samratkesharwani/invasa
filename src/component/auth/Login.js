@@ -6,7 +6,7 @@ import '../../css/tailwind.css';
 import { User, Loader, AlertCircle } from "lucide-react";
 import Error from '../../component/element/Error';
 
-const Signin = () => {
+const Signin = ({ isDarkMode }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("");
@@ -205,20 +205,22 @@ const Signin = () => {
         </div>
       )}
       
-      <section className="bg-dark min-h-screen flex items-center justify-center">
+      <section className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-dark' : 'bg-[#f5f9fa]'}`}>
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap justify-center">
             <div className="w-full px-4 max-w-[525px]">
-              <div className="relative mx-auto rounded-lg bg-dark px-8 py-12 sm:px-10 shadow-lg border border-gray-800">
+              <div className={`relative mx-auto rounded-lg px-8 py-12 sm:px-10 shadow-lg ${
+                isDarkMode ? 'bg-dark border border-gray-800' : 'bg-white border border-gray-200'
+              }`}>
                 <div className="mb-8 text-center">
-                  <h1 className="text-white text-2xl font-bold sm:text-3xl">
+                  <h1 className={`text-2xl font-bold sm:text-3xl ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                     Welcome Back
                   </h1>
-                  <p className="text-gray-400 mt-2">Sign in to your account</p>
+                  <p className={`mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Sign in to your account</p>
                 </div>
                 <form onSubmit={handleLogin} className="space-y-5">
                   <div>
-                    <label htmlFor="email" className="text-white text-sm font-medium block mb-1">Email</label>
+                    <label htmlFor="email" className={`text-sm font-medium block mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Email</label>
                     <input
                       id="email"
                       type="email"
@@ -238,7 +240,7 @@ const Signin = () => {
                   </div>
                   
                   <div>
-                    <label htmlFor="password" className="text-white text-sm font-medium block mb-1">Password</label>
+                    <label htmlFor="password" className={`text-sm font-medium block mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Password</label>
                     <input
                       id="password"
                       type="password"
@@ -261,7 +263,7 @@ const Signin = () => {
                     <button 
                       type="button" 
                       onClick={handleForgotPassword}
-                      className="text-sm text-primary hover:underline"
+                      className={`text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'} hover:text-primary`}
                       disabled={loading}
                     >
                       Forgot Password?
@@ -271,30 +273,28 @@ const Signin = () => {
                   <div>
                     <button
                       type="submit"
-                      className="w-full rounded-md border border-primary bg-primary px-5 py-3 text-white transition hover:bg-opacity-90 flex items-center justify-center disabled:opacity-70"
+                      className={`w-full rounded-md border border-primary bg-primary px-5 py-3 text-white transition hover:bg-opacity-90 flex items-center justify-center disabled:opacity-70`}
                       disabled={loading}
                     >
                       {loading ? (
-                        <>
-                          <Loader className="animate-spin h-5 w-5 mr-2" />
-                          Signing in...
-                        </>
+                        <Loader className="animate-spin h-5 w-5 mr-2" />
                       ) : (
-                        "Sign In"
+                        <User className="h-5 w-5 mr-2" />
                       )}
+                      {loading ? "Signing in..." : "Sign In"}
                     </button>
                   </div>
                 </form>
                 
                 <div className="mt-8 text-center">
-                  <p className="text-gray-400">
-                    <span className="pr-0.5">Not registered yet?</span>{" "}
+                  <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <span className={`${isDarkMode ? 'text-white' : 'text-black'} pr-0.5`}>Not registered yet?</span>{" "}
                     <button 
                       onClick={goToRegister} 
-                      className="text-primary hover:underline font-medium"
+                      className={`text-primary hover:underline font-medium`}
                       disabled={loading}
                     >
-                      Create an account
+                      Create an Account
                     </button>
                   </p>
                 </div>

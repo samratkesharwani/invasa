@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../utils/supabase';
-import PrintViewer from '../../components/PrintViewer';
+import PrintViewer from '../../component/element/PrintViewer';
 
 const BrandsDashboard = () => {
   const [orders, setOrders] = useState([]);

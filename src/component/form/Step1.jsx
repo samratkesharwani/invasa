@@ -5,7 +5,7 @@ import "../../css/tailwind.css";
 import { supabase } from "../../utils/supabase";
 import Header from "../Header";
 
-function Step1({ nextPage, handleChange, formData }) {
+function Step1({ nextPage, handleChange, formData, isDarkMode = false }) {
   const [address, setAddress] = useState('');
   const [coordinates, setCoordinates] = useState(null);
   const [errors, setErrors] = useState({});
@@ -141,10 +141,10 @@ function Step1({ nextPage, handleChange, formData }) {
   return (
     <>
       <div style={{ marginBottom: '-3vw' }} className=""></div>
-      <section className="py-12">
+      <section className={`py-12 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
         <div className="container">
           <div className="-mx-4 flex flex-wrap">
-            <DefaultColumn>
+            <DefaultColumn isDarkMode={isDarkMode}>
               <TextInput
                 title="Business Name"
                 name="businessName"
@@ -153,10 +153,11 @@ function Step1({ nextPage, handleChange, formData }) {
                 onBlur={handleBlur}
                 value={formData.businessName}
                 error={touched.businessName && errors.businessName}
+                isDarkMode={isDarkMode}
               />
             </DefaultColumn>
 
-            <DefaultColumn>
+            <DefaultColumn isDarkMode={isDarkMode}>
               <TextInput
                 title="Owner Name"
                 name="ownerName"
@@ -165,10 +166,11 @@ function Step1({ nextPage, handleChange, formData }) {
                 onBlur={handleBlur}
                 value={formData.ownerName}
                 error={touched.ownerName && errors.ownerName}
+                isDarkMode={isDarkMode}
               />
             </DefaultColumn>
 
-            <DefaultColumn>
+            <DefaultColumn isDarkMode={isDarkMode}>
               <TextInput
                 title="Contact Number"
                 name="contactNumber"
@@ -177,10 +179,11 @@ function Step1({ nextPage, handleChange, formData }) {
                 onBlur={handleBlur}
                 value={formData.contactNumber}
                 error={touched.contactNumber && errors.contactNumber}
+                isDarkMode={isDarkMode}
               />
             </DefaultColumn>
 
-            <DefaultColumn>
+            <DefaultColumn isDarkMode={isDarkMode}>
               <EmailInput
                 name="email"
                 placeholder="info@example.com"
@@ -188,10 +191,11 @@ function Step1({ nextPage, handleChange, formData }) {
                 onBlur={handleBlur}
                 value={formData.email}
                 error={touched.email && errors.email}
+                isDarkMode={isDarkMode}
               />
             </DefaultColumn>
 
-            <DefaultColumn>
+            <DefaultColumn isDarkMode={isDarkMode}>
               <TextInput
                 title="Address"
                 name="address"
@@ -200,10 +204,11 @@ function Step1({ nextPage, handleChange, formData }) {
                 onBlur={handleBlur}
                 value={formData.address}
                 error={touched.address && errors.address}
+                isDarkMode={isDarkMode}
               />
             </DefaultColumn>
 
-            <DefaultColumn>
+            <DefaultColumn isDarkMode={isDarkMode}>
               <TextInput
                 title="City"
                 name="city"
@@ -212,10 +217,11 @@ function Step1({ nextPage, handleChange, formData }) {
                 onBlur={handleBlur}
                 value={formData.city}
                 error={touched.city && errors.city}
+                isDarkMode={isDarkMode}
               />
             </DefaultColumn>
 
-            <DefaultColumn>
+            <DefaultColumn isDarkMode={isDarkMode}>
               <TextInput
                 title="Pincode"
                 name="pincode"
@@ -224,6 +230,7 @@ function Step1({ nextPage, handleChange, formData }) {
                 onBlur={handleBlur}
                 value={formData.pincode}
                 error={touched.pincode && errors.pincode}
+                isDarkMode={isDarkMode}
               />
             </DefaultColumn>
           </div>
@@ -242,54 +249,68 @@ function Step1({ nextPage, handleChange, formData }) {
 
 export default Step1;
 
-const DefaultColumn = ({ children }) => {
+const DefaultColumn = ({ children, isDarkMode }) => {
   return (
     <div className="w-full px-4 md:w-1/2 lg:w-1/3">
-      <div className="mb-12">{children}</div>
+      <div className={`mb-12 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{children}</div>
     </div>
   );
 };
 
-const TextInput = ({ title, name, placeholder, onChange, onBlur, value, error }) => {
+const TextInput = ({ title, name, placeholder, onChange, onBlur, value, error, isDarkMode = false }) => {
   return (
-    <>
-      <label className="mb-[10px] block text-base font-medium text-dark text-white">
+    <div>
+      <label
+        htmlFor={name}
+        className={`mb-3 block text-base font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
+      >
         {title}
       </label>
-      <input
-        type="text"
-        name={name}
-        value={value}
-        onChange={onChange}
-        onBlur={onBlur}
-        placeholder={placeholder}
-        className={`w-full bg-transparent rounded-md border ${error ? 'border-red-500' : 'border-stroke dark:border-dark-3'} py-[10px] px-5 text-dark-6 outline-none transition focus:border-primary active:border-primary`}
-      />
-      {error && (
-        <p className="mt-1 text-sm text-red-500">{error}</p>
-      )}
-    </>
+      <div className="relative">
+        <input
+          type="text"
+          name={name}
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+          onBlur={onBlur}
+          className={`w-full rounded-md border border-form-stroke py-3 px-5 text-base font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-[#F5F7FD] ${
+            isDarkMode 
+              ? 'bg-dark-3 border-dark-3 text-white placeholder-gray-400' 
+              : 'bg-white border-[#E9EDF4] text-body-color placeholder-body-color'
+          } ${error ? 'border-red-500' : ''}`}
+        />
+      </div>
+      {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+    </div>
   );
 };
 
-const EmailInput = ({ name, placeholder, onChange, onBlur, value, error }) => {
+const EmailInput = ({ name, placeholder, onChange, onBlur, value, error, isDarkMode = false }) => {
   return (
-    <>
-      <label className="mb-[10px] block text-base font-medium text-dark text-white">
-        Email
+    <div>
+      <label
+        htmlFor={name}
+        className={`mb-3 block text-base font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
+      >
+        Email Address
       </label>
-      <input
-        type="email"
-        name={name}
-        value={value}
-        onChange={onChange}
-        onBlur={onBlur}
-        placeholder={placeholder}
-        className={`w-full bg-transparent rounded-md border ${error ? 'border-red-500' : 'border-stroke dark:border-dark-3'} py-[10px] px-5 text-dark-6 outline-none transition focus:border-primary active:border-primary`}
-      />
-      {error && (
-        <p className="mt-1 text-sm text-red-500">{error}</p>
-      )}
-    </>
+      <div className="relative">
+        <input
+          type="email"
+          name={name}
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+          onBlur={onBlur}
+          className={`w-full rounded-md border border-form-stroke py-3 px-5 text-base font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-[#F5F7FD] ${
+            isDarkMode 
+              ? 'bg-dark-3 border-dark-3 text-white placeholder-gray-400' 
+              : 'bg-white border-[#E9EDF4] text-body-color placeholder-body-color'
+          } ${error ? 'border-red-500' : ''}`}
+        />
+      </div>
+      {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+    </div>
   );
 };

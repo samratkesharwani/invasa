@@ -5,15 +5,15 @@ import DesignPreview from './DesignPreview';
 import PrintDesign from '../seller/order/PrintDesign';
 
 // Fixed PrintPreview Component - Shows exact positioning of designs with grid lines
-const PrintPreview = ({ print, productType = 'tshirt' }) => {
+const PrintPreview = ({ print, productType = 'tshirt', isDarkMode = true }) => {
   // Constants for display
   const PIXELS_PER_INCH = 16;
   const containerStyle = {
     position: 'relative',
     width: '100%',
     height: '300px',
-    backgroundColor: '#1a1a1a',
-    border: '1px solid #333',
+    backgroundColor: isDarkMode ? '#1a1a1a' : '#f0f0f0',
+    border: isDarkMode ? '1px solid #333' : '1px solid #ddd',
     borderRadius: '4px',
     overflow: 'hidden',
     display: 'flex',
@@ -152,7 +152,7 @@ const PrintPreview = ({ print, productType = 'tshirt' }) => {
             top: `${i * gridSize}px`,
             width: '100%',
             height: '1px',
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
             zIndex: 3
           }}
         />
@@ -170,7 +170,7 @@ const PrintPreview = ({ print, productType = 'tshirt' }) => {
             top: 0,
             width: '1px',
             height: '100%',
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
             zIndex: 3
           }}
         />
@@ -187,7 +187,7 @@ const PrintPreview = ({ print, productType = 'tshirt' }) => {
           top: '50%',
           width: '100%',
           height: '1px',
-          backgroundColor: 'rgba(255, 255, 255, 0.3)',
+          backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
           zIndex: 4
         }}
       />
@@ -202,7 +202,7 @@ const PrintPreview = ({ print, productType = 'tshirt' }) => {
           top: 0,
           width: '1px',
           height: '100%',
-          backgroundColor: 'rgba(255, 255, 255, 0.3)',
+          backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
           zIndex: 4
         }}
       />
@@ -274,7 +274,7 @@ const PrintPreview = ({ print, productType = 'tshirt' }) => {
               position: 'absolute',
               bottom: '8px',
               left: '8px',
-              color: 'rgba(255, 255, 255, 0.7)',
+              color: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)',
               fontSize: '10px',
               zIndex: 15
             }}>
@@ -285,7 +285,7 @@ const PrintPreview = ({ print, productType = 'tshirt' }) => {
               position: 'absolute',
               bottom: '8px',
               right: '8px',
-              color: 'rgba(255, 255, 255, 0.7)',
+              color: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)',
               fontSize: '10px',
               zIndex: 15
             }}>
@@ -296,7 +296,7 @@ const PrintPreview = ({ print, productType = 'tshirt' }) => {
               position: 'absolute',
               top: '8px',
               left: '8px',
-              color: 'rgba(255, 255, 255, 0.7)',
+              color: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)',
               fontSize: '10px',
               zIndex: 15
             }}>
@@ -307,7 +307,7 @@ const PrintPreview = ({ print, productType = 'tshirt' }) => {
               position: 'absolute',
               top: '8px',
               right: '8px',
-              color: 'rgba(255, 255, 255, 0.7)',
+              color: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)',
               fontSize: '10px',
               zIndex: 15
             }}>
@@ -318,29 +318,29 @@ const PrintPreview = ({ print, productType = 'tshirt' }) => {
       </div>
       
       <div className="mt-3 space-y-1 text-sm">
-        <p className="text-gray-300">Position: <span className="text-white">{print.position}</span></p>
-        <p className="text-gray-300">Coordinates: <span className="text-white">
+        <p className={isDarkMode ? "text-gray-300" : "text-gray-700"}>Position: <span className={isDarkMode ? "text-white" : "text-black"}>{print.position}</span></p>
+        <p className={isDarkMode ? "text-gray-300" : "text-gray-700"}>Coordinates: <span className={isDarkMode ? "text-white" : "text-black"}>
           x: {Math.round(print.x)}, y: {Math.round(print.y)}
         </span></p>
         {!print.isCaptured && (
           <>
-            <p className="text-gray-300">Size: <span className="text-white">
+            <p className={isDarkMode ? "text-gray-300" : "text-gray-700"}>Size: <span className={isDarkMode ? "text-white" : "text-black"}>
               {(print.width / PIXELS_PER_INCH).toFixed(1)}" × {(print.height / PIXELS_PER_INCH).toFixed(1)}"
             </span></p>
-            <p className="text-gray-300">Area: <span className="text-white">
+            <p className={isDarkMode ? "text-gray-300" : "text-gray-700"}>Area: <span className={isDarkMode ? "text-white" : "text-black"}>
               {print.area} sq in
             </span></p>
           </>
         )}
         {print.isCaptured && (
-          <p className="text-gray-300"><span className="text-green-400 font-medium">✓ Captured Design</span></p>
+          <p className={isDarkMode ? "text-gray-300" : "text-gray-700"}><span className="text-green-400 font-medium">✓ Captured Design</span></p>
         )}
       </div>
     </div>
   );
 };
 
-const OrdersComponent = ({ sellerId }) => {
+const OrdersComponent = ({ sellerId, isDarkMode = true }) => {
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -666,49 +666,49 @@ const OrdersComponent = ({ sellerId }) => {
   };
 
   return (
-    <div className="p-6 bg-dark-1 min-h-screen">
-      <h1 className="text-2xl font-bold text-white mb-6">Orders</h1>
+    <div className={isDarkMode ? "p-6 bg-dark-1 min-h-screen" : "p-6 bg-gray-100 min-h-screen"}>
+      <h1 className={isDarkMode ? "text-2xl font-bold text-white mb-6" : "text-2xl font-bold text-gray-900 mb-6"}>Orders</h1>
 
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-secondary"></div>
         </div>
       ) : !isApproved ? (
-        <div className="text-center py-12 bg-dark-2 rounded-lg p-6">
+        <div className={isDarkMode ? "text-center py-12 bg-dark-2 rounded-lg p-6" : "text-center py-12 bg-white rounded-lg p-6 shadow"}>
           <div className={getStatusBadgeClass(sellerStatus)} style={{display: 'inline-block', marginBottom: '12px'}}>
             {sellerStatus || 'Unknown'}
           </div>
-          <p className="text-gray-300 text-lg mb-2">Your business account is not yet approved</p>
-          <p className="text-gray-400">You will be able to view orders once your account is approved by the admin.</p>
-          <p className="text-gray-500 mt-4">Seller ID: {sellerId}</p>
+          <p className={isDarkMode ? "text-gray-300 text-lg mb-2" : "text-gray-700 text-lg mb-2"}>Your business account is not yet approved</p>
+          <p className={isDarkMode ? "text-gray-400" : "text-gray-600"}>You will be able to view orders once your account is approved by the admin.</p>
+          <p className={isDarkMode ? "text-gray-500 mt-4" : "text-gray-500 mt-4"}>Seller ID: {sellerId}</p>
         </div>
       ) : orders.length === 0 ? (
-        <div className="text-center py-12 bg-dark-2 rounded-lg">
-          <p className="text-gray-400 text-lg">No orders found</p>
-          <p className="text-gray-500 mt-2">Seller ID: {sellerId}</p>
+        <div className={isDarkMode ? "text-center py-12 bg-dark-2 rounded-lg" : "text-center py-12 bg-white rounded-lg shadow"}>
+          <p className={isDarkMode ? "text-gray-400 text-lg" : "text-gray-600 text-lg"}>No orders found</p>
+          <p className={isDarkMode ? "text-gray-500 mt-2" : "text-gray-500 mt-2"}>Seller ID: {sellerId}</p>
         </div>
       ) : (
-        <div className="bg-dark-2 rounded-lg overflow-hidden">
-      <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-700">
-              <thead className="bg-dark-3">
+        <div className={isDarkMode ? "bg-dark-2 rounded-lg overflow-hidden" : "bg-white rounded-lg shadow overflow-hidden"}>
+          <div className="overflow-x-auto">
+            <table className={`min-w-full divide-y ${isDarkMode ? 'divide-gray-700 text-gray-300' : 'divide-gray-200 text-gray-700'}`}>
+              <thead className={isDarkMode ? "bg-dark-3" : "bg-gray-50"}>
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Order ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Customer</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Product</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Prints</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
-      </tr>
-    </thead>
-              <tbody className="divide-y divide-gray-700">
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Order ID</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Date</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Customer</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Product</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Prints</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Status</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Actions</th>
+                </tr>
+              </thead>
+              <tbody className={isDarkMode ? "divide-y divide-gray-700" : "divide-y divide-gray-200"}>
                 {orders.map((order) => (
-                  <tr key={order.id} className="hover:bg-dark-4">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">#{order.id}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{formatDate(order.date)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{order.customerInfo?.customerName}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{order.productData?.selectedProduct}</td>
+                  <tr key={order.id} className={isDarkMode ? "hover:bg-dark-4" : "hover:bg-gray-50"}>
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>#{order.id}</td>
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{formatDate(order.date)}</td>
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{order.customerInfo?.customerName}</td>
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{order.productData?.selectedProduct}</td>
                     <td className="px-6 py-4">
                       <div className="flex space-x-2">
                         {order.printImages && order.printImages.length > 0 ? (
@@ -717,7 +717,7 @@ const OrdersComponent = ({ sellerId }) => {
                               <img 
                                 src={print.image} 
                                 alt={`${print.position} Print`} 
-                                className="h-10 w-10 object-cover rounded border border-gray-700"
+                                className={`h-10 w-10 object-cover rounded border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'}`}
                               />
                               <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs py-1 text-center rounded-b opacity-0 group-hover:opacity-100 transition-opacity">
                                 {print.position}
@@ -725,10 +725,10 @@ const OrdersComponent = ({ sellerId }) => {
                             </div>
                           ))
                         ) : (
-                          <span className="text-gray-500 text-sm">No prints</span>
+                          <span className={isDarkMode ? "text-gray-500 text-sm" : "text-gray-400 text-sm"}>No prints</span>
                         )}
                         {order.printImages && order.printImages.length > 2 && (
-                          <div className="h-10 w-10 bg-dark-3 rounded flex items-center justify-center text-gray-400 text-xs">
+                          <div className={`h-10 w-10 ${isDarkMode ? 'bg-dark-3' : 'bg-gray-200'} rounded flex items-center justify-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-xs`}>
                             +{order.printImages.length - 2}
                           </div>
                         )}
@@ -738,17 +738,17 @@ const OrdersComponent = ({ sellerId }) => {
                       <span className={getStatusBadgeClass(order.status)}>{order.status || 'Unknown'}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-              <button
-                onClick={() => openModal(order)}
+                      <button
+                        onClick={() => openModal(order)}
                         className="text-secondary hover:text-[#0BB489] transition-colors duration-200"
-              >
+                      >
                         View Details
-              </button>
-            </td>
-          </tr>
+                      </button>
+                    </td>
+                  </tr>
                 ))}
-    </tbody>
-  </table>
+              </tbody>
+            </table>
           </div>
         </div>
       )}
@@ -762,62 +762,62 @@ const OrdersComponent = ({ sellerId }) => {
         <div className="flex items-center justify-center min-h-screen">
           <Dialog.Overlay className="fixed inset-0 bg-black opacity-50" />
 
-          <div className="bg-dark-2 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto relative z-10">
+          <div className={isDarkMode ? "bg-dark-2 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto relative z-10" : "bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto relative z-10 shadow-xl"}>
             {selectedOrder && (
               <>
                 <div className="flex justify-between items-center mb-6">
-                  <Dialog.Title className="text-2xl font-bold text-white">
+                  <Dialog.Title className={isDarkMode ? "text-2xl font-bold text-white" : "text-2xl font-bold text-gray-900"}>
                     Order Details
                   </Dialog.Title>
                   <button
                     onClick={closeModal}
-                    className="text-gray-400 hover:text-white"
+                    className={isDarkMode ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-900"}
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
-</div>
+                </div>
 
                 {/* Order Information */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                  <div className="bg-dark-3 p-4 rounded-lg">
-                    <h3 className="text-lg font-semibold text-white mb-4">Order Information</h3>
+                  <div className={isDarkMode ? "bg-dark-3 p-4 rounded-lg" : "bg-gray-50 p-4 rounded-lg"}>
+                    <h3 className={isDarkMode ? "text-lg font-semibold text-white mb-4" : "text-lg font-semibold text-gray-900 mb-4"}>Order Information</h3>
                     <div className="space-y-2">
-                      <p className="text-gray-300">Order ID: <span className="text-white">{selectedOrder.id}</span></p>
-                      <p className="text-gray-300">Date: <span className="text-white">{formatDate(selectedOrder.date)}</span></p>
-                      <p className="text-gray-300">Status: <span className="text-white">{selectedOrder.status || 'Unknown'}</span></p>
-                      <p className="text-gray-300">City: <span className="text-white">{selectedOrder.selectedCity}</span></p>
-                      <p className="text-gray-300">Payment: <span className="text-white">{selectedOrder.paymentAmount || 'N/A'}</span></p>
-                      <p className="text-gray-300">Transaction ID: <span className="text-white">{selectedOrder.transactionId || 'N/A'}</span></p>
+                      <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Order ID: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.id}</span></p>
+                      <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Date: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{formatDate(selectedOrder.date)}</span></p>
+                      <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Status: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.status || 'Unknown'}</span></p>
+                      <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>City: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.selectedCity}</span></p>
+                      <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Payment: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.paymentAmount || 'N/A'}</span></p>
+                      <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Transaction ID: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.transactionId || 'N/A'}</span></p>
                     </div>
                   </div>
 
-                  <div className="bg-dark-3 p-4 rounded-lg">
-                    <h3 className="text-lg font-semibold text-white mb-4">Customer Information</h3>
+                  <div className={isDarkMode ? "bg-dark-3 p-4 rounded-lg" : "bg-gray-50 p-4 rounded-lg"}>
+                    <h3 className={isDarkMode ? "text-lg font-semibold text-white mb-4" : "text-lg font-semibold text-gray-900 mb-4"}>Customer Information</h3>
                     <div className="space-y-2">
-                      <p className="text-gray-300">Name: <span className="text-white">{selectedOrder.customerInfo?.customerName}</span></p>
-                      <p className="text-gray-300">Contact: <span className="text-white">{selectedOrder.customerInfo?.customerContact}</span></p>
-                      <p className="text-gray-300">Address: <span className="text-white">{selectedOrder.fullAddress?.address}</span></p>
-                      <p className="text-gray-300">Pincode: <span className="text-white">{selectedOrder.fullAddress?.pincode}</span></p>
+                      <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Name: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.customerInfo?.customerName}</span></p>
+                      <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Contact: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.customerInfo?.customerContact}</span></p>
+                      <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Address: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.fullAddress?.address}</span></p>
+                      <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Pincode: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.fullAddress?.pincode}</span></p>
                     </div>
                   </div>
-            </div>
+                </div>
 
                 {/* Product Details */}
-                <div className="bg-dark-3 p-4 rounded-lg mb-6">
-                  <h3 className="text-lg font-semibold text-white mb-4">Product Details</h3>
+                <div className={isDarkMode ? "bg-dark-3 p-4 rounded-lg mb-6" : "bg-gray-50 p-4 rounded-lg mb-6"}>
+                  <h3 className={isDarkMode ? "text-lg font-semibold text-white mb-4" : "text-lg font-semibold text-gray-900 mb-4"}>Product Details</h3>
                   <div className="space-y-2">
-                    <p className="text-gray-300">Product: <span className="text-white">{selectedOrder.productData?.selectedProduct}</span></p>
-                    <p className="text-gray-300">Color: <span className="text-white">{selectedOrder.productData?.selectedColor}</span></p>
-                    <p className="text-gray-300">Size: <span className="text-white">{selectedOrder.productData?.selectedSize}</span></p>
-                    <p className="text-gray-300">Quantity: <span className="text-white">{selectedOrder.productData?.quantity}</span></p>
-            </div>
-            </div>
+                    <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Product: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.productData?.selectedProduct}</span></p>
+                    <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Color: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.productData?.selectedColor}</span></p>
+                    <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Size: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.productData?.selectedSize}</span></p>
+                    <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Quantity: <span className={isDarkMode ? "text-white" : "text-gray-900"}>{selectedOrder.productData?.quantity}</span></p>
+                  </div>
+                </div>
 
                 {/* Print Designs */}
-                <div className="bg-dark-3 p-4 rounded-lg mb-6">
-                  <h3 className="text-lg font-semibold text-white mb-4">Print Designs</h3>
+                <div className={isDarkMode ? "bg-dark-3 p-4 rounded-lg mb-6" : "bg-gray-50 p-4 rounded-lg mb-6"}>
+                  <h3 className={isDarkMode ? "text-lg font-semibold text-white mb-4" : "text-lg font-semibold text-gray-900 mb-4"}>Print Designs</h3>
                   
                   {/* Add the DesignPreview component */}
                   {selectedOrder.printImages && selectedOrder.printImages.length > 0 ? (
@@ -825,6 +825,7 @@ const OrdersComponent = ({ sellerId }) => {
                       <DesignPreview 
                         prints={selectedOrder.printImages} 
                         productType={selectedOrder.productData?.selectedProduct || 'tshirt'} 
+                        isDarkMode={isDarkMode}
                       />
                     </div>
                   ) : null}
@@ -832,26 +833,27 @@ const OrdersComponent = ({ sellerId }) => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {selectedOrder.printImages && selectedOrder.printImages.length > 0 ? (
                       selectedOrder.printImages.map((print, index) => (
-                        <div key={index} className="bg-dark-4 p-4 rounded-lg">
-                          <h4 className="text-white font-medium mb-2">{print.position}</h4>
+                        <div key={index} className={isDarkMode ? "bg-dark-4 p-4 rounded-lg" : "bg-gray-100 p-4 rounded-lg"}>
+                          <h4 className={isDarkMode ? "text-white font-medium mb-2" : "text-gray-900 font-medium mb-2"}>{print.position}</h4>
                           
                           {/* Print Preview Component */}
                           <PrintPreview 
                             print={print} 
                             productType={print.productType} 
+                            isDarkMode={isDarkMode}
                           />
                           
-            <button
+                          <button
                             onClick={() => downloadPrintImage(print.image, print.position)}
                             className="w-full mt-4 bg-secondary hover:bg-[#0BB489] text-white px-4 py-2 rounded transition-colors duration-200"
-            >
+                          >
                             Download Print
-            </button>
+                          </button>
                         </div>
                       ))
                     ) : (
                       <div className="col-span-2 text-center py-8">
-                        <p className="text-gray-400">No print designs for this order</p>
+                        <p className={isDarkMode ? "text-gray-400" : "text-gray-500"}>No print designs for this order</p>
                       </div>
                     )}
                   </div>
@@ -859,12 +861,12 @@ const OrdersComponent = ({ sellerId }) => {
 
                 {/* Action Buttons */}
                 <div className="flex justify-end space-x-4 mt-6">
-            <button
-              onClick={closeModal}
-                    className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
-            >
-              Close
-            </button>
+                  <button
+                    onClick={closeModal}
+                    className={isDarkMode ? "px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors" : "px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors"}
+                  >
+                    Close
+                  </button>
                   {selectedOrder.status === 'pending' && (
                     <button
                       onClick={markAsReadyToDeliver}
@@ -877,15 +879,15 @@ const OrdersComponent = ({ sellerId }) => {
               </>
             )}
           </div>
-          </div>
-        </Dialog>
+        </div>
+      </Dialog>
 
       
       {showPrintDesign && (
         <div className="modal">
           <div className="modal-content">
             <span className="close" onClick={handleHidePrintDesign}>&times;</span>
-            <PrintDesign setOrderData={setOrderData} orderData={orderData} printData={printData} />
+            <PrintDesign setOrderData={setOrderData} orderData={orderData} printData={printData} isDarkMode={isDarkMode} />
           </div>
         </div>
       )}

@@ -3,7 +3,7 @@ import Draggable from 'react-draggable';
 import { ResizableBox } from 'react-resizable';
 import 'react-resizable/css/styles.css';
 
-const PrintDesign = ({ setOrderData, orderData, printData }) => {
+const PrintDesign = ({ setOrderData, orderData, printData, isDarkMode = false }) => {
   // Constants for size constraints (in pixels for the UI, representing inches)
   const PIXELS_PER_INCH = 16;
   const MAX_FRONT_BACK_WIDTH = 12 * PIXELS_PER_INCH; // 12 inches
@@ -36,6 +36,59 @@ const PrintDesign = ({ setOrderData, orderData, printData }) => {
   const [isUploading, setIsUploading] = useState(false);
   const containerRef = useRef(null);
   const printAreaRef = useRef(null);
+  
+  // Load existing print data from orderData when component mounts
+  useEffect(() => {
+    if (orderData && orderData.printData && orderData.printData.length > 0) {
+      // Restore saved print data
+      orderData.printData.forEach(print => {
+        if (!print.side || !print.image) return;
+        
+        switch (print.side) {
+          case 'front':
+            setFrontImage(print.image);
+            if (print.width && print.height) {
+              setFrontSize({ width: print.width, height: print.height });
+            }
+            if (print.x !== undefined && print.y !== undefined) {
+              setFrontPosition({ x: print.x, y: print.y });
+            }
+            break;
+          case 'back':
+            setBackImage(print.image);
+            if (print.width && print.height) {
+              setBackSize({ width: print.width, height: print.height });
+            }
+            if (print.x !== undefined && print.y !== undefined) {
+              setBackPosition({ x: print.x, y: print.y });
+            }
+            break;
+          case 'left':
+            setLeftImage(print.image);
+            if (print.width && print.height) {
+              setLeftSize({ width: print.width, height: print.height });
+            }
+            if (print.x !== undefined && print.y !== undefined) {
+              setLeftPosition({ x: print.x, y: print.y });
+            }
+            break;
+          case 'right':
+            setRightImage(print.image);
+            if (print.width && print.height) {
+              setRightSize({ width: print.width, height: print.height });
+            }
+            if (print.x !== undefined && print.y !== undefined) {
+              setRightPosition({ x: print.x, y: print.y });
+            }
+            break;
+          default:
+            break;
+        }
+      });
+      
+      console.log("Restored print data from orderData:", orderData.printData);
+    }
+  }, [orderData.printData]);
   
   // Calculate print area in square inches
   const calculatePrintArea = (size) => {
@@ -146,15 +199,23 @@ const PrintDesign = ({ setOrderData, orderData, printData }) => {
       });
     }
     
-    // Update order data with print information and total area
-    setOrderData({
-      ...orderData,
-      printData: prints,
-      totalPrintArea: parseFloat(totalPrintArea)
-    });
+    // Only update if something has changed (deep comparison of arrays is tricky)
+    // So we'll compare the stringified versions
+    const currentPrints = JSON.stringify(prints);
+    const previousPrints = JSON.stringify(orderData.printData || []);
     
+    if (currentPrints !== previousPrints || parseFloat(totalPrintArea) !== orderData.totalPrintArea) {
+      console.log("Updating order data with print information:", prints);
+      
+      // Update order data with print information and total area
+      setOrderData(prevOrderData => ({
+        ...prevOrderData,
+        printData: prints,
+        totalPrintArea: parseFloat(totalPrintArea)
+      }));
+    }
   }, [frontImage, backImage, leftImage, rightImage, frontSize, backSize, leftSize, rightSize, 
-      frontPosition, backPosition, leftPosition, rightPosition, totalPrintArea, setOrderData, orderData]);
+      frontPosition, backPosition, leftPosition, rightPosition, totalPrintArea, setOrderData, orderData.printData]);
   
   // Upload image to server and get URL
   const uploadImageToServer = async (file) => {
@@ -513,16 +574,30 @@ const PrintDesign = ({ setOrderData, orderData, printData }) => {
     return [MAX_FRONT_BACK_WIDTH, MAX_FRONT_BACK_HEIGHT];
   };
   
-  // Calculate individual print areas
+  // Get individual print areas
   const getIndividualPrintAreas = () => {
-    const areas = {
-      front: frontImage ? calculatePrintArea(frontSize).toFixed(1) : 0,
-      back: backImage ? calculatePrintArea(backSize).toFixed(1) : 0,
-      left: leftImage ? calculatePrintArea(leftSize).toFixed(1) : 0,
-      right: rightImage ? calculatePrintArea(rightSize).toFixed(1) : 0
-    };
-    
-    return areas;
+    return [
+      { 
+        side: 'front', 
+        area: frontImage ? calculatePrintArea(frontSize).toFixed(1) : 0,
+        hasImage: !!frontImage
+      },
+      { 
+        side: 'back', 
+        area: backImage ? calculatePrintArea(backSize).toFixed(1) : 0,
+        hasImage: !!backImage
+      },
+      { 
+        side: 'left', 
+        area: leftImage ? calculatePrintArea(leftSize).toFixed(1) : 0,
+        hasImage: !!leftImage
+      },
+      { 
+        side: 'right', 
+        area: rightImage ? calculatePrintArea(rightSize).toFixed(1) : 0,
+        hasImage: !!rightImage
+      }
+    ];
   };
   
   // Get active print count
@@ -762,200 +837,165 @@ const PrintDesign = ({ setOrderData, orderData, printData }) => {
   };
   
   return (
-    <div className="bg-dark-3 p-4 rounded-lg">
-      <h3 className="text-white mb-4">Design Your Print</h3>
+    <div className={`${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+      {/* Print side selection tabs */}
+      <div className="flex mb-4">
+        {['front', 'back', 'left', 'right'].map((side) => (
+          <button
+            key={side}
+            onClick={() => updatePrintSide(side)}
+            className={`px-4 py-2 border-b-2 ${
+              printSide === side
+                ? isDarkMode
+                  ? 'border-secondary text-secondary'
+                  : 'border-blue-600 text-blue-600'
+                : isDarkMode
+                  ? 'border-gray-700 text-gray-400 hover:text-gray-300'
+                  : 'border-gray-200 text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            {side.charAt(0).toUpperCase() + side.slice(1)}
+          </button>
+        ))}
+      </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Print Upload */}
-        <div>
-          <div className="mb-4">
-            <label className="block text-white mb-2 font-medium">Upload Your Design for {printSide.charAt(0).toUpperCase() + printSide.slice(1)}</label>
-            <div className="flex items-center">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileUpload}
-                className="hidden"
-                id="design-upload"
-                disabled={isUploading}
-              />
-              <label
-                htmlFor="design-upload"
-                className={`${
-                  isUploading 
-                    ? 'bg-gray-500 cursor-not-allowed' 
-                    : 'bg-secondary hover:bg-[#0BB489] cursor-pointer'
-                } text-white px-4 py-2 rounded transition-colors duration-200 flex items-center`}
-              >
-                {isUploading ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Uploading...
-                  </>
-                ) : (
-                  'Choose File'
-                )}
-              </label>
-              <span className="ml-3 text-gray-300 text-sm">
-                {getCurrentImage() ? 'Image uploaded!' : 'No file chosen'}
-              </span>
-            </div>
-            
-            {uploadStatus && (
-              <div className={`mt-2 p-2 rounded text-sm ${
-                uploadStatus.includes('successful') 
-                  ? 'bg-green-900 text-green-200' 
-                  : uploadStatus.includes('failed') 
-                    ? 'bg-red-900 text-red-200' 
-                    : 'bg-blue-900 text-blue-200'
-              }`}>
-                {uploadStatus}
-              </div>
-            )}
-            
-            <p className="text-gray-400 text-sm mt-2">
-              Upload your design to place on the {printSide}. Drag to position and resize using corner handles.
-            </p>
-          </div>
-          
-          {/* Print Size Information */}
-          <div className="bg-gray-800 p-3 rounded-lg mt-4">
-            <h4 className="text-white text-sm font-medium mb-2">Print Size Information</h4>
-            
-            {getCurrentImage() ? (
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-400 text-sm">Current Size:</span>
-                  <span className="text-white text-sm font-medium">{currentPrintSize.width}" × {currentPrintSize.height}"</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400 text-sm">Current Area:</span>
-                  <span className="text-white text-sm font-medium">{currentPrintSize.area} sq in</span>
-                </div>
-                
-                {getActivePrintCount() > 1 && (
-                  <div className="mt-3 pt-2 border-t border-gray-700">
-                    <p className="text-gray-400 text-sm mb-1">All Print Areas:</p>
-                    <div className="space-y-1 pl-2">
-                      {frontImage && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-400 text-xs">Front:</span>
-                          <span className="text-white text-xs">{getIndividualPrintAreas().front} sq in</span>
-                        </div>
-                      )}
-                      {backImage && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-400 text-xs">Back:</span>
-                          <span className="text-white text-xs">{getIndividualPrintAreas().back} sq in</span>
-                        </div>
-                      )}
-                      {leftImage && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-400 text-xs">Left Sleeve:</span>
-                          <span className="text-white text-xs">{getIndividualPrintAreas().left} sq in</span>
-                        </div>
-                      )}
-                      {rightImage && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-400 text-xs">Right Sleeve:</span>
-                          <span className="text-white text-xs">{getIndividualPrintAreas().right} sq in</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-                
-                <div className="flex justify-between border-t border-gray-700 pt-2 mt-2">
-                  <span className="text-gray-400 text-sm font-medium">Total Print Area:</span>
-                  <span className="text-secondary text-sm font-medium">{totalPrintArea} sq in</span>
-                </div>
-                
-                {/* Add Capture and Upload Button */}
-                <div className="mt-4 pt-2 border-t border-gray-700">
-                  <button
-                    onClick={captureAndUploadAllDesigns}
-                    disabled={isUploading || (!frontImage && !backImage && !leftImage && !rightImage)}
-                    className={`w-full py-2 rounded text-white text-sm font-medium ${
-                      isUploading || (!frontImage && !backImage && !leftImage && !rightImage)
-                        ? 'bg-gray-600 cursor-not-allowed'
-                        : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
-                    }`}
-                  >
-                    {isUploading ? (
-                      <span className="flex items-center justify-center">
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Processing...
-                      </span>
-                    ) : (
-                      'Capture & Save All Designs'
-                    )}
-                  </button>
-                  <p className="text-gray-400 text-xs mt-1">
-                    This will capture the designs with their positions and save them to the server.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <p className="text-gray-400 text-sm italic">Upload designs to see size information</p>
-            )}
-          </div>
-          
-          <p className="text-gray-400 text-sm mt-4">
-            {printSide === 'left' || printSide === 'right' 
-              ? `Maximum sleeve print size: 4 x 4 inches` 
-              : `Maximum front/back print size: 12 x 16 inches`
-            }
-          </p>
+      {/* Print size information */}
+      <div className={`mb-4 p-3 rounded-lg ${isDarkMode ? 'bg-dark-4' : 'bg-gray-50 border border-gray-200'}`}>
+        <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>
+          Current Size: {currentPrintSize.width}" × {currentPrintSize.height}" 
+          (Area: {currentPrintSize.area} sq. in)
+        </p>
+        <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>
+          Total Print Area: {totalPrintArea} sq. in
+        </p>
+      </div>
+      
+      {/* Upload button and status */}
+      <div className="mb-4">
+        <input
+          type="file"
+          id="image-upload"
+          onChange={handleFileUpload}
+          accept="image/*"
+          className="hidden"
+        />
+        <label
+          htmlFor="image-upload"
+          className={`inline-block px-4 py-2 rounded-lg cursor-pointer ${
+            isDarkMode
+              ? 'bg-dark-4 text-white hover:bg-gray-700'
+              : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+          }`}
+        >
+          Upload Image for {printSide.charAt(0).toUpperCase() + printSide.slice(1)}
+        </label>
+        
+        {uploadStatus && (
+          <span className={`ml-2 text-sm ${
+            uploadStatus.includes('failed')
+              ? 'text-red-500'
+              : isDarkMode
+                ? 'text-green-400'
+                : 'text-green-500'
+          }`}>
+            {uploadStatus}
+          </span>
+        )}
+      </div>
+      
+      {/* Product preview area */}
+      <div 
+        ref={containerRef}
+        className={`relative w-full h-[300px] border ${
+          isDarkMode 
+            ? 'border-gray-700 bg-dark-4' 
+            : 'border-gray-300 bg-gray-100'
+        } rounded-lg mb-4 overflow-hidden`}
+      >
+        {/* T-shirt or product representation - changes color based on selected product */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          {renderProductPreview()}
         </div>
         
-        {/* Print Preview */}
-        <div>
-          <div className="mb-4">
-            <label className="block text-white mb-2 font-medium">Select Print Side</label>
-            <div className="flex flex-wrap gap-2">
-              <button
-                className={`px-3 py-1 rounded ${printSide === 'front' ? 'bg-secondary text-white' : 'bg-gray-700 text-gray-300'}`}
-                onClick={() => updatePrintSide('front')}
-              >
-                Front
-              </button>
-              <button
-                className={`px-3 py-1 rounded ${printSide === 'back' ? 'bg-secondary text-white' : 'bg-gray-700 text-gray-300'}`}
-                onClick={() => updatePrintSide('back')}
-              >
-                Back
-              </button>
-              <button
-                className={`px-3 py-1 rounded ${printSide === 'left' ? 'bg-secondary text-white' : 'bg-gray-700 text-gray-300'}`}
-                onClick={() => updatePrintSide('left')}
-              >
-                Left Sleeve
-              </button>
-              <button
-                className={`px-3 py-1 rounded ${printSide === 'right' ? 'bg-secondary text-white' : 'bg-gray-700 text-gray-300'}`}
-                onClick={() => updatePrintSide('right')}
-              >
-                Right Sleeve
-              </button>
+        {/* Current print overlay */}
+        {getCurrentImage() && (
+          <Draggable
+            bounds="parent"
+            position={getCurrentPosition()}
+            onStart={handleDragStart}
+            onDrag={handleDrag}
+            onStop={handleDragStop}
+            disabled={isResizing}
+          >
+            <ResizableBox
+              width={getCurrentSize().width}
+              height={getCurrentSize().height}
+              minConstraints={[20, 20]}
+              maxConstraints={getMaxConstraints()}
+              onResize={handleResize}
+              onResizeStart={() => setIsResizing(true)}
+              onResizeStop={() => setIsResizing(false)}
+              className="!absolute cursor-move"
+              resizeHandles={['se']}
+              handle={
+                <div className={`absolute bottom-0 right-0 w-4 h-4 cursor-se-resize ${
+                  isDarkMode ? 'bg-secondary' : 'bg-blue-600'
+                }`}></div>
+              }
+            >
+              <img
+                src={getCurrentImage()}
+                alt={`${printSide} print`}
+                className="w-full h-full object-contain"
+              />
+            </ResizableBox>
+          </Draggable>
+        )}
+      </div>
+      
+      {/* Print area information */}
+      <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-dark-4' : 'bg-gray-50 border border-gray-200'}`}>
+        <h4 className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Print Areas:</h4>
+        <div className="grid grid-cols-2 gap-2">
+          {getIndividualPrintAreas().map(({ side, area, hasImage }) => (
+            <div key={side} className={`text-xs ${hasImage ? (isDarkMode ? 'text-white' : 'text-gray-900') : (isDarkMode ? 'text-gray-500' : 'text-gray-400')}`}>
+              {side.charAt(0).toUpperCase() + side.slice(1)}: {area} sq. in {hasImage ? '✓' : ''}
             </div>
-            
-            <div className="relative">
-              {renderProductPreview()}
-              <p>sleeve prints are always printed in center</p>
-              <p className="text-center text-gray-400 text-sm mt-2">
-                {isDragging ? 
-                  <span className="text-secondary font-medium">Dragging design...</span> : 
-                  "Drag to position, resize using corner handle"}
-              </p>
-            </div>
-          </div>
+          ))}
         </div>
+      </div>
+      
+      {/* Action buttons */}
+      <div className="mt-4 flex justify-end space-x-2">
+        <button
+          onClick={() => {
+            // Reset current side
+            switch (printSide) {
+              case 'front':
+                setFrontImage(null);
+                break;
+              case 'back':
+                setBackImage(null);
+                break;
+              case 'left':
+                setLeftImage(null);
+                break;
+              case 'right':
+                setRightImage(null);
+                break;
+              default:
+                break;
+            }
+          }}
+          className={`px-4 py-2 rounded-lg ${
+            isDarkMode
+              ? 'bg-gray-700 text-white hover:bg-gray-600'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          }`}
+          disabled={!getCurrentImage()}
+        >
+          Clear {printSide.charAt(0).toUpperCase() + printSide.slice(1)}
+        </button>
       </div>
     </div>
   );

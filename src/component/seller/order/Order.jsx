@@ -8,7 +8,7 @@ import SelectProduct from "./SelectProduct";
 import SelectOptions from "./SelectOptions";
 import OrderPayment from "./OrderPayment";
 
-const Order = () => {
+const Order = ({ isDarkMode = false }) => {
   const navigate= useNavigate()
   const [step, setStep] = useState(1);
   const [isUploading, setIsUploading] = useState(false);
@@ -304,27 +304,174 @@ const Order = () => {
   };
 
   const stepInc = () => {
-    setStep(step + 1);
-    console.log(step);
-  }
+    if (step < 5) {  // Updated to account for the new step
+      // Save current state to localStorage for recovery
+      try {
+        localStorage.setItem('orderState', JSON.stringify(orderData));
+        console.log('Saved order state to localStorage:', orderData);
+      } catch (error) {
+        console.error('Error saving order state:', error);
+      }
+      
+      setStep(step + 1);
+    }
+  };
 
   const stepDec = () => {
-    setStep(step - 1);
-    console.log(step);
-  }
+    if (step > 1) {
+      // Save current state to localStorage for recovery
+      try {
+        localStorage.setItem('orderState', JSON.stringify(orderData));
+        console.log('Saved order state to localStorage:', orderData);
+      } catch (error) {
+        console.error('Error saving order state:', error);
+      }
+      
+      setStep(step - 1);
+    }
+  };
+  
+  // Recover saved state from localStorage on component mount
+  useEffect(() => {
+    try {
+      const savedOrderState = localStorage.getItem('orderState');
+      
+      if (savedOrderState) {
+        const parsedState = JSON.parse(savedOrderState);
+        
+        // Only update if we have valid saved state
+        if (parsedState && typeof parsedState === 'object') {
+          console.log('Recovered saved order state:', parsedState);
+          setOrderData(prevState => ({
+            ...prevState,
+            ...parsedState,
+            // Ensure these properties are always present
+            customerInfo: {
+              ...(prevState.customerInfo || {}),
+              ...(parsedState.customerInfo || {})
+            },
+            fullAddress: {
+              ...(prevState.fullAddress || {}),
+              ...(parsedState.fullAddress || {})
+            },
+            productData: {
+              ...(prevState.productData || {}),
+              ...(parsedState.productData || {})
+            }
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error recovering saved order state:', error);
+    }
+  }, []);
 
   return (
-    <div className="bg-gray-900 min-h-screen text-white">
-      {step === 1 && <ChooseCity setOrderData={setOrderData} orderData={orderData} handleChange={handleChange} stepDec={stepDec} stepInc={stepInc} />}
-      {step === 2 && <FullAddress setOrderData={setOrderData} orderData={orderData} handleChange={handleChange} stepDec={stepDec} stepInc={stepInc} />}
-      {step === 3 && <SelectProduct setOrderData={setOrderData} orderData={orderData} handleChange={handleChange} stepDec={stepDec} stepInc={stepInc} />}
-      {step === 4 && <SelectOptions setOrderData={setOrderData} orderData={orderData} handleChange={handleChange} updatePrintData={updatePrintData} stepDec={stepDec} step={step} setStep={setStep} stepInc={stepInc} />}
-      {step === 5 && <OrderPayment handleOrderSubmit={handleOrderSubmit} setOrderData={setOrderData} orderData={orderData} handleChange={handleChange} stepDec={stepDec} step={step} setStep={setStep} stepInc={stepInc} />}
+    <div className={`container mx-auto px-4 py-8 min-h-screen ${isDarkMode ? 'bg-dark-1' : 'bg-gray-50'}`}>
+      <div className={`w-full max-w-4xl mx-auto rounded-lg overflow-hidden shadow-lg ${isDarkMode ? 'bg-dark-2' : 'bg-white'}`}>
+        <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+          <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Create Order</h1>
+          
+          {/* Step indicators */}
+          <div className="flex justify-between items-center mt-6">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex items-center">
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    step >= i 
+                      ? isDarkMode
+                        ? 'bg-secondary text-black' 
+                        : 'bg-blue-600 text-white'
+                      : isDarkMode
+                        ? 'bg-gray-700 text-gray-400'
+                        : 'bg-gray-200 text-gray-500'
+                  }`}
+                >
+                  {i}
+                </div>
+                {i < 5 && (
+                  <div
+                    className={`h-1 w-12 sm:w-20 ${
+                      step > i 
+                        ? isDarkMode
+                          ? 'bg-secondary' 
+                          : 'bg-blue-600'
+                        : isDarkMode
+                          ? 'bg-gray-700'
+                          : 'bg-gray-200'
+                    }`}
+                  ></div>
+                )}
+              </div>
+            ))}
+          </div>
+          
+          {/* Step labels */}
+          <div className="flex justify-between items-center mt-2">
+            <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>City</span>
+            <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Address</span>
+            <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Product</span>
+            <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Options</span>
+            <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Payment</span>
+          </div>
+        </div>
+
+        <div className="p-6">
+          {step === 1 && (
+            <ChooseCity
+              orderData={orderData}
+              setOrderData={setOrderData}
+              stepInc={stepInc}
+              isDarkMode={isDarkMode}
+            />
+          )}
+          {step === 2 && (
+            <FullAddress
+              orderData={orderData}
+              setOrderData={setOrderData}
+              handleChange={handleChange}
+              stepInc={stepInc}
+              stepDec={stepDec}
+              isDarkMode={isDarkMode}
+            />
+          )}
+          {step === 3 && (
+            <SelectProduct
+              orderData={orderData}
+              setOrderData={setOrderData}
+              handleChange={handleChange}
+              stepInc={stepInc}
+              stepDec={stepDec}
+              isDarkMode={isDarkMode}
+            />
+          )}
+          {step === 4 && (
+            <SelectOptions
+              orderData={orderData}
+              setOrderData={setOrderData}
+              handleChange={handleChange}
+              stepInc={stepInc}
+              stepDec={stepDec}
+              isDarkMode={isDarkMode}
+            />
+          )}
+          {step === 5 && (
+            <OrderPayment
+              orderData={orderData}
+              setOrderData={setOrderData}
+              handleChange={handleChange}
+              handleOrderSubmit={handleOrderSubmit}
+              stepDec={stepDec}
+              isDarkMode={isDarkMode}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 };
 
-const ChooseCity = ({ stepInc, setOrderData, orderData }) => {
+const ChooseCity = ({ stepInc, setOrderData, orderData, isDarkMode }) => {
   const [cities, setCities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -379,37 +526,67 @@ const ChooseCity = ({ stepInc, setOrderData, orderData }) => {
   }, []);
 
   return (
-    <div className="container grid place-items-center">
-      <div className="flex items-center justify-evenly w-full">
-        <BackButton />
-        <h1 className="text-white text-lg text-center mt-10 mb-10 w-full">
-          Select the city
-        </h1>
+    <div className="mx-auto max-w-4xl">
+      <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+        Choose Your City
+      </h2>
+      <div className={`p-4 rounded-lg mb-4 ${isDarkMode ? 'bg-dark-3' : 'bg-gray-100'}`}>
+        <p className={`mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+          Please select your city for the best printing service in your area.
+        </p>
       </div>
       
       {loading ? (
-        <div className="flex justify-center items-center h-32">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-secondary"></div>
+        <div className="flex justify-center py-8">
+          <div className={`inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid ${isDarkMode ? 'border-white border-t-transparent' : 'border-blue-600 border-t-transparent'}`} />
         </div>
-      ) : cities.length === 0 ? (
-        <div className="text-center py-6">
-          <p className="text-gray-400">No cities available from approved sellers</p>
+      ) : error ? (
+        <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-red-900 bg-opacity-20 text-red-300' : 'bg-red-100 text-red-700'}`}>
+          {error}
         </div>
       ) : (
-        /* City selection buttons */
-        <div className="flex flex-wrap items-center justify-center">
-          {cities.map((city, index) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {cities.map((city) => (
             <button
-              key={index}
+              key={city}
               onClick={() => handleCitySelection(city)}
-              className="w-[100px] h-[100px] bg-dark-3 p-5 rounded-lg m-4 text-center text-sm text-white hover:bg-[#1F2A37]"
+              className={`p-4 rounded-lg transition-colors ${
+                orderData.selectedCity === city 
+                  ? isDarkMode 
+                    ? 'bg-secondary bg-opacity-30 border-secondary' 
+                    : 'bg-blue-100 border-blue-600'
+                  : isDarkMode 
+                    ? 'bg-dark-3 hover:bg-dark-4' 
+                    : 'bg-white hover:bg-gray-50 border-gray-200'
+              } border flex items-center`}
             >
-              {/* Display with first letter capitalized */}
-              {city.charAt(0).toUpperCase() + city.slice(1)}
+              <div className="flex-1">
+                <p className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {city.charAt(0).toUpperCase() + city.slice(1)}
+                </p>
+              </div>
             </button>
           ))}
         </div>
       )}
+      
+      <div className="flex justify-end mt-8">
+        <button
+          onClick={stepInc}
+          disabled={!orderData.selectedCity}
+          className={`px-6 py-2 rounded-lg ${
+            !orderData.selectedCity
+              ? isDarkMode 
+                ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
+                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              : isDarkMode 
+                ? 'bg-secondary text-black hover:bg-green-600' 
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
+        >
+          Continue
+        </button>
+      </div>
     </div>
   );
 };

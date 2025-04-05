@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../utils/supabase';
 
-const Inventory = () => {
+const Inventory = ({ isDarkMode }) => {
   const [inventory, setInventory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -227,9 +227,9 @@ const Inventory = () => {
 
   if (isLoading && inventory.length === 0) {
     return (
-      <div className="w-full text-white pb-10">
-        <div className="container mt-10 mb-5 rounded-lg dark:bg-dark-2 p-5 flex justify-center items-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-secondary"></div>
+      <div className={`w-full ${isDarkMode ? 'text-white' : 'text-gray-800'} pb-10`}>
+        <div className={`container mt-10 mb-5 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white border border-gray-200'} p-5 flex justify-center items-center`}>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#00E0A4]"></div>
           <span className="ml-3">Loading inventory...</span>
         </div>
       </div>
@@ -237,186 +237,188 @@ const Inventory = () => {
   }
 
   return (
-    <div className="w-full text-white pb-10">
-      <div className="container mt-10 mb-5 rounded-lg dark:bg-dark-2 p-5">
+    <div className={`w-full ${isDarkMode ? 'text-white' : 'text-gray-800'} pb-10`}>
+      <div className="container mb-5 rounded-lg p-5">
         <div className="flex justify-between items-center">
-          <h2 className="text-xl font-bold">Inventory Management</h2>
+          <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Inventory Management</h2>
           <button 
             onClick={openAddModal}
-            className="bg-secondary hover:bg-[#0BB489] text-white font-medium py-2 px-4 rounded"
+            className="bg-[#00E0A4] hover:bg-[#0BB489] text-black font-medium py-2 px-6 rounded-lg transition-all duration-300"
           >
             Add New Product
           </button>
         </div>
-        
-        {/* Success Message */}
-        {success && (
-          <div className="mt-4 bg-green-800 text-green-100 px-4 py-3 rounded relative">
-            <span className="block sm:inline">{success}</span>
-          </div>
-        )}
-        
-        {/* Error Message */}
-        {error && (
-          <div className="mt-4 bg-gray-900 dark:bg-dark-1 border border-red-500 text-red-400 px-4 py-3 rounded relative" role="alert">
-            <span className="block sm:inline">{error}</span>
-          </div>
-        )}
       </div>
-      
-      {inventory.length === 0 ? (
-        <div className="container rounded-lg dark:bg-dark-2 p-10 text-center">
-          <p className="text-gray-400 mb-4">No inventory items found.</p>
-          <button 
-            onClick={openAddModal}
-            className="bg-secondary hover:bg-[#0BB489] text-white font-medium py-2 px-4 rounded"
-          >
-            Add Your First Product
-          </button>
-        </div>
-      ) : (
-        <div className="container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {inventory.map((item) => (
-            <InventoryCard 
-              key={item.id} 
-              item={item} 
-              openModal={openModal} 
-              openDeleteConfirmation={openDeleteConfirmation}
-            />
-          ))}
+
+      {error && (
+        <div className={`container mb-5 ${isDarkMode ? 'bg-red-900 text-red-200' : 'bg-red-100 text-red-800'} p-4 rounded-lg`}>
+          {error}
         </div>
       )}
       
+      {success && (
+        <div className={`container mb-5 ${isDarkMode ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800'} p-4 rounded-lg`}>
+          {success}
+        </div>
+      )}
+
+      <div className="container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {inventory.map(item => (
+          <InventoryCard 
+            key={item.id} 
+            item={item} 
+            openModal={openModal} 
+            openDeleteConfirmation={openDeleteConfirmation}
+            isDarkMode={isDarkMode}
+          />
+        ))}
+      </div>
+
       {isModalOpen && selectedItem && (
         <UpdateModal 
           item={selectedItem} 
           closeModal={closeModal} 
-          updateInventory={updateInventory}
+          updateInventory={updateInventory} 
           isLoading={updateLoading}
+          isDarkMode={isDarkMode}
         />
       )}
-      
+
       {isAddModalOpen && (
-        <AddProductModal
-          closeModal={closeAddModal}
-          addInventoryItem={addInventoryItem}
-          products={availableProducts}
+        <AddProductModal 
+          closeModal={closeAddModal} 
+          addInventoryItem={addInventoryItem} 
+          products={availableProducts} 
+          colors={availableColors}
+          sizes={availableSizes}
           isLoading={addLoading}
+          isDarkMode={isDarkMode}
         />
       )}
 
       {isDeleteModalOpen && itemToDelete && (
-        <DeleteConfirmationModal
-          item={itemToDelete}
-          closeModal={closeDeleteConfirmation}
-          confirmDelete={deleteInventoryItem}
+        <DeleteConfirmationModal 
+          item={itemToDelete} 
+          closeModal={closeDeleteConfirmation} 
+          confirmDelete={deleteInventoryItem} 
           isLoading={deleteLoading}
+          isDarkMode={isDarkMode}
         />
       )}
     </div>
   );
 };
 
-const InventoryCard = ({ item, openModal, openDeleteConfirmation }) => {
+const InventoryCard = ({ item, openModal, openDeleteConfirmation, isDarkMode }) => {
   const calculateTotalQuantity = () => {
-    if (!item.data || !Array.isArray(item.data)) return 0;
-    
     let total = 0;
-    item.data.forEach(colorData => {
-      if (colorData && typeof colorData === 'object') {
-        Object.keys(colorData).forEach(key => {
-          if (key !== 'color' && key !== 'price') {
-            total += parseInt(colorData[key] || 0, 10);
-          }
+    if (item.data && Array.isArray(item.data)) {
+      item.data.forEach(colorData => {
+        Object.keys(colorData.sizes || {}).forEach(size => {
+          total += parseInt(colorData.sizes[size] || 0, 10);
         });
-      }
-    });
-    
+      });
+    }
     return total;
   };
-  
+
   const formatCurrency = (amount) => {
-    return `₹${Number(amount || 0).toFixed(2)}`;
+    if (!amount && amount !== 0) return '₹0.00';
+    return `₹${parseFloat(amount).toFixed(2)}`;
   };
 
+  const totalQuantity = calculateTotalQuantity();
+
   return (
-    <div className="bg-gray-800 rounded-lg p-4 shadow-md">
-      <div className="flex justify-between items-start mb-3">
-        <h3 className="text-white text-lg font-semibold">{item.product_name}</h3>
-        <div className="flex space-x-2">
-          <button
-            onClick={() => openModal(item)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
-          >
-            Edit
-          </button>
-          <button
-            onClick={() => openDeleteConfirmation(item)}
-            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
-          >
-            Delete
-          </button>
+    <div className={`rounded-lg overflow-hidden ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-[#f8f9fa] border'}`}>
+      <div className="p-5">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{item.product_name}</h3>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => openModal(item)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded-md text-sm transition duration-300"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => openDeleteConfirmation(item)}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded-md text-sm transition duration-300"
+            >
+              Delete
+            </button>
+          </div>
         </div>
-      </div>
-      
-      <div className="text-gray-300 mb-2">
-        <div className="flex justify-between mb-1">
-          <span>Total Quantity:</span>
-          <span>{calculateTotalQuantity()}</span>
+
+        <div className="space-y-3 text-white">
+          <div className="flex justify-between">
+            <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Total Quantity:</span>
+            <span className={` font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{totalQuantity}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Price:</span>
+            <span className="font-medium text-[#00E0A4]">{formatCurrency(item.price)}</span>
+          </div>
         </div>
-        <div className="flex justify-between mb-1">
-          <span>Price:</span>
-          <span className="text-green-400 font-medium">{formatCurrency(item.price)}</span>
-        </div>
-      </div>
-      
-      <div className="mt-3 pt-3 border-t border-gray-700">
-        <h4 className="text-gray-400 text-sm mb-2">Available Colors & Sizes</h4>
-        <div className="space-y-2">
-          {item.data && Array.isArray(item.data) && item.data.map((colorData, index) => (
-            <div key={index} className="text-sm">
-              <div className="flex items-center mb-1">
-                <div 
-                  className="w-4 h-4 rounded-full mr-2" 
-                  style={{ backgroundColor: colorData.color.toLowerCase() }}
-                ></div>
-                <span className="text-white">{colorData.color}</span>
+
+        {item.data && Array.isArray(item.data) && item.data.length > 0 && (
+          <div className="mt-5">
+            <h4 className="text-sm text-gray-400 mb-3">Available Colors & Sizes</h4>
+            {item.data.map((colorData, colorIndex) => (
+              <div key={colorIndex} className="mb-4">
+                <div className="flex items-center mb-2">
+                  <div 
+                    className={`w-4 h-4 rounded-full mr-2 border-2`}
+                    style={{ backgroundColor: colorData.color.toLowerCase() }}
+                  ></div>
+                  <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{colorData.color}</span>
+                </div>
+                <div className="grid grid-cols-4 gap-2 ml-6">
+                  {Object.entries(colorData.sizes || {}).map(([size, quantity]) => (
+                    parseInt(quantity, 10) > 0 && (
+                      <div key={size} className="text-sm text-gray-300">
+                        <span>{size}: {quantity}</span>
+                      </div>
+                    )
+                  ))}
+                </div>
               </div>
-              <div className="grid grid-cols-3 gap-1 pl-6">
-                {Object.keys(colorData).filter(key => key !== 'color' && key !== 'price').map(size => (
-                  <div key={size} className="text-gray-400">
-                    {size}: <span className="text-white">{colorData[size]}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-const DeleteConfirmationModal = ({ item, closeModal, confirmDelete, isLoading }) => {
+const DeleteConfirmationModal = ({ item, closeModal, confirmDelete, isLoading, isDarkMode }) => {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-gray-800 bg-opacity-75">
-      <div className="bg-gray-900 rounded-lg shadow-lg w-full max-w-md p-6">
-        <h3 className="text-xl font-bold text-white mb-4">Confirm Deletion</h3>
-        <p className="text-gray-300 mb-6">
-          Are you sure you want to delete <span className="font-semibold">{item.product_name}</span>? This action cannot be undone.
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+      <div className={`${
+        isDarkMode 
+          ? 'bg-gray-800 border-gray-700' 
+          : 'bg-white border-gray-300'
+        } rounded-lg w-full max-w-md p-6 border`}>
+        <h3 className={`text-xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Delete Product</h3>
+        <p className={`mb-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+          Are you sure you want to delete "{item.product_name}" from your inventory? This action cannot be undone.
         </p>
-        <div className="flex justify-end space-x-4">
+        <div className="flex justify-end space-x-3">
           <button
             onClick={closeModal}
+            className={`px-4 py-2 rounded-lg ${
+              isDarkMode 
+                ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+                : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+            } transition-colors`}
             disabled={isLoading}
-            className="px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={() => confirmDelete(item.id)}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
             disabled={isLoading}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 flex items-center"
           >
             {isLoading ? (
               <>
@@ -424,9 +426,9 @@ const DeleteConfirmationModal = ({ item, closeModal, confirmDelete, isLoading })
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Deleting...
+                Processing
               </>
-            ) : "Delete"}
+            ) : 'Delete'}
           </button>
         </div>
       </div>
@@ -434,76 +436,92 @@ const DeleteConfirmationModal = ({ item, closeModal, confirmDelete, isLoading })
   );
 };
 
-const UpdateModal = ({ item, closeModal, updateInventory, isLoading }) => {
-  const [updatedItem, setUpdatedItem] = useState(item);
-  const [price, setPrice] = useState(item.price || 0);
-
+const UpdateModal = ({ item, closeModal, updateInventory, isLoading, isDarkMode }) => {
+  // Clone the item to avoid mutating the original
+  const [formData, setFormData] = useState(JSON.parse(JSON.stringify(item)));
+  
   const handleInputChange = (colorIndex, size, value) => {
-    const newData = [...updatedItem.data];
-    newData[colorIndex][size] = parseInt(value, 10) || 0;
-    setUpdatedItem({ ...updatedItem, data: newData });
+    const newData = [...formData.data];
+    newData[colorIndex].sizes[size] = value;
+    setFormData({ ...formData, data: newData });
   };
   
   const handlePriceChange = (e) => {
-    const value = e.target.value;
-    setPrice(value === '' ? 0 : Number(value));
+    setFormData({ ...formData, price: e.target.value });
   };
-
+  
   const handleSubmit = (e) => {
     e.preventDefault();
-    updateInventory({ 
-      ...updatedItem, 
-      price,
-      product_name: updatedItem.product_name
-    });
+    updateInventory(formData);
   };
-
+  
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <h2 className="text-white text-xl font-semibold mb-4">Update Inventory: {updatedItem.product_name}</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+      <div className={`${
+        isDarkMode 
+          ? 'bg-gray-800 border-gray-700' 
+          : 'bg-white border-gray-300'
+        } rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto border p-6`}>
+        <div className="flex justify-between items-center mb-6">
+          <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Edit {formData.product_name}</h3>
+          <button 
+            onClick={closeModal}
+            className={`${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'} text-xl`}
+          >
+            ✕
+          </button>
+        </div>
         
         <form onSubmit={handleSubmit}>
-          {/* Price Input */}
           <div className="mb-6">
-            <label className="block text-white mb-2">Product Price</label>
-            <div className="flex items-center">
-              <span className="bg-gray-700 text-white px-3 py-2 rounded-l-md">₹</span>
+            <label className={`block mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Price</label>
+            <div className={`relative rounded-md ${isDarkMode ? 'bg-gray-700' : 'bg-white'}`}>
+              <div className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                ₹
+              </div>
               <input
                 type="number"
+                value={formData.price}
+                onChange={handlePriceChange}
                 step="0.01"
                 min="0"
-                value={price}
-                onChange={handlePriceChange}
-                className="bg-gray-700 text-white px-3 py-2 rounded-r-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter price"
+                className={`block w-full pl-10 pr-3 py-2 rounded-md border ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#00E0A4] focus:border-[#00E0A4]' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-[#00E0A4] focus:border-[#00E0A4]'
+                } focus:outline-none focus:ring-2`}
+                placeholder="0.00"
+                required
               />
             </div>
           </div>
           
-          <div className="mb-4">
-            <h3 className="text-white text-lg mb-3">Inventory by Color & Size</h3>
-            
-            {updatedItem.data.map((colorData, colorIndex) => (
-              <div key={colorIndex} className="mb-6 bg-gray-700 p-4 rounded-lg">
-                <div className="flex items-center mb-3">
+          <div className="mb-6">
+            <h4 className={`text-lg font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Inventory by Color & Size</h4>
+            {formData.data.map((colorData, colorIndex) => (
+              <div key={colorIndex} className={`mb-6 p-4 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                <div className="flex items-center mb-4">
                   <div 
-                    className="w-6 h-6 rounded-full mr-2" 
+                    className="w-5 h-5 rounded-full mr-2" 
                     style={{ backgroundColor: colorData.color.toLowerCase() }}
                   ></div>
-                  <h4 className="text-white font-medium">{colorData.color}</h4>
+                  <h5 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{colorData.color}</h5>
                 </div>
                 
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {Object.keys(colorData).filter(key => key !== 'color' && key !== 'price').map(size => (
-                    <div key={size} className="mb-2">
-                      <label className="block text-gray-300 text-sm mb-1">{size}</label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {Object.keys(colorData.sizes).map(size => (
+                    <div key={size} className="flex flex-col">
+                      <label className={`text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{size}</label>
                       <input
                         type="number"
-                        min="0"
-                        value={colorData[size]}
+                        value={colorData.sizes[size]}
                         onChange={(e) => handleInputChange(colorIndex, size, e.target.value)}
-                        className="bg-gray-600 text-white px-3 py-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        min="0"
+                        className={`w-full px-3 py-2 rounded border ${
+                          isDarkMode 
+                            ? 'bg-gray-800 border-gray-600 text-white focus:ring-[#00E0A4] focus:border-[#00E0A4]' 
+                            : 'bg-white border-gray-300 text-gray-900 focus:ring-[#00E0A4] focus:border-[#00E0A4]'
+                        } focus:outline-none focus:ring-2`}
                       />
                     </div>
                   ))}
@@ -516,25 +534,29 @@ const UpdateModal = ({ item, closeModal, updateInventory, isLoading }) => {
             <button
               type="button"
               onClick={closeModal}
-              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded"
+              className={`px-4 py-2 rounded-lg ${
+                isDarkMode 
+                  ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+                  : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+              } transition-colors`}
               disabled={isLoading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+              className="bg-[#00E0A4] hover:bg-[#0BB489] text-black font-medium px-4 py-2 rounded-lg transition-colors flex items-center"
               disabled={isLoading}
             >
               {isLoading ? (
-                <span className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Updating...
-                </span>
-              ) : 'Update Inventory'}
+                  Saving
+                </>
+              ) : 'Save Changes'}
             </button>
           </div>
         </form>
@@ -547,7 +569,10 @@ const AddProductModal = ({
   closeModal, 
   addInventoryItem, 
   products, 
-  isLoading 
+  colors: availableColors,
+  sizes: availableSizes,
+  isLoading,
+  isDarkMode
 }) => {
   const [formData, setFormData] = useState({
     product_id: '',
@@ -557,103 +582,98 @@ const AddProductModal = ({
     colorSizeData: []
   });
   
-  // Add state for input fields
-  const [colorInput, setColorInput] = useState('');
-  const [sizeInput, setSizeInput] = useState('');
-  
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
   
   const addColor = () => {
-    const color = colorInput.trim();
+    const colorSelect = document.getElementById('colorSelect');
+    const selectedColor = colorSelect.value;
     
-    if (color && !formData.colors.includes(color)) {
-      const newColors = [...formData.colors, color];
-      
-      // Update colorSizeData with the new color
+    if (selectedColor && !formData.colors.includes(selectedColor)) {
+      const newColors = [...formData.colors, selectedColor];
       const newColorSizeData = [...formData.colorSizeData];
-      const colorData = { color };
       
-      // Add size fields
-      formData.sizes.forEach(size => {
-        colorData[size] = 0;
+      // Add new color data with empty sizes
+      newColorSizeData.push({
+        color: selectedColor,
+        sizes: formData.sizes.reduce((acc, size) => {
+          acc[size] = "0";
+          return acc;
+        }, {})
       });
       
-      newColorSizeData.push(colorData);
+      setFormData({ 
+        ...formData, 
+        colors: newColors, 
+        colorSizeData: newColorSizeData 
+      });
       
-      setFormData(prev => ({
-        ...prev,
-        colors: newColors,
-        colorSizeData: newColorSizeData
-      }));
-      
-      // Clear input
-      setColorInput('');
+      // Reset the select element
+      colorSelect.value = '';
     }
   };
   
   const removeColor = (color) => {
-    setFormData(prev => ({
-      ...prev,
-      colors: prev.colors.filter(c => c !== color),
-      colorSizeData: prev.colorSizeData.filter(data => data.color !== color)
-    }));
+    const newColors = formData.colors.filter(c => c !== color);
+    const newColorSizeData = formData.colorSizeData.filter(data => data.color !== color);
+    
+    setFormData({
+      ...formData,
+      colors: newColors,
+      colorSizeData: newColorSizeData
+    });
   };
   
   const addSize = () => {
-    const size = sizeInput.trim().toUpperCase();
+    const sizeSelect = document.getElementById('sizeSelect');
+    const selectedSize = sizeSelect.value;
     
-    if (size && !formData.sizes.includes(size)) {
-      const newSizes = [...formData.sizes, size];
-      
-      // Update colorSizeData with the new size
-      const newColorSizeData = [...formData.colorSizeData];
-      newColorSizeData.forEach(colorData => {
-        colorData[size] = 0;
+    if (selectedSize && !formData.sizes.includes(selectedSize)) {
+      const newSizes = [...formData.sizes, selectedSize];
+      const newColorSizeData = formData.colorSizeData.map(colorData => {
+        const newSizes = { ...colorData.sizes };
+        newSizes[selectedSize] = "0";
+        return {
+          ...colorData,
+          sizes: newSizes
+        };
       });
       
-      setFormData(prev => ({
-        ...prev,
+      setFormData({
+        ...formData,
         sizes: newSizes,
         colorSizeData: newColorSizeData
-      }));
+      });
       
-      // Clear input
-      setSizeInput('');
+      // Reset the select element
+      sizeSelect.value = '';
     }
   };
   
   const removeSize = (size) => {
-    // Remove size from all color data
-    const newColorSizeData = [...formData.colorSizeData];
-    newColorSizeData.forEach(colorData => {
-      delete colorData[size];
+    const newSizes = formData.sizes.filter(s => s !== size);
+    const newColorSizeData = formData.colorSizeData.map(colorData => {
+      const newSizes = { ...colorData.sizes };
+      delete newSizes[size];
+      return {
+        ...colorData,
+        sizes: newSizes
+      };
     });
     
-    setFormData(prev => ({
-      ...prev,
-      sizes: prev.sizes.filter(s => s !== size),
+    setFormData({
+      ...formData,
+      sizes: newSizes,
       colorSizeData: newColorSizeData
-    }));
+    });
   };
   
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    if (!formData.product_id) {
-      alert('Please select a product');
-      return;
-    }
-    
-    if (formData.colors.length === 0) {
-      alert('Please add at least one color');
-      return;
-    }
-    
-    if (formData.sizes.length === 0) {
-      alert('Please add at least one size');
+    if (formData.colors.length === 0 || formData.sizes.length === 0) {
+      alert('Please add at least one color and one size.');
       return;
     }
     
@@ -662,166 +682,210 @@ const AddProductModal = ({
   
   const handleQuantityChange = (colorIndex, size, value) => {
     const newColorSizeData = [...formData.colorSizeData];
-    newColorSizeData[colorIndex][size] = parseInt(value, 10) || 0;
+    newColorSizeData[colorIndex].sizes[size] = value;
     
-    setFormData(prev => ({
-      ...prev,
+    setFormData({
+      ...formData,
       colorSizeData: newColorSizeData
-    }));
+    });
   };
-
+  
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <h2 className="text-white text-xl font-semibold mb-4">Add New Inventory Item</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+      <div className={`${
+        isDarkMode 
+          ? 'bg-gray-800 border-gray-700' 
+          : 'bg-white border-gray-300'
+        } rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto border p-6`}>
+        <div className="flex justify-between items-center mb-6">
+          <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Add New Product</h3>
+          <button 
+            onClick={closeModal}
+            className={`${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'} text-xl`}
+          >
+            ✕
+          </button>
+        </div>
         
         <form onSubmit={handleSubmit}>
-          {/* Product Selection */}
-          <div className="mb-4">
-            <label className="block text-white mb-2">Select Product</label>
-            <select
-              name="product_id"
-              value={formData.product_id}
-              onChange={handleChange}
-              className="bg-gray-700 text-white px-3 py-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            >
-              <option value="">Select a product</option>
-              <option value="tshirt">T-shirt</option>
-              <option value="oversize-tshirt">Oversize T-shirt</option>
-              <option value="hoodie">Hoodie</option>
-              <option value="oversize-hoodie">Oversize Hoodie</option>
-              <option value="sweatshirt">Sweatshirt</option>
-            </select>
-          </div>
-          
-          {/* Price Input */}
-          <div className="mb-4">
-            <label className="block text-white mb-2">Product Price</label>
-            <div className="flex items-center">
-              <span className="bg-gray-700 text-white px-3 py-2 rounded-l-md">₹</span>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                name="price"
-                value={formData.price}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+              <label className={`block mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Product Type</label>
+              <select
+                name="product_id"
+                value={formData.product_id}
                 onChange={handleChange}
-                className="bg-gray-700 text-white px-3 py-2 rounded-r-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter price"
-              />
+                className={`w-full px-3 py-2 rounded border ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white focus:ring-[#00E0A4] focus:border-[#00E0A4]' 
+                    : 'bg-white border-gray-300 text-gray-900 focus:ring-[#00E0A4] focus:border-[#00E0A4]'
+                } focus:outline-none focus:ring-2`}
+                required
+              >
+                <option value="">Select a product</option>
+                {products.map(product => (
+                  <option key={product.id} value={product.id}>{product.name}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div>
+              <label className={`block mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Price</label>
+              <div className={`relative rounded-md ${isDarkMode ? 'bg-gray-700' : 'bg-white'}`}>
+                <div className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  ₹
+                </div>
+                <input
+                  type="number"
+                  name="price"
+                  value={formData.price}
+                  onChange={handleChange}
+                  step="0.01"
+                  min="0"
+                  className={`block w-full pl-10 pr-3 py-2 rounded-md border ${
+                    isDarkMode 
+                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#00E0A4] focus:border-[#00E0A4]' 
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-[#00E0A4] focus:border-[#00E0A4]'
+                  } focus:outline-none focus:ring-2`}
+                  placeholder="0.00"
+                  required
+                />
+              </div>
             </div>
           </div>
           
-          {/* Colors Section */}
-          <div className="mb-4">
-            <label className="block text-white mb-2">Add Colors</label>
-            <div className="flex space-x-2 mb-2">
-              <select
-                value={colorInput}
-                onChange={(e) => setColorInput(e.target.value)}
-                className="bg-gray-700 text-white px-3 py-2 rounded flex-grow focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select a color</option>
-                <option value="White">White</option>
-                <option value="Black">Black</option>
-                <option value="Navy">Navy</option>
-                <option value="Red">Red</option>
-                <option value="Blue">Blue</option>
-                <option value="Gray">Gray</option>
-                <option value="Green">Green</option>
-                <option value="Yellow">Yellow</option>
-                <option value="Pink">Pink</option>
-                <option value="Purple">Purple</option>
-                <option value="Orange">Orange</option>
-              </select>
-              <button
-                type="button"
-                onClick={addColor}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-              >
-                Add
-              </button>
+          <div className="mb-6">
+            <div className="flex justify-between items-center mb-2">
+              <label className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Colors</label>
+              <div className="flex space-x-2">
+                <select 
+                  id="colorSelect" 
+                  className={`px-3 py-1 rounded border ${
+                    isDarkMode 
+                      ? 'bg-gray-700 border-gray-600 text-white' 
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                >
+                  <option value="">Select a color</option>
+                  {availableColors.filter(color => !formData.colors.includes(color)).map(color => (
+                    <option key={color} value={color}>{color}</option>
+                  ))}
+                </select>
+                <button 
+                  type="button" 
+                  onClick={addColor}
+                  className="bg-[#00E0A4] hover:bg-[#0BB489] text-black px-3 py-1 rounded"
+                >
+                  Add
+                </button>
+              </div>
             </div>
             
-            <div className="flex flex-wrap gap-2 mt-2">
+            <div className="flex flex-wrap gap-2 mb-4">
               {formData.colors.map(color => (
-                <div key={color} className="bg-gray-700 text-white px-3 py-1 rounded-full flex items-center">
+                <div 
+                  key={color} 
+                  className={`flex items-center space-x-2 px-3 py-1 rounded ${
+                    isDarkMode 
+                      ? 'bg-gray-700 text-white' 
+                      : 'bg-gray-100 text-gray-800'
+                  }`}
+                >
+                  <div 
+                    className="w-3 h-3 rounded-full" 
+                    style={{ backgroundColor: color.toLowerCase() }}
+                  ></div>
                   <span>{color}</span>
-                  <button
-                    type="button"
+                  <button 
+                    type="button" 
                     onClick={() => removeColor(color)}
-                    className="ml-2 text-gray-400 hover:text-white"
+                    className={`ml-2 ${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'}`}
                   >
-                    &times;
+                    ✕
                   </button>
                 </div>
               ))}
             </div>
           </div>
           
-          {/* Sizes Section */}
-          <div className="mb-4">
-            <label className="block text-white mb-2">Add Sizes</label>
-            <div className="flex space-x-2 mb-2">
-              <select
-                value={sizeInput}
-                onChange={(e) => setSizeInput(e.target.value)}
-                className="bg-gray-700 text-white px-3 py-2 rounded flex-grow focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select a size</option>
-                <option value="XS">XS</option>
-                <option value="S">S</option>
-                <option value="M">M</option>
-                <option value="L">L</option>
-                <option value="XL">XL</option>
-                <option value="XXL">XXL</option>
-                <option value="XXXL">XXXL</option>
-              </select>
-              <button
-                type="button"
-                onClick={addSize}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-              >
-                Add
-              </button>
+          <div className="mb-6">
+            <div className="flex justify-between items-center mb-2">
+              <label className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Sizes</label>
+              <div className="flex space-x-2">
+                <select 
+                  id="sizeSelect" 
+                  className={`px-3 py-1 rounded border ${
+                    isDarkMode 
+                      ? 'bg-gray-700 border-gray-600 text-white' 
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                >
+                  <option value="">Select a size</option>
+                  {availableSizes.filter(size => !formData.sizes.includes(size)).map(size => (
+                    <option key={size} value={size}>{size}</option>
+                  ))}
+                </select>
+                <button 
+                  type="button" 
+                  onClick={addSize}
+                  className="bg-[#00E0A4] hover:bg-[#0BB489] text-black px-3 py-1 rounded"
+                >
+                  Add
+                </button>
+              </div>
             </div>
             
-            <div className="flex flex-wrap gap-2 mt-2">
+            <div className="flex flex-wrap gap-2">
               {formData.sizes.map(size => (
-                <div key={size} className="bg-gray-700 text-white px-3 py-1 rounded-full flex items-center">
+                <div 
+                  key={size} 
+                  className={`flex items-center space-x-2 px-3 py-1 rounded ${
+                    isDarkMode 
+                      ? 'bg-gray-700 text-white' 
+                      : 'bg-gray-100 text-gray-800'
+                  }`}
+                >
                   <span>{size}</span>
-                  <button
-                    type="button"
+                  <button 
+                    type="button" 
                     onClick={() => removeSize(size)}
-                    className="ml-2 text-gray-400 hover:text-white"
+                    className={`ml-2 ${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'}`}
                   >
-                    &times;
+                    ✕
                   </button>
                 </div>
               ))}
             </div>
           </div>
           
-          {/* Inventory Grid */}
           {formData.colors.length > 0 && formData.sizes.length > 0 && (
             <div className="mb-6">
-              <h3 className="text-white text-lg mb-3">Set Inventory Quantities</h3>
+              <h4 className={`text-lg font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Inventory Quantities</h4>
               
               {formData.colorSizeData.map((colorData, colorIndex) => (
-                <div key={colorIndex} className="mb-4 bg-gray-700 p-4 rounded-lg">
-                  <h4 className="text-white font-medium mb-2">{colorData.color}</h4>
+                <div key={colorIndex} className={`mb-6 p-4 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                  <div className="flex items-center mb-4">
+                    <div 
+                      className="w-5 h-5 rounded-full mr-2" 
+                      style={{ backgroundColor: colorData.color.toLowerCase() }}
+                    ></div>
+                    <h5 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{colorData.color}</h5>
+                  </div>
                   
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {formData.sizes.map(size => (
-                      <div key={size} className="mb-2">
-                        <label className="block text-gray-300 text-sm mb-1">{size}</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {Object.keys(colorData.sizes).map(size => (
+                      <div key={size} className="flex flex-col">
+                        <label className={`text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{size}</label>
                         <input
                           type="number"
-                          min="0"
-                          value={colorData[size] || 0}
+                          value={colorData.sizes[size]}
                           onChange={(e) => handleQuantityChange(colorIndex, size, e.target.value)}
-                          className="bg-gray-600 text-white px-3 py-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          min="0"
+                          className={`w-full px-3 py-2 rounded border ${
+                            isDarkMode 
+                              ? 'bg-gray-800 border-gray-600 text-white focus:ring-[#00E0A4] focus:border-[#00E0A4]' 
+                              : 'bg-white border-gray-300 text-gray-900 focus:ring-[#00E0A4] focus:border-[#00E0A4]'
+                          } focus:outline-none focus:ring-2`}
                         />
                       </div>
                     ))}
@@ -835,25 +899,29 @@ const AddProductModal = ({
             <button
               type="button"
               onClick={closeModal}
-              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded"
+              className={`px-4 py-2 rounded-lg ${
+                isDarkMode 
+                  ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+                  : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+              } transition-colors`}
               disabled={isLoading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+              className="bg-[#00E0A4] hover:bg-[#0BB489] text-black font-medium px-4 py-2 rounded-lg transition-colors flex items-center"
               disabled={isLoading}
             >
               {isLoading ? (
-                <span className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Adding...
-                </span>
-              ) : 'Add Inventory Item'}
+                  Adding
+                </>
+              ) : 'Add Product'}
             </button>
           </div>
         </form>

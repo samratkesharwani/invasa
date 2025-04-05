@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../utils/supabase';
 
-function Step3({formData, handleChange, nextPage, prevPage}) {
+function Step3({formData, handleChange, nextPage, prevPage, isDarkMode = false}) {
   const navigate = useNavigate();
   const [id, setId] = useState("");
   const [errors, setErrors] = useState({});
@@ -175,10 +175,10 @@ function Step3({formData, handleChange, nextPage, prevPage}) {
   return (
     <>
       <div style={{ marginBottom: '-3vw' }} className=""></div>
-      <section className="py-12">
+      <section className={`py-12 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
         <div className="container">
           <div className="-mx-4 flex flex-wrap">
-            <DefaultColumn>
+            <DefaultColumn isDarkMode={isDarkMode}>
               <TextInput
                 title="Which printer do you use?"
                 name="printer"
@@ -187,10 +187,11 @@ function Step3({formData, handleChange, nextPage, prevPage}) {
                 onBlur={handleBlur}
                 value={formData.printer}
                 error={touched.printer && errors.printer}
+                isDarkMode={isDarkMode}
               />
             </DefaultColumn>
 
-            <DefaultColumn>
+            <DefaultColumn isDarkMode={isDarkMode}>
               <TextInput
                 title="Which ink do you use?"
                 name="ink"
@@ -199,10 +200,11 @@ function Step3({formData, handleChange, nextPage, prevPage}) {
                 onBlur={handleBlur}
                 value={formData.ink}
                 error={touched.ink && errors.ink}
+                isDarkMode={isDarkMode}
               />
             </DefaultColumn>
 
-            <DefaultColumn>
+            <DefaultColumn isDarkMode={isDarkMode}>
               <SelectInput
                 title="What printing methods do you use?"
                 name="printingMethod"
@@ -210,10 +212,11 @@ function Step3({formData, handleChange, nextPage, prevPage}) {
                 onChange={handleSelectChange}
                 value={formData.printingMethod}
                 error={touched.printingMethod && errors.printingMethod}
+                isDarkMode={isDarkMode}
               />
             </DefaultColumn>
 
-            <DefaultColumn>
+            <DefaultColumn isDarkMode={isDarkMode}>
               <TextInput
                 title="Printing Price (in sq inch)"
                 name="printingPrice"
@@ -222,6 +225,7 @@ function Step3({formData, handleChange, nextPage, prevPage}) {
                 onBlur={handleBlur}
                 value={formData.printingPrice}
                 error={touched.printingPrice && errors.printingPrice}
+                isDarkMode={isDarkMode}
               />
             </DefaultColumn>
           </div>
@@ -254,62 +258,88 @@ function Step3({formData, handleChange, nextPage, prevPage}) {
 
 export default Step3;
 
-const TextInput = ({ title, name, placeholder, onChange, onBlur, value, error }) => {
-  return (
-    <div>
-      <label className="mb-[10px] block text-base font-medium text-dark text-white">
-        {title}
-      </label>
-      <input
-        type="text"
-        name={name}
-        onChange={onChange}
-        onBlur={onBlur}
-        value={value}
-        placeholder={placeholder}
-        className={`w-full bg-transparent rounded-md border ${
-          error ? 'border-red-500' : 'border-stroke dark:border-dark-3'
-        } py-[10px] px-5 text-dark-6 outline-none transition focus:border-primary active:border-primary`}
-      />
-      {error && (
-        <p className="mt-1 text-sm text-red-500">{error}</p>
-      )}
-    </div>
-  );
-};
-
-const DefaultColumn = ({ children }) => {
+const DefaultColumn = ({ children, isDarkMode }) => {
   return (
     <div className="w-full px-4 md:w-1/2 lg:w-1/3">
-      <div className="mb-12">{children}</div>
+      <div className={`mb-12 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{children}</div>
     </div>
   );
 };
 
-const SelectInput = ({ title, name, options, onChange, value, error }) => {
+const TextInput = ({ title, name, placeholder, onChange, onBlur, value, error, isDarkMode = false }) => {
   return (
     <div>
-      <label className="mb-[10px] block text-base font-medium text-dark text-white">
+      <label
+        htmlFor={name}
+        className={`mb-3 block text-base font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
+      >
         {title}
       </label>
-      <select
-        name={name}
-        onChange={onChange}
-        value={value}
-        className={`w-full bg-transparent rounded-md border ${
-          error ? 'border-red-500' : 'border-stroke dark:border-dark-3'
-        } py-[10px] px-5 text-dark-6 outline-none transition focus:border-primary active:border-primary`}
+      <div className="relative">
+        <input
+          type="text"
+          name={name}
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+          onBlur={onBlur}
+          className={`w-full rounded-md border border-form-stroke py-3 px-5 text-base font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-[#F5F7FD] ${
+            isDarkMode 
+              ? 'bg-dark-3 border-dark-3 text-white placeholder-gray-400' 
+              : 'bg-white border-[#E9EDF4] text-body-color placeholder-body-color'
+          } ${error ? 'border-red-500' : ''}`}
+        />
+      </div>
+      {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+    </div>
+  );
+};
+
+const SelectInput = ({ title, name, options, onChange, value, error, isDarkMode = false }) => {
+  return (
+    <div>
+      <label
+        htmlFor={name}
+        className={`mb-3 block text-base font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
       >
-        <option value="">Select a method</option>
-        {options.map((option, index) => (
-          <option key={index} value={option} className="bg-transparent text-dark-6">
-            {option}
-          </option>
-        ))}
-      </select>
-      {error && (
-        <p className="mt-1 text-sm text-red-500">{error}</p>
-      )}
+        {title}
+      </label>
+      <div className="relative">
+        <select
+          name={name}
+          value={value || ''}
+          onChange={onChange}
+          className={`w-full appearance-none rounded-md border border-form-stroke py-3 px-5 text-base font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-[#F5F7FD] ${
+            isDarkMode 
+              ? 'bg-dark-3 border-dark-3 text-white' 
+              : 'bg-white border-[#E9EDF4] text-body-color'
+          } ${error ? 'border-red-500' : ''}`}
+        >
+          <option value="">Select option</option>
+          {options.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+        <span className="absolute right-4 top-1/2 -translate-y-1/2">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              fillRule="evenodd"
+              clipRule="evenodd"
+              d="M5.29289 8.29289C5.68342 7.90237 6.31658 7.90237 6.70711 8.29289L12 13.5858L17.2929 8.29289C17.6834 7.90237 18.3166 7.90237 18.7071 8.29289C19.0976 8.68342 19.0976 9.31658 18.7071 9.70711L12.7071 15.7071C12.3166 16.0976 11.6834 16.0976 11.2929 15.7071L5.29289 9.70711C4.90237 9.31658 4.90237 8.68342 5.29289 8.29289Z"
+              fill={isDarkMode ? "#fff" : "#64748B"}
+            />
+          </svg>
+        </span>
+      </div>
+      {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
     </div>
   );
 };

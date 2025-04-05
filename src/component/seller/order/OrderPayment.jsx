@@ -2,9 +2,9 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../../../utils/supabase';
 import QRCode from "react-qr-code";
 import Payment from '../../../component/Payment';
-import ImageUpload from '../../../components/ImageUpload';
+import ImageUpload from '../../../component/element/ImageUpload';
 
-function OrderPayment({ handleOrderSubmit, setOrderData, orderData, handleChange }) {
+function OrderPayment({ handleOrderSubmit, setOrderData, orderData, handleChange, stepDec, isDarkMode = false }) {
   const [printingPricePerSqInch, setPrintingPricePerSqInch] = useState(0.75); // Default price is 0.75 per square inch
   const [totalAmount, setTotalAmount] = useState(0);
   const [totalPrintPrice, setTotalPrintPrice] = useState(0);
@@ -182,17 +182,17 @@ function OrderPayment({ handleOrderSubmit, setOrderData, orderData, handleChange
     if (orderData.printData && orderData.printData.length > 0) {
       try {
         const processedPrints = orderData.printData.map(print => ({
-          imageUrl: String(print.image || ''),
-          area: typeof print.area === 'number' ? Number(print.area) : 0,
-          position: String(print.position || 'Front'),
-          designDetails: {
-            width: typeof print.width === 'number' ? String(print.width) : '0',
-            height: typeof print.height === 'number' ? String(print.height) : '0',
-            x: typeof print.x === 'number' ? String(print.x) : '0',
-            y: typeof print.y === 'number' ? String(print.y) : '0',
-            rotation: typeof print.rotation === 'number' ? String(print.rotation) : '0',
-            scale: typeof print.scale === 'number' ? String(print.scale) : '1'
-          }
+            imageUrl: String(print.image || ''),
+            area: typeof print.area === 'number' ? Number(print.area) : 0,
+            position: String(print.position || 'Front'),
+            designDetails: {
+              width: typeof print.width === 'number' ? String(print.width) : '0',
+              height: typeof print.height === 'number' ? String(print.height) : '0',
+              x: typeof print.x === 'number' ? String(print.x) : '0',
+              y: typeof print.y === 'number' ? String(print.y) : '0',
+              rotation: typeof print.rotation === 'number' ? String(print.rotation) : '0',
+              scale: typeof print.scale === 'number' ? String(print.scale) : '1'
+            }
         }));
 
         if (setOrderData) {
@@ -294,12 +294,12 @@ function OrderPayment({ handleOrderSubmit, setOrderData, orderData, handleChange
     setIsLoadingPayment(true);
 
     try {
-      const scriptLoaded = await loadRazorpayScript();
+    const scriptLoaded = await loadRazorpayScript();
 
-      if (!scriptLoaded) {
-        alert('Razorpay SDK failed to load. Are you online?');
-        return;
-      }
+    if (!scriptLoaded) {
+      alert('Razorpay SDK failed to load. Are you online?');
+      return;
+    }
 
       // Create and store the order data
       const safeOrderData = {
@@ -340,12 +340,12 @@ function OrderPayment({ handleOrderSubmit, setOrderData, orderData, handleChange
         order_id: order.id,
         handler: async function (response) {
           try {
-            // Update inventory after successful payment
-            await updateInventory();
-            
-            if (handleOrderSubmit) {
-              await handleOrderSubmit();
-            }
+          // Update inventory after successful payment
+          await updateInventory();
+          
+          if (handleOrderSubmit) {
+            await handleOrderSubmit();
+          }
             alert('Payment Successful!');
           } catch (error) {
             console.error('Error after payment:', error);
@@ -373,135 +373,161 @@ function OrderPayment({ handleOrderSubmit, setOrderData, orderData, handleChange
   };
 
   return (
-    <div className='grid place-items-center'>
-      {/* Validation Errors */}
+    <div className={`${isDarkMode ? 'm-4 pb-5 rounded-lg bg-dark-2' : 'pb-5 rounded-lg bg-white'}`}>
+      <div className="flex items-center mb-6">
+        <button 
+          onClick={stepDec} 
+          className={`mr-4 p-2 rounded-full ${isDarkMode ? 'bg-dark-3 hover:bg-dark-4' : 'bg-gray-100 hover:bg-gray-200'}`}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${isDarkMode ? 'text-white' : 'text-gray-700'}`} viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+          </svg>
+        </button>
+        <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          Payment Details
+        </h2>
+      </div>
+      
       {validationErrors.length > 0 && (
-        <div className="mb-4 w-full md:w-1/2 lg:w-1/2 bg-red-900 border border-red-500 rounded-lg p-4">
-          <h4 className="text-white font-medium mb-2">Please fix the following issues:</h4>
-          <ul className="list-disc pl-5">
+        <div className={`mb-6 p-4 rounded-lg ${isDarkMode ? 'bg-red-900 bg-opacity-20 border border-red-800' : 'bg-red-50 border border-red-200'}`}>
+          <h3 className={`text-sm font-semibold mb-2 ${isDarkMode ? 'text-red-300' : 'text-red-700'}`}>Please fix the following issues:</h3>
+          <ul className={`list-disc list-inside text-sm ${isDarkMode ? 'text-red-300' : 'text-red-600'}`}>
             {validationErrors.map((error, index) => (
-              <li key={index} className="text-red-200 mb-1">{error}</li>
+              <li key={index}>{error}</li>
             ))}
           </ul>
         </div>
       )}
       
-      <div className="mb-4 dark:bg-dark-2 p-4 rounded-lg sm:w-full md:w-1/2 lg:w-1/2 mt-4">
-        <h3 className="text-white text-lg mb-4 text-center">Order Summary</h3>
+      <div className={`mb-8 rounded-lg p-6 ${isDarkMode ? 'bg-dark-3' : 'bg-gray-50'}`}>
+        <h3 className={`text-lg font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Order Summary</h3>
         
-        {/* Print Details */}
-        <div className="mb-4 border-b border-gray-700 pb-2">
-          <div className="flex justify-between items-center p-2">
-            <span className="text-white">Print Details:</span>
-            <span className="text-white">{getPrintDetailsSummary()}</span>
+        <div className="space-y-4">
+          {/* Product Details */}
+          <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-dark-4' : 'bg-white border border-gray-200'}`}>
+            <h4 className={`font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Product</h4>
+            <div className="flex justify-between">
+              <span className={isDarkMode ? 'text-white' : 'text-gray-900'}>
+                {orderData.productData?.selectedProduct || 'No product selected'} 
+                {orderData.productData?.selectedSize ? ` - ${orderData.productData.selectedSize}` : ''}
+                {orderData.productData?.selectedColor ? ` (${orderData.productData.selectedColor})` : ''}
+                {orderData.productData?.quantity ? ` x${orderData.productData.quantity}` : ''}
+              </span>
+              <span className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                {formatCurrency(productPrice)}
+              </span>
+            </div>
           </div>
-          <div className="flex justify-between items-center p-2">
-            <span className="text-white">Printing Price:</span>
-            <span className="text-white">{formatCurrency(totalPrintPrice)}</span>
+          
+          {/* Print Details */}
+          <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-dark-4' : 'bg-white border border-gray-200'}`}>
+            <h4 className={`font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Print Designs</h4>
+            <div className="flex justify-between">
+              <span className={isDarkMode ? 'text-white' : 'text-gray-900'}>
+                {getPrintDetailsSummary()}
+              </span>
+              <span className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                {formatCurrency(totalPrintPrice)}
+              </span>
+            </div>
+            
+            {/* Print details breakdown */}
+            {orderData.printData && orderData.printData.length > 0 && (
+              <div className="mt-2 pl-4 border-l-2 border-gray-700">
+                {orderData.printData.map((print, index) => (
+                  <div key={index} className="flex justify-between text-sm mt-1">
+                    <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
+                      {print.position || 'Position'} ({print.area ? print.area.toFixed(1) : '0'} sq in)
+                    </span>
+                    <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
+                      {formatCurrency(print.area * printingPricePerSqInch)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          <div className="text-xs text-gray-400 italic pl-2 pb-2">
-            Price: {formatCurrency(printingPricePerSqInch)} per square inch × {orderData.totalPrintArea?.toFixed(1) || 0} sq in
+          
+          {/* Shipping */}
+          <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-dark-4' : 'bg-white border border-gray-200'}`}>
+            <h4 className={`font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Shipping</h4>
+            <div className="flex justify-between">
+              <span className={isDarkMode ? 'text-white' : 'text-gray-900'}>Standard Delivery</span>
+              <span className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                {formatCurrency(shippingCost)}
+              </span>
+            </div>
           </div>
-        </div>
-        
-        {/* Product and Shipping */}
-        <div className="flex justify-between items-center p-2">
-          <span className="text-white">Product Price:</span>
-          <span className="text-white">{formatCurrency(productPrice)}</span>
-        </div>
-        <div className="flex justify-between items-center p-2 mb-2">
-          <span className="text-white">Shipping Charges:</span>
-          <span className="text-white">{formatCurrency(shippingCost)}</span>
-        </div>
-        
-        {/* Total */}
-        <div className="border-t border-gray-300 my-4"></div>
-        <div className="flex justify-between items-center font-bold p-2">
-          <span className="text-white">Total Amount:</span>
-          <span className="text-white">{formatCurrency(totalAmount)}</span>
-        </div>
-        
-        {/* Order Details */}
-        <div className="mt-6 border-t border-gray-700 pt-4">
-          <h4 className="text-white font-medium mb-2">Order Details</h4>
-          <div className="bg-gray-800 rounded-lg p-3">
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="text-gray-400">Product:</div>
-              <div className="text-white">{orderData.productData?.selectedProduct || 'Not selected'}</div>
-              
-              <div className="text-gray-400">Size:</div>
-              <div className="text-white">{orderData.productData?.selectedSize || 'Not selected'}</div>
-              
-              <div className="text-gray-400">Color:</div>
-              <div className="text-white">{orderData.productData?.selectedColor || 'Not selected'}</div>
-              
-              <div className="text-gray-400">Quantity:</div>
-              <div className="text-white">{orderData.productData?.quantity || 0}</div>
+          
+          {/* Total */}
+          <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-dark-4 border border-gray-700' : 'bg-white border-2 border-gray-300'}`}>
+            <div className="flex justify-between">
+              <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Total</span>
+              <span className={`font-bold ${isDarkMode ? 'text-secondary' : 'text-blue-600'}`}>
+                {formatCurrency(totalAmount)}
+              </span>
             </div>
           </div>
         </div>
-
-        {/* Print Preview Section */}
-        {safePrintData.length > 0 && (
-          <div className="mt-6 border-t border-gray-700 pt-4">
-            <h4 className="text-white font-medium mb-4">Print Designs</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {safePrintData.map((print, index) => (
-                <div key={index} className="bg-gray-800 rounded-lg p-4">
-                  <div className="relative pb-2">
-                    <img
-                      src={print.image}
-                      alt={`Print ${index + 1}`}
-                      className="w-full h-48 object-contain rounded-lg mb-2"
-                      loading="lazy"
-                    />
-                    <div className="absolute top-1 right-1 bg-gray-900 text-xs text-white px-2 py-1 rounded-full">
-                      {print.position || 'Front'}
-                    </div>
-                  </div>
-                  <div className="text-white text-xs space-y-1">
-                    <div className="grid grid-cols-2 gap-1">
-                      <p>Area:</p>
-                      <p>{print.area.toFixed(2)} sq in</p>
-                      
-                      <p>Size:</p>
-                      <p>{print.width.toFixed(0)}×{print.height.toFixed(0)}</p>
-                      
-                      <p>Position:</p>
-                      <p>X: {print.x.toFixed(0)}, Y: {print.y.toFixed(0)}</p>
-                      
-                      <p>Rotation:</p>
-                      <p>{print.rotation.toFixed(0)}°</p>
-                      
-                      <p>Scale:</p>
-                      <p>{print.scale.toFixed(2)}×</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
       
-      {/* Direct Payment Button */}
-      <div className="mt-6 mb-10">
+      {/* Payment Method */}
+      <div className={`mb-8 rounded-lg p-6 ${isDarkMode ? 'bg-dark-3' : 'bg-gray-50'}`}>
+        <h3 className={`text-lg font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Payment Method</h3>
+        
+        <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-dark-4' : 'bg-white border border-gray-200'}`}>
+          <div className="flex items-center mb-4">
+            <input
+              type="radio"
+              id="online-payment"
+              name="paymentMethod"
+              value="online"
+              checked={true}
+              readOnly
+              className="w-4 h-4 accent-blue-600"
+            />
+            <label htmlFor="online-payment" className={`ml-2 font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              Online Payment
+            </label>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-between p-4 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600">
+            <div className="mb-4 sm:mb-0">
+              <p className="text-white font-medium">Total Amount</p>
+              <p className="text-white text-2xl font-bold">{formatCurrency(totalAmount)}</p>
+            </div>
+            
+            <button
+              onClick={handleDirectPayment}
+              disabled={!isValid || isLoadingPayment}
+              className={`px-6 py-3 rounded-lg font-medium ${
+                !isValid || isLoadingPayment
+                  ? 'bg-gray-500 text-gray-300 cursor-not-allowed'
+                  : 'bg-white text-indigo-700 hover:bg-gray-100'
+              } transition-colors duration-200 flex items-center`}
+            >
+              {isLoadingPayment ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-indigo-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </>
+              ) : (
+                'Pay Now'
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div className="flex justify-between mt-8">
         <button
-          className='bg-secondary border-secondary border rounded-md inline-flex items-center justify-center py-3 px-7 text-center text-base font-medium text-white hover:bg-[#0BB489] hover:border-[#0BB489] disabled:bg-gray-700 disabled:border-gray-700 disabled:text-gray-400'
-          onClick={handleDirectPayment}
-          disabled={!isValid || isLoadingPayment}
+          onClick={stepDec}
+          className={`px-6 py-2 rounded-lg ${isDarkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
         >
-          {isLoadingPayment ? (
-            <>
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Processing...
-            </>
-          ) : (
-            'Pay Now'
-          )}
+          Back
         </button>
       </div>
     </div>

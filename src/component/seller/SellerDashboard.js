@@ -2,9 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../utils/supabase";
 import ExploreProducts from '../../component/form/ExploreProducts';
-import { FaBox, FaClock, FaWallet, FaSearch, FaPlus, FaUser, FaRegBell, FaRegStar, FaExclamationTriangle } from 'react-icons/fa';
+import OrderDetailsModal from './OrderDetailsModal';
+import { FaBox, FaClock, FaWallet, FaSearch, FaPlus, FaUser, FaRegBell, FaRegStar, FaExclamationTriangle, FaEye } from 'react-icons/fa';
+import IconContainer from '../../component/IconContainer';
 
-function BuyerDashboard() {
+function BuyerDashboard({ isDarkMode }) {
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [form, setForm] = useState(false);
@@ -17,6 +19,7 @@ function BuyerDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [totalSpent, setTotalSpent] = useState(0);
+  const [selectedOrder, setSelectedOrder] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -136,23 +139,34 @@ function BuyerDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 mt-10 grid place-items-center mx-auto to-black">
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gradient-to-b from-gray-900 to-black' : 'bg-[#f5f9fa]'} mt-10 grid place-items-center mx-auto`}>
       {/* Enhanced Header Section with Glass Effect */}
-      <div className="bg-black bg-opacity-60 backdrop-blur-lg border-b w-[90%] rounded-2xl border-gray-800">
+      <div className={`${isDarkMode 
+        ? 'bg-black bg-opacity-60 backdrop-blur-lg border-gray-800' 
+        : 'bg-white backdrop-blur-lg border-gray-200'} border-b w-[90%] rounded-2xl`}>
         <div className="container mx-auto px-6 py-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center mb-4 md:mb-0">
               <div className="relative">
                 <div className="absolute inset-0 bg-[#00E0A4] opacity-10 blur-xl rounded-full"></div>
-                <div className="relative bg-black bg-opacity-50 p-4 rounded-full border border-[#00E0A4]">
-                  <FaUser className="text-[#00E0A4] text-2xl" />
+                <div className="flex items-center justify-center w-12 h-12">
+                  <IconContainer
+                    icon={<FaUser className="m-1.5" />}
+                    isDarkMode={isDarkMode}
+                    size="md"
+                    color="teal"
+                  />
                 </div>
               </div>
               <div className="ml-6">
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+                <h1 className={`text-3xl font-bold ${
+                  isDarkMode 
+                    ? 'bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent' 
+                    : 'text-gray-900'
+                }`}>
                   Welcome back, {name || "there"}!
                 </h1>
-                <p className="text-gray-400 mt-2 text-lg">
+                <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-700'} mt-2 text-lg`}>
                   Your personal shopping dashboard
                 </p>
               </div>
@@ -177,10 +191,17 @@ function BuyerDashboard() {
             </div>
           </div>
         ) : error ? (
-          <div className="bg-black bg-opacity-60 backdrop-blur-lg text-red-200 p-8 rounded-2xl mb-8 shadow-2xl border border-red-800">
+          <div className={`${isDarkMode 
+            ? 'bg-black bg-opacity-60 backdrop-blur-lg text-red-200 border-red-800' 
+            : 'bg-white text-red-600 border-red-300'} p-8 rounded-2xl mb-8 shadow-lg border`}>
             <div className="flex items-center">
-              <div className="bg-red-900 bg-opacity-50 p-4 rounded-full mr-6">
-                <FaRegBell className="text-red-200 text-2xl" />
+              <div className="flex items-center justify-center w-12 h-12 mr-6">
+                <IconContainer
+                  icon={<FaRegBell />}
+                  isDarkMode={isDarkMode}
+                  size="md"
+                  color="red"
+                />
               </div>
               <div>
                 <h3 className="text-2xl font-semibold mb-2">Error</h3>
@@ -191,231 +212,239 @@ function BuyerDashboard() {
         ) : (
           <>
             {!form ? (
-              <div className="bg-black bg-opacity-60 backdrop-blur-lg rounded-2xl p-10 mb-12 shadow-2xl border border-gray-800">
+              <div className={`${isDarkMode 
+                ? 'bg-black bg-opacity-60 backdrop-blur-lg border-gray-800' 
+                : 'bg-white backdrop-blur-lg border-gray-200'} 
+                rounded-2xl p-10 mb-12 shadow-lg border`}>
                 <div className="flex items-center mb-8">
                   <div className="relative">
                     <div className="absolute inset-0 bg-[#00E0A4] opacity-20 blur-xl rounded-full"></div>
-                    <div className="relative bg-black bg-opacity-50 p-5 rounded-full border border-[#00E0A4]">
-                      <FaUser className="text-[#00E0A4] text-3xl" />
+                    <div className="flex items-center justify-center w-12 h-12">
+                      <IconContainer
+                        icon={<FaUser />}
+                        isDarkMode={isDarkMode}
+                        size="md"
+                        color="teal"
+                      />
                     </div>
                   </div>
                   <div className="ml-8">
-                    <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Complete Your Profile</h2>
-                    <p className="text-gray-400 text-lg mt-2">Unlock a personalized shopping experience</p>
+                    <h2 className={`text-3xl font-bold ${
+                      isDarkMode 
+                        ? 'bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent' 
+                        : 'text-gray-900'
+                    }`}>Complete Your Profile</h2>
+                    <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-700'} text-lg mt-2`}>Unlock a personalized shopping experience</p>
                   </div>
                 </div>
-                <div className="bg-black bg-opacity-50 p-8 rounded-xl border border-gray-800">
-                  <p className="text-gray-300 text-lg mb-8 leading-relaxed">
+                <div className={`${isDarkMode 
+                  ? 'bg-black bg-opacity-50 border-gray-800' 
+                  : 'bg-gray-50 border-gray-200'} p-8 rounded-xl border`}>
+                  <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-lg mb-8 leading-relaxed`}>
                     Take a moment to complete your profile and discover tailored recommendations, exclusive offers, and a seamless shopping experience designed just for you.
                   </p>
-                  <ExploreProducts />
+                  <ExploreProducts isDarkMode={isDarkMode} />
                 </div>
               </div>
             ) : (
               <>
                 {/* Quick Stats with Glass Effect */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-                  <div className="bg-black bg-opacity-60 backdrop-blur-lg rounded-2xl p-8 shadow-2xl border border-gray-800 transition-all duration-300 hover:transform hover:scale-105 group">
-                    <div className="flex items-center">
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-[#00E0A4] opacity-20 blur-xl rounded-full"></div>
-                        <div className="relative bg-black bg-opacity-50 p-5 rounded-full border border-[#00E0A4]">
-                          <FaBox className="text-[#00E0A4] text-2xl" />
-                        </div>
-                      </div>
-                      <div className="ml-6">
-                        <p className="text-gray-400 text-lg">Total Orders</p>
-                        <h3 className="text-4xl font-bold text-white mt-2">{totalOrders}</h3>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-black bg-opacity-60 backdrop-blur-lg rounded-2xl p-8 shadow-2xl border border-gray-800 transition-all duration-300 hover:transform hover:scale-105 group">
-                    <div className="flex items-center">
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-[#00E0A4] opacity-20 blur-xl rounded-full"></div>
-                        <div className="relative bg-black bg-opacity-50 p-5 rounded-full border border-[#00E0A4]">
-                          <FaClock className="text-[#00E0A4] text-2xl" />
-                        </div>
-                      </div>
-                      <div className="ml-6">
-                        <p className="text-gray-400 text-lg">In Progress</p>
-                        <h3 className="text-4xl font-bold text-white mt-2">{pendingOrders}</h3>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-black bg-opacity-60 backdrop-blur-lg rounded-2xl p-8 shadow-2xl border border-gray-800 transition-all duration-300 hover:transform hover:scale-105 group">
-                    <div className="flex items-center">
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-[#00E0A4] opacity-20 blur-xl rounded-full"></div>
-                        <div className="relative bg-black bg-opacity-50 p-5 rounded-full border border-[#00E0A4]">
-                          <FaWallet className="text-[#00E0A4] text-2xl" />
-                        </div>
-                      </div>
-                      <div className="ml-6">
-                        <p className="text-gray-400 text-lg">Total Spent</p>
-                        <h3 className="text-4xl font-bold text-white mt-2">{formatCurrency(totalSpent)}</h3>
-                      </div>
-                    </div>
-                  </div>
+                  <StatCard 
+                    icon={<FaBox className="m-1.5" />} 
+                    label="Total Orders" 
+                    value={totalOrders}
+                    isDarkMode={isDarkMode}
+                  />
+                  <StatCard 
+                    icon={<FaClock className="m-1.5" />} 
+                    label="Pending Orders" 
+                    value={pendingOrders}
+                    isDarkMode={isDarkMode}
+                  />
+                  <StatCard 
+                    icon={<FaWallet className="m-1.5" />} 
+                    label="Total Spent" 
+                    value={formatCurrency(totalSpent)}
+                    isDarkMode={isDarkMode}
+                  />
                 </div>
-
-                {/* Orders Section with Enhanced Glass Effect */}
-                <div className="bg-black bg-opacity-60 backdrop-blur-lg rounded-2xl shadow-2xl overflow-hidden mb-12 border border-gray-800">
-                  <div className="p-8 border-b border-gray-800">
-                    <div className="flex items-center">
-                      <div className="relative mr-6">
-                        <div className="absolute inset-0 bg-[#00E0A4] opacity-20 blur-xl rounded-full"></div>
-                        <div className="relative bg-black bg-opacity-50 p-4 rounded-full border border-[#00E0A4]">
-                          <FaBox className="text-[#00E0A4] text-2xl" />
-                        </div>
+                
+                {/* Recent Transactions Section */}
+                <div className={`${isDarkMode 
+                  ? 'bg-black bg-opacity-60 backdrop-blur-lg border-gray-800' 
+                  : 'bg-white border-gray-200'} rounded-2xl p-8 mb-12 shadow-lg border`}>
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+                    <div className="flex items-center mb-6 md:mb-0">
+                      <div className="flex items-center justify-center w-12 h-12 mr-6">
+                        <IconContainer
+                          icon={<FaBox className="m-1.5" />}
+                          isDarkMode={isDarkMode}
+                          size="md"
+                          color="teal"
+                        />
                       </div>
                       <div>
-                        <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">My Orders</h2>
-                        <p className="text-gray-400 text-lg mt-2">View and manage your purchases</p>
+                        <h2 className={`text-2xl font-bold ${
+                          isDarkMode ? 'text-white' : 'text-gray-900'
+                        }`}>Recent Orders</h2>
+                        <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-700'} mt-1`}>
+                          Track and manage your recent purchases
+                        </p>
                       </div>
                     </div>
-                  </div>
-                  
-                  <div className="p-8 border-b border-gray-800">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                      <div className="relative w-full md:w-96">
-                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                          <FaSearch className="text-gray-400 text-lg" />
+                    
+                    <div className="flex flex-col w-full md:w-auto space-y-4 md:space-y-0 md:flex-row md:space-x-4">
+                      <div className={`relative w-full md:w-64 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <FaSearch className={`${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
                         </div>
                         <input
                           type="text"
+                          className={`block w-full pl-10 pr-3 py-2 rounded-lg ${
+                            isDarkMode 
+                              ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500'
+                              : 'bg-white border-gray-300 text-black placeholder-gray-500'
+                          } border`}
                           placeholder="Search orders..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className="bg-black bg-opacity-50 text-white text-lg pl-12 pr-6 py-4 rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-[#00E0A4] border border-gray-800 focus:border-[#00E0A4] transition-all duration-300"
                         />
                       </div>
                       
                       <select
+                        className={`block w-full md:w-auto px-3 py-2 rounded-lg ${
+                          isDarkMode 
+                            ? 'bg-gray-800 border-gray-700 text-white' 
+                            : 'bg-white border-gray-300 text-black'
+                        } border`}
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
-                        className="bg-black bg-opacity-50 text-white text-lg px-6 py-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00E0A4] w-full md:w-auto border border-gray-800 focus:border-[#00E0A4] transition-all duration-300"
                       >
-                        <option value="all">All Orders</option>
+                        <option value="all">All Statuses</option>
                         <option value="pending">Pending</option>
+                        <option value="processing">Processing</option>
                         <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
                       </select>
                     </div>
                   </div>
                   
-                  {filteredTransactions.length === 0 ? (
-                    <div className="p-20 text-center">
-                      <div className="relative inline-block mb-8">
-                        <div className="absolute inset-0 bg-[#00E0A4] opacity-20 blur-xl rounded-full"></div>
-                        <div className="relative bg-black bg-opacity-50 p-10 rounded-full border border-[#00E0A4]">
-                          <FaBox className="text-[#00E0A4] text-6xl" />
-                        </div>
-                      </div>
-                      <h3 className="text-2xl font-bold text-white mb-4">No Orders Found</h3>
-                      <p className="text-gray-400 text-lg mb-10 max-w-lg mx-auto">
-                        We couldn't find any orders matching your criteria. Start your shopping journey by creating a new order.
-                      </p>
-                      <button 
-                        onClick={navigateToCreateOrder}
-                        className="bg-gradient-to-r from-[#00E0A4] to-[#0BB489] hover:from-[#0BB489] hover:to-[#00E0A4] text-black font-semibold py-4 px-10 rounded-xl inline-flex items-center text-lg transition-all duration-300 transform hover:scale-105 shadow-[0_0_15px_rgba(0,224,164,0.3)]"
-                      >
-                        <FaPlus className="mr-3" /> Create Order
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="text-left text-gray-400 bg-black bg-opacity-50">
-                            <th className="p-6 text-lg font-semibold">Order ID</th>
-                            <th className="p-6 text-lg font-semibold">Transaction ID</th>
-                            <th className="p-6 text-lg font-semibold">City</th>
-                            <th className="p-6 text-lg font-semibold">Date</th>
-                            <th className="p-6 text-lg font-semibold">Amount</th>
-                            <th className="p-6 text-lg font-semibold">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredTransactions.map((transaction, index) => (
-                            <tr key={index} className="border-t border-gray-800 hover:bg-black hover:bg-opacity-50 transition-colors duration-300">
-                              <td className="p-6 text-lg text-gray-300">
-                                {transaction.id ? transaction.id.slice(0, 8) : `#${index + 1}`}
+                  {/* Table Component */}
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full">
+                      <thead>
+                        <tr className={`${isDarkMode ? 'border-gray-800' : 'border-gray-200'} border-b`}>
+                          <th className={`px-4 py-3 text-left ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Order ID</th>
+                          <th className={`px-4 py-3 text-left ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Date</th>
+                          <th className={`px-4 py-3 text-left ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>City</th>
+                          <th className={`px-4 py-3 text-left ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Amount</th>
+                          <th className={`px-4 py-3 text-left ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Status</th>
+                          <th className={`px-4 py-3 text-right ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                        {filteredTransactions.length > 0 ? (
+                          filteredTransactions.map((transaction) => (
+                            <tr 
+                              key={transaction.id}
+                              className={`${isDarkMode ? 'hover:bg-gray-900' : 'hover:bg-gray-50'} transition-colors`}
+                            >
+                              <td className={`px-4 py-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                                {transaction.id ? transaction.id.slice(0, 8) : 'N/A'}
                               </td>
-                              <td className="p-6 text-lg text-gray-300">
-                                {transaction.transactionId || "N/A"}
-                              </td>
-                              <td className="p-6 text-lg text-gray-300">
-                                {transaction.selectedCity || "Pune"}
-                              </td>
-                              <td className="p-6 text-lg text-gray-300">
+                              <td className={`px-4 py-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>
                                 {formatDate(transaction.date)}
                               </td>
-                              <td className="p-6 text-lg font-medium text-white">
-                                {transaction.paymentAmount === "NaN" ? "₹NaN" : formatCurrency(transaction.paymentAmount)}
+                              <td className={`px-4 py-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                                {transaction.selectedCity || 'N/A'}
                               </td>
-                              <td className="p-6">
-                                <span className={`px-4 py-2 text-sm rounded-xl ${
-                                  transaction.status?.toLowerCase() === "completed" ? "bg-green-900 bg-opacity-50 text-green-300 border border-green-700" :
-                                  transaction.status?.toLowerCase() === "pending" ? "bg-yellow-900 bg-opacity-50 text-yellow-300 border border-yellow-700" :
-                                  "bg-gray-800 bg-opacity-50 text-gray-300 border border-gray-700"
-                                }`}>
-                                  {transaction.status || "Unknown"}
+                              <td className={`px-4 py-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                                {formatCurrency(transaction.paymentAmount)}
+                              </td>
+                              <td className={`px-4 py-4`}>
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                  ${transaction.status?.toLowerCase() === 'completed' 
+                                    ? isDarkMode ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800'
+                                    : transaction.status?.toLowerCase() === 'pending'
+                                    ? isDarkMode ? 'bg-yellow-900 text-yellow-200' : 'bg-yellow-100 text-yellow-800'
+                                    : transaction.status?.toLowerCase() === 'cancelled'
+                                    ? isDarkMode ? 'bg-red-900 text-red-200' : 'bg-red-100 text-red-800'
+                                    : isDarkMode ? 'bg-blue-900 text-blue-200' : 'bg-blue-100 text-blue-800'
+                                  }`}
+                                >
+                                  {transaction.status || 'Processing'}
                                 </span>
                               </td>
+                              <td className="px-4 py-4 text-right">
+                                <button
+                                  onClick={() => setSelectedOrder(transaction)}
+                                  className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${
+                                    isDarkMode 
+                                      ? 'bg-gray-800 hover:bg-gray-700 text-[#00E0A4] hover:text-white'
+                                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-black'
+                                  } transition-colors`}
+                                >
+                                  <IconContainer
+                                    icon={<FaEye />}
+                                    isDarkMode={isDarkMode}
+                                    size="sm"
+                                    color="teal"
+                                  />
+                                </button>
+                              </td>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-
-                {/* Coming Soon Section with Enhanced Glass Effect */}
-                <div className="bg-black bg-opacity-60 backdrop-blur-lg rounded-2xl shadow-2xl overflow-hidden border border-gray-800">
-                  <div className="p-8 border-b border-gray-800">
-                    <div className="flex items-center">
-                      <div className="relative mr-6">
-                        <div className="absolute inset-0 bg-[#00E0A4] opacity-20 blur-xl rounded-full"></div>
-                        <div className="relative bg-black bg-opacity-50 p-4 rounded-full border border-[#00E0A4]">
-                          <FaRegStar className="text-[#00E0A4] text-2xl" />
-                        </div>
-                      </div>
-                      <div>
-                        <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Recommended For You</h2>
-                        <p className="text-gray-400 text-lg mt-2">Personalized product suggestions</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="p-20 text-center">
-                    <div className="relative inline-block mb-8">
-                      <div className="absolute inset-0 bg-[#00E0A4] opacity-20 blur-xl rounded-full"></div>
-                      <div className="relative bg-black bg-opacity-50 p-10 rounded-full border border-[#00E0A4]">
-                        <FaExclamationTriangle className="text-[#00E0A4] text-6xl" />
-                      </div>
-                    </div>
-                    <h3 className="text-2xl font-bold text-white mb-4">Coming Soon!</h3>
-                    <p className="text-gray-400 text-lg mb-10 max-w-lg mx-auto">
-                      We're crafting personalized product recommendations based on your preferences and order history. 
-                      Stay tuned for an enhanced shopping experience!
-                    </p>
-                    <button 
-                      onClick={navigateToCreateOrder}
-                      className="bg-gradient-to-r from-[#00E0A4] to-[#0BB489] hover:from-[#0BB489] hover:to-[#00E0A4] text-black font-semibold py-4 px-10 rounded-xl inline-flex items-center text-lg transition-all duration-300 transform hover:scale-105 shadow-[0_0_15px_rgba(0,224,164,0.3)]"
-                    >
-                      <FaPlus className="mr-3" /> Create Order Now
-                    </button>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan="6" className={`px-4 py-8 text-center ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                              {searchTerm || filterStatus !== 'all' 
+                                ? "No orders match your search criteria." 
+                                : "You don't have any orders yet."}
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </>
             )}
           </>
         )}
+
+        {selectedOrder && (
+          <OrderDetailsModal
+            order={selectedOrder}
+            onClose={() => setSelectedOrder(null)}
+            isDarkMode={isDarkMode}
+          />
+        )}
       </div>
     </div>
   );
 }
+
+const StatCard = ({ icon, label, value, isDarkMode }) => (
+  <div className={`${isDarkMode 
+    ? 'bg-black bg-opacity-60 border-gray-800' 
+    : 'bg-white border-gray-200'} 
+    rounded-xl p-6 shadow-md border transition duration-300 hover:shadow-lg`}>
+    <div className="flex items-center">
+      <div className="flex items-center justify-center w-12 h-12 mr-4">
+        <IconContainer
+          icon={icon}
+          isDarkMode={isDarkMode}
+          size="md"
+          color="teal"
+        />
+      </div>
+      <div>
+        <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-sm`}>{label}</p>
+        <p className={`text-2xl font-bold mt-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{value}</p>
+      </div>
+    </div>
+  </div>
+);
 
 export default BuyerDashboard;

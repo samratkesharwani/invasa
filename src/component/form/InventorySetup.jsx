@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../utils/supabase';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
-const InventorySetup = ({ nextStep, prevStep }) => {
+const InventorySetup = ({ nextStep, prevStep, isDarkMode = false }) => {
   const navigate = useNavigate();
   const [userId, setUserId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -209,253 +209,262 @@ const InventorySetup = ({ nextStep, prevStep }) => {
 
   if (isPageLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-dark-2">
+      <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-dark-2' : 'bg-gray-100'}`}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-secondary mx-auto mb-4"></div>
-          <p className="text-white text-lg">Loading inventory setup...</p>
+          <p className={`${isDarkMode ? 'text-white' : 'text-gray-900'} text-lg`}>Loading inventory setup...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 bg-dark-1 min-h-screen">
-      <div className="max-w-4xl mx-auto">
-        <h2 className="text-2xl font-bold text-white mb-6">Add New Inventory Item</h2>
-        
+    <div className={`p-6 rounded-lg ${isDarkMode ? 'bg-dark-2 text-white' : 'bg-gray-50 text-gray-900'}`}>
+      <div className="container mx-auto">
+        <div className="flex items-center mb-6">
+          <button 
+            onClick={() => navigate(-1)} 
+            className={`mr-4 p-2 rounded-full hover:bg-opacity-10 ${isDarkMode ? 'hover:bg-gray-300' : 'hover:bg-gray-700'}`}
+          >
+            <ArrowBackIcon className={isDarkMode ? 'text-white' : 'text-gray-800'} />
+          </button>
+          <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Inventory Setup</h2>
+        </div>
+
         {error && (
-          <div className="bg-red-900 text-red-200 p-4 rounded-lg mb-6">
-            {error}
-          </div>
-        )}
-        
-        {success && (
-          <div className="bg-green-900 text-green-200 p-4 rounded-lg mb-6">
-            {success}
+          <div className="mb-6 p-4 rounded-md bg-red-100 text-red-700 border border-red-400">
+            <p>{error}</p>
           </div>
         )}
 
-        <div className="space-y-6">
-          {/* Product Selection */}
-          <div>
-            <label className="block text-white mb-2">Select Product</label>
-            <select
-              value={selectedProduct}
-              onChange={handleProductSelect}
-              className="w-full bg-dark-2 text-white border border-gray-700 rounded-lg p-3"
+        {success && (
+          <div className="mb-6 p-4 rounded-md bg-green-100 text-green-700 border border-green-400">
+            <p>{success}</p>
+          </div>
+        )}
+
+        <div className={`mb-6 p-6 rounded-lg ${isDarkMode ? 'bg-dark-3' : 'bg-white'} shadow-sm`}>
+          <h3 className="text-xl font-semibold mb-4">Product Information</h3>
+          
+          <div className="mb-4">
+            <label className="block mb-2 font-medium">Select Product</label>
+            <select 
+              value={selectedProduct} 
+              onChange={handleProductSelect} 
+              className={`w-full px-4 py-2 rounded-md border ${
+                isDarkMode 
+                  ? 'bg-dark-4 border-dark-3 text-white' 
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
             >
-              <option value="">Select a product</option>
+              <option value="">-- Select a product --</option>
               {availableProducts.map(product => (
-                <option key={product.id} value={product.id}>
-                  {product.name}
-                </option>
+                <option key={product.id} value={product.id}>{product.name}</option>
               ))}
             </select>
           </div>
 
-          {/* Product Price */}
-          <div>
-            <label className="block text-white mb-2">Product Price</label>
-            <div className="relative">
-              <span className="absolute left-3 top-3 text-gray-400">₹</span>
-              <input
-                type="number"
-                value={productPrice}
-                onChange={handlePriceChange}
-                className="w-full bg-dark-2 text-white border border-gray-700 rounded-lg p-3 pl-8"
-                placeholder="Enter price"
-              />
-            </div>
+          <div className="mb-4">
+            <label className="block mb-2 font-medium">Product Price (₹)</label>
+            <input 
+              type="number" 
+              value={productPrice} 
+              onChange={handlePriceChange} 
+              min="0" 
+              step="0.01" 
+              placeholder="Enter price in rupees" 
+              className={`w-full px-4 py-2 rounded-md border ${
+                isDarkMode 
+                  ? 'bg-dark-4 border-dark-3 text-white placeholder-gray-400' 
+                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+              }`}
+            />
           </div>
+        </div>
 
-          {/* Color Selection */}
-          <div>
-            <label className="block text-white mb-2">Add Colors</label>
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                placeholder="Enter color name (e.g. Red, Blue, Black)"
-                className="flex-grow bg-dark-2 text-white border border-gray-700 rounded-lg p-3"
-                value={colorInput}
-                onChange={(e) => setColorInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddColor();
-                  }
-                }}
-              />
+        <div className={`mb-6 p-6 rounded-lg ${isDarkMode ? 'bg-dark-3' : 'bg-white'} shadow-sm`}>
+          <h3 className="text-xl font-semibold mb-4">Colors</h3>
+          
+          <div className="flex flex-wrap gap-2 mb-4">
+            {availableColors.map(color => (
               <button
-                type="button"
-                onClick={handleAddColor}
-                className="bg-secondary text-white px-4 py-2 rounded-lg"
+                key={color}
+                onClick={() => handleColorSelect(color)}
+                className={`px-3 py-2 rounded-md text-sm ${
+                  selectedColors.includes(color)
+                    ? 'bg-secondary text-white'
+                    : isDarkMode
+                      ? 'bg-dark-4 text-white hover:bg-dark-5'
+                      : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                }`}
               >
-                Add
+                {color}
               </button>
-            </div>
-            {selectedColors.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {selectedColors.map(color => (
-                  <div key={color} className="bg-dark-2 text-white px-3 py-1 rounded-lg flex items-center">
-                    {color}
-                    <button
-                      type="button"
-                      onClick={() => handleColorSelect(color)}
-                      className="ml-2 text-gray-400 hover:text-white"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+            ))}
           </div>
 
-          {/* Size Selection */}
-          <div>
-            <label className="block text-white mb-2">Add Sizes</label>
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                placeholder="Enter size (e.g. S, M, L, XL)"
-                className="flex-grow bg-dark-2 text-white border border-gray-700 rounded-lg p-3"
-                value={sizeInput}
-                onChange={(e) => setSizeInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddSize();
-                  }
-                }}
-              />
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={colorInput}
+              onChange={(e) => setColorInput(e.target.value)}
+              placeholder="Add custom color"
+              className={`flex-1 px-4 py-2 rounded-md border ${
+                isDarkMode 
+                  ? 'bg-dark-4 border-dark-3 text-white placeholder-gray-400' 
+                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+              }`}
+            />
+            <button
+              onClick={handleAddColor}
+              className="px-4 py-2 bg-secondary text-white rounded-md hover:bg-[#0BB489]"
+            >
+              Add
+            </button>
+          </div>
+        </div>
+
+        <div className={`mb-6 p-6 rounded-lg ${isDarkMode ? 'bg-dark-3' : 'bg-white'} shadow-sm`}>
+          <h3 className="text-xl font-semibold mb-4">Sizes</h3>
+          
+          <div className="flex flex-wrap gap-2 mb-4">
+            {availableSizes.map(size => (
               <button
-                type="button"
-                onClick={handleAddSize}
-                className="bg-secondary text-white px-4 py-2 rounded-lg"
+                key={size}
+                onClick={() => handleSizeSelect(size)}
+                className={`px-3 py-2 rounded-md text-sm ${
+                  selectedSizes.includes(size)
+                    ? 'bg-secondary text-white'
+                    : isDarkMode
+                      ? 'bg-dark-4 text-white hover:bg-dark-5'
+                      : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                }`}
               >
-                Add
+                {size}
               </button>
-            </div>
-            {selectedSizes.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {selectedSizes.map(size => (
-                  <div key={size} className="bg-dark-2 text-white px-3 py-1 rounded-lg flex items-center">
-                    {size}
-                    <button
-                      type="button"
-                      onClick={() => handleSizeSelect(size)}
-                      className="ml-2 text-gray-400 hover:text-white"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+            ))}
           </div>
 
-          {/* GSM Selection */}
-          <div>
-            <label className="block text-white mb-2">Add GSM</label>
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                placeholder="Enter GSM (e.g. 180, 200, 220)"
-                className="flex-grow bg-dark-2 text-white border border-gray-700 rounded-lg p-3"
-                value={gsmInput}
-                onChange={(e) => setGsmInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddGsm();
-                  }
-                }}
-              />
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={sizeInput}
+              onChange={(e) => setSizeInput(e.target.value)}
+              placeholder="Add custom size"
+              className={`flex-1 px-4 py-2 rounded-md border ${
+                isDarkMode 
+                  ? 'bg-dark-4 border-dark-3 text-white placeholder-gray-400' 
+                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+              }`}
+            />
+            <button
+              onClick={handleAddSize}
+              className="px-4 py-2 bg-secondary text-white rounded-md hover:bg-[#0BB489]"
+            >
+              Add
+            </button>
+          </div>
+        </div>
+
+        <div className={`mb-6 p-6 rounded-lg ${isDarkMode ? 'bg-dark-3' : 'bg-white'} shadow-sm`}>
+          <h3 className="text-xl font-semibold mb-4">GSM</h3>
+          
+          <div className="flex flex-wrap gap-2 mb-4">
+            {availableGsm.map(gsm => (
               <button
-                type="button"
-                onClick={handleAddGsm}
-                className="bg-secondary text-white px-4 py-2 rounded-lg"
+                key={gsm}
+                onClick={() => handleGsmSelect(gsm)}
+                className={`px-3 py-2 rounded-md text-sm ${
+                  selectedGsm.includes(gsm)
+                    ? 'bg-secondary text-white'
+                    : isDarkMode
+                      ? 'bg-dark-4 text-white hover:bg-dark-5'
+                      : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                }`}
               >
-                Add
+                {gsm}
               </button>
-            </div>
-            {selectedGsm.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {selectedGsm.map(gsm => (
-                  <div key={gsm} className="bg-dark-2 text-white px-3 py-1 rounded-lg flex items-center">
-                    {gsm}
-                    <button
-                      type="button"
-                      onClick={() => handleGsmSelect(gsm)}
-                      className="ml-2 text-gray-400 hover:text-white"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+            ))}
           </div>
 
-          {/* Quantity Matrix */}
-          {selectedColors.length > 0 && selectedSizes.length > 0 && selectedGsm.length > 0 && (
-            <div>
-              <label className="block text-white mb-2">Set Quantities</label>
-              <div className="overflow-x-auto">
-                <table className="w-full text-white">
-                  <thead>
-                    <tr>
-                      <th className="text-left p-2">Color</th>
-                      <th className="text-left p-2">GSM</th>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={gsmInput}
+              onChange={(e) => setGsmInput(e.target.value)}
+              placeholder="Add custom GSM"
+              className={`flex-1 px-4 py-2 rounded-md border ${
+                isDarkMode 
+                  ? 'bg-dark-4 border-dark-3 text-white placeholder-gray-400' 
+                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+              }`}
+            />
+            <button
+              onClick={handleAddGsm}
+              className="px-4 py-2 bg-secondary text-white rounded-md hover:bg-[#0BB489]"
+            >
+              Add
+            </button>
+          </div>
+        </div>
+
+        {selectedColors.length > 0 && selectedSizes.length > 0 && selectedGsm.length > 0 && (
+          <div className={`mb-6 p-6 rounded-lg ${isDarkMode ? 'bg-dark-3' : 'bg-white'} shadow-sm`}>
+            <h3 className="text-xl font-semibold mb-4">Inventory Quantities</h3>
+            
+            <div className="overflow-x-auto">
+              <table className={`w-full border-collapse ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                <thead>
+                  <tr className={isDarkMode ? 'border-b border-dark-4' : 'border-b border-gray-300'}>
+                    <th className="px-4 py-2 text-left">Color</th>
+                    {selectedSizes.map(size => (
+                      <th key={size} className="px-4 py-2 text-center">{size}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedColors.map(color => (
+                    <tr key={color} className={isDarkMode ? 'border-b border-dark-4' : 'border-b border-gray-200'}>
+                      <td className="px-4 py-2">{color}</td>
                       {selectedSizes.map(size => (
-                        <th key={size} className="p-2">{size}</th>
+                        <td key={`${color}-${size}`} className="px-4 py-2">
+                          <input
+                            type="number"
+                            min="0"
+                            value={quantities[`${color}-${selectedGsm[0]}-${size}`] || ''}
+                            onChange={(e) => handleQuantityChange(color, selectedGsm[0], size, e.target.value)}
+                            className={`w-full px-3 py-1 rounded border text-center ${
+                              isDarkMode 
+                                ? 'bg-dark-4 border-dark-3 text-white' 
+                                : 'bg-white border-gray-300 text-gray-900'
+                            }`}
+                          />
+                        </td>
                       ))}
                     </tr>
-                  </thead>
-                  <tbody>
-                    {selectedColors.map(color => (
-                      selectedGsm.map(gsm => (
-                        <tr key={`${color}-${gsm}`} className="border-t border-gray-700">
-                          <td className="p-2">{color}</td>
-                          <td className="p-2">{gsm}</td>
-                          {selectedSizes.map(size => (
-                            <td key={size} className="p-2">
-                              <input
-                                type="number"
-                                min="0"
-                                value={quantities[`${color}-${gsm}-${size}`] || ''}
-                                onChange={(e) => handleQuantityChange(color, gsm, size, e.target.value)}
-                                className="w-20 bg-dark-2 text-white border border-gray-700 rounded p-2"
-                              />
-                            </td>
-                          ))}
-                        </tr>
-                      ))
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
-
-          {/* Submit Button */}
-          <div className="flex justify-end space-x-4">
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="px-6 py-3 bg-dark-2 text-white rounded-lg hover:bg-gray-700"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={isLoading}
-              className="px-6 py-3 bg-secondary text-white rounded-lg hover:bg-[#0BB489] disabled:bg-gray-600"
-            >
-              {isLoading ? 'Adding...' : 'Add Inventory Item'}
-            </button>
           </div>
+        )}
+
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={handleSubmit}
+            disabled={isLoading}
+            className={`px-6 py-3 bg-secondary text-white rounded-md flex items-center ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-[#0BB489]'}`}
+          >
+            {isLoading ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Saving Inventory...
+              </>
+            ) : 'Save Inventory'}
+          </button>
         </div>
       </div>
     </div>

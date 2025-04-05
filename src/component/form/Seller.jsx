@@ -4,7 +4,7 @@ import Step1 from "./Step1";
 import Step3 from "./Step3";
 import Header from '../Header'
 
-const FormElementInput = () => {
+const FormElementInput = ({ isDarkMode = false }) => {
   const [pageCounter, setPageCounter] = useState(1);
   const [data, setData] = useState({});
   const [formData, setFormData] = useState({
@@ -45,18 +45,17 @@ const FormElementInput = () => {
   const previousPage = () => {
     setPageCounter(prev => prev === 2 ? 1 : prev);
   };
-
+ 
   return (
     <>
-      <section className="py-12 dark:bg-dark-2 p-5 mt-10 rounded-lg">
+      <section className={`py-12 p-5 mt-10 rounded-lg ${isDarkMode ? 'bg-dark-2' : 'bg-gray-50'}`}>
         <div className="container">
-          <h3 className="p-8 mb-4 text-2xl font-bold text-dark text-white sm:text-[40px]/[48px]">
-            {/* <ArrowBackIcon fontSize="large" onClick={handleBackClick} />  */}
-            <span className="ml-4">Onboarding Form-</span> 
+          <h3 className={`p-8 mb-6 text-2xl font-bold sm:text-[32px] ${isDarkMode ? 'text-black' : 'text-gray-900'}`}>
+            <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Seller Onboarding Form</span> 
           </h3>
-          {pageCounter === 1 && <Step1 handleChange={handleChange} formData={formData} nextPage={nextPage} />}
+          {pageCounter === 1 && <Step1 handleChange={handleChange} formData={formData} nextPage={nextPage} isDarkMode={isDarkMode} />}
           {pageCounter === 2 && (
-            <Step3 setFormData={setFormData} handleChange={handleChange} formData={formData} prevPage={previousPage} nextPage={nextPage} />
+            <Step3 setFormData={setFormData} handleChange={handleChange} formData={formData} prevPage={previousPage} nextPage={nextPage} isDarkMode={isDarkMode} />
           )}
         </div>
       </section>

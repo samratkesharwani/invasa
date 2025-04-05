@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../../utils/supabase';
 
-function FullAddress({ setOrderData, orderData, handleChange, stepDec, stepInc }) {
+function FullAddress({ setOrderData, orderData, handleChange, stepDec, stepInc, isDarkMode = false }) {
     const navigate = useNavigate();
     const [address, setAddress] = useState('');
     const [coordinates, setCoordinates] = useState(null);
@@ -248,30 +248,83 @@ function FullAddress({ setOrderData, orderData, handleChange, stepDec, stepInc }
                     return isMatch;
                 });
                 
-                console.log(`Found ${citySellersList.length} sellers in city "${selectedCity}"`);
+                console.log(`Found ${citySellersList.length} sellers in ${displayCity}:`, citySellersList);
                 
                 if (citySellersList.length === 0) {
-                    setError(`No sellers found in ${displayCity}. Please select a different city.`);
+                    setError(`No approved sellers found in ${displayCity}. Please select another city.`);
                     setIsPageLoading(false);
                     return;
                 }
                 
+                // Store the filtered sellers for this city
                 setCitySellers(citySellersList);
-                setSellersWithInventory(citySellersList);
-
+                
+                // Fetch inventory for each seller to check which sellers have stock
+                const sellersInventoryPromises = citySellersList.map(async seller => {
+                    const { data: inventory, error: invError } = await supabase
+                        .from('inventory')
+                        .select('*')
+                        .eq('brand_id', seller.id);
+                        
+                    if (invError) {
+                        console.error(`Error fetching inventory for seller ${seller.id}:`, invError);
+                        return null;
+                    }
+                    
+                    // Check if inventory has any items with stock
+                    let hasStock = false;
+                    if (inventory && inventory.length > 0) {
+                        for (const item of inventory) {
+                            if (item.data && Array.isArray(item.data)) {
+                                for (const colorData of item.data) {
+                                    // Check each size property for stock
+                                    for (const key in colorData) {
+                                        if (key !== 'color' && colorData[key] > 0) {
+                                            hasStock = true;
+                                            break;
+                                        }
+                                    }
+                                    if (hasStock) break;
+                                }
+                            }
+                            if (hasStock) break;
+                        }
+                    }
+                    
+                    return { ...seller, hasStock };
+                });
+                
+                const sellersInventoryResults = await Promise.all(sellersInventoryPromises);
+                const sellersWithInventoryList = sellersInventoryResults
+                    .filter(seller => seller && seller.hasStock);
+                
+                console.log(`Found ${sellersWithInventoryList.length} sellers with inventory in ${displayCity}:`, sellersWithInventoryList);
+                
+                setSellersWithInventory(sellersWithInventoryList);
+                
+                setIsPageLoading(false);
             } catch (error) {
-                console.error("Error loading city data:", error);
-                setError("Error loading city data. Please try again.");
-            } finally {
+                console.error('Error fetching city data:', error);
+                setError('Failed to load sellers. Please try again.');
                 setIsPageLoading(false);
             }
         };
 
         fetchCityData();
-    }, [orderData.selectedCity, navigate]);
+    }, [orderData.selectedCity, navigate, orderData.cityDisplayName]);
 
-    // Calculate distance is a pure function that doesn't need component state - can be moved outside
-    // This function can be shared across components
+    // Restore form values from orderData when component mounts
+    useEffect(() => {
+        if (orderData.fullAddress && orderData.fullAddress.address) {
+            setAddress(orderData.fullAddress.address);
+        }
+        
+        if (orderData.coordinates) {
+            setCoordinates(orderData.coordinates);
+        }
+    }, [orderData]);
+
+    // Function to calculate distance
     const calculateDistance = (lat1, lon1, lat2, lon2) => {
         const R = 6371; // Radius of the Earth in km
         const dLat = (lat2 - lat1) * (Math.PI / 180);
@@ -281,137 +334,195 @@ function FullAddress({ setOrderData, orderData, handleChange, stepDec, stepInc }
             Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
             Math.sin(dLon / 2) * Math.sin(dLon / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        const distance = R * c; // Distance in km
-        return distance;
+        return R * c; // Distance in km
     };
 
+    // Function to calculate total print size
     const calculateTotalPrintSize = () => {
-        if (!orderData.prints || orderData.prints.length === 0) {
-            return 0;
-        }
-        return orderData.prints.reduce((total, print) => total + (print.size || 0), 0);
+        // Add logic to calculate total print size if needed
+        return 0;
+    };
+
+    // Add a function to handle back navigation with state preservation
+    const handleBackClick = () => {
+        // Save the current state before navigating back
+        const updatedOrderData = {
+            ...orderData,
+            fullAddress: {
+                ...orderData.fullAddress,
+                address: address || orderData.fullAddress.address,
+                pincode: orderData.fullAddress.pincode
+            }
+        };
+        
+        // Update the orderData with current form values
+        setOrderData(updatedOrderData);
+        
+        // Navigate back
+        stepDec();
     };
 
     if (isPageLoading) {
         return (
-            <div className="container m-4 rounded-lg bg-gray-800 dark:bg-dark-2 flex items-center justify-center" style={{ minHeight: "300px" }}>
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-secondary mx-auto mb-4"></div>
-                    <p className="text-white">Loading address form...</p>
-                </div>
+            <div className="flex justify-center items-center py-12">
+                <div className={`inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid ${isDarkMode ? 'border-white border-t-transparent' : 'border-blue-600 border-t-transparent'}`} />
             </div>
         );
     }
 
     return (
-        <>
-            <div className='container m-4 rounded-lg bg-gray-800 dark:bg-dark-2'>
-                <div className='pr-10 pl-10 pb-5'>
-                    <div className="flex items-center justify-evenly w-full">
-                        <h1 className="text-white text-lg text-center mt-10 mb-10 w-full">Enter Address</h1>
+        <div className="mx-auto max-w-4xl">
+            <div className="flex items-center mb-6">
+                <button 
+                  onClick={handleBackClick} 
+                  className={`mr-4 p-2 rounded-full ${isDarkMode ? 'bg-dark-3 hover:bg-dark-4' : 'bg-gray-100 hover:bg-gray-200'}`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${isDarkMode ? 'text-white' : 'text-gray-700'}`} viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+                <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    Enter Delivery Address
+                </h2>
+            </div>
+
+            {error && (
+                <div className={`p-4 mb-6 rounded-lg ${isDarkMode ? 'bg-red-900 bg-opacity-20 border border-red-800 text-red-300' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+                    {error}
+                </div>
+            )}
+
+            <div className={`p-4 rounded-lg mb-6 ${isDarkMode ? 'bg-dark-3' : 'bg-gray-100'}`}>
+                <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Please enter delivery details for {orderData.cityDisplayName || orderData.selectedCity || 'your city'}.
+                </p>
+            </div>
+
+            <div className={`p-6 rounded-lg mb-6 ${isDarkMode ? 'bg-dark-3' : 'bg-white border border-gray-200'}`}>
+                <h3 className={`text-lg font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    Customer Information
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label className={`block mb-1 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                            Customer Name
+                        </label>
+                        <input
+                            type="text"
+                            name="customerName"
+                            value={orderData.customerInfo.customerName || ''}
+                            onChange={handleChange}
+                            className={`w-full px-3 py-2 rounded-lg ${
+                                isDarkMode 
+                                    ? 'bg-dark-4 border-gray-700 text-white placeholder-gray-500 focus:border-secondary' 
+                                    : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-500'
+                            } border focus:outline-none focus:ring-1 ${
+                                isDarkMode ? 'focus:ring-secondary' : 'focus:ring-blue-500'
+                            }`}
+                            placeholder="Enter customer name"
+                        />
                     </div>
-                    
-                    {/* Show city information and seller count */}
-                    <div className="bg-gray-900 dark:bg-dark-1 text-white px-4 py-3 rounded mb-6">
-                        <p className="text-sm">
-                            Selected City: <span className="font-medium">{orderData.selectedCity.charAt(0).toUpperCase() + orderData.selectedCity.slice(1)}</span>
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                            {citySellers.length} approved sellers found{sellersWithInventory.length > 0 ? `, ${sellersWithInventory.length} with active inventory` : ''}
-                        </p>
+                    <div>
+                        <label className={`block mb-1 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                            Contact Number
+                        </label>
+                        <input
+                            type="tel"
+                            name="customerContact"
+                            value={orderData.customerInfo.customerContact || ''}
+                            onChange={handleChange}
+                            className={`w-full px-3 py-2 rounded-lg ${
+                                isDarkMode 
+                                    ? 'bg-dark-4 border-gray-700 text-white placeholder-gray-500 focus:border-secondary' 
+                                    : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-500'
+                            } border focus:outline-none focus:ring-1 ${
+                                isDarkMode ? 'focus:ring-secondary' : 'focus:ring-blue-500'
+                            }`}
+                            placeholder="Enter contact number"
+                        />
                     </div>
-                    
-                    <input 
-                        onChange={handleChange} 
-                        type="text" 
-                        placeholder='Customer Name' 
-                        name='customerName' 
-                        value={orderData.customerInfo.customerName || ''} 
-                        className='m-3 w-full bg-gray-700 dark:bg-dark-3 rounded-md border border-gray-600 dark:border-dark-5 py-[10px] px-5 text-white outline-none transition focus:border-secondary active:border-secondary' 
+                </div>
+                
+                <div className="mb-4">
+                    <label className={`block mb-1 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Full Address
+                    </label>
+                    <textarea
+                        name="address"
+                        value={orderData.fullAddress.address || ''}
+                        onChange={(e) => setOrderData(prev => ({
+                            ...prev,
+                            fullAddress: { ...prev.fullAddress, address: e.target.value }
+                        }))}
+                        className={`w-full px-3 py-2 rounded-lg ${
+                            isDarkMode 
+                                ? 'bg-dark-4 border-gray-700 text-white placeholder-gray-500 focus:border-secondary' 
+                                : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-500'
+                        } border focus:outline-none focus:ring-1 ${
+                            isDarkMode ? 'focus:ring-secondary' : 'focus:ring-blue-500'
+                        }`}
+                        rows="3"
+                        placeholder="Enter full address"
+                    ></textarea>
+                </div>
+                
+                <div>
+                    <label className={`block mb-1 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Pincode
+                    </label>
+                    <input
+                        type="text"
+                        name="pincode"
+                        value={orderData.fullAddress.pincode || ''}
+                        onChange={(e) => setOrderData(prev => ({
+                            ...prev,
+                            fullAddress: { ...prev.fullAddress, pincode: e.target.value }
+                        }))}
+                        className={`w-full px-3 py-2 rounded-lg ${
+                            isDarkMode 
+                                ? 'bg-dark-4 border-gray-700 text-white placeholder-gray-500 focus:border-secondary' 
+                                : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-500'
+                        } border focus:outline-none focus:ring-1 ${
+                            isDarkMode ? 'focus:ring-secondary' : 'focus:ring-blue-500'
+                        }`}
+                        placeholder="Enter pincode"
+                        maxLength="6"
                     />
-                    <input 
-                        onChange={handleChange} 
-                        type="number" 
-                        placeholder='Contact Number' 
-                        name='customerContact' 
-                        value={orderData.customerInfo.customerContact || ''} 
-                        className='m-3 w-full bg-gray-700 dark:bg-dark-3 rounded-md border border-gray-600 dark:border-dark-5 py-[10px] px-5 text-white outline-none transition focus:border-secondary active:border-secondary' 
-                    />
-                    <input 
-                        onChange={(e) => {
-                            const updatedOrderData = {
-                                ...orderData,
-                                fullAddress: {
-                                    ...orderData.fullAddress,
-                                    address: e.target.value
-                                }
-                            };
-                            setOrderData(updatedOrderData);
-                        }} 
-                        type="text" 
-                        placeholder='Enter Full Address' 
-                        value={orderData.fullAddress.address || ''} 
-                        className='m-3 w-full bg-gray-700 dark:bg-dark-3 rounded-md border border-gray-600 dark:border-dark-5 py-[10px] px-5 text-white outline-none transition focus:border-secondary active:border-secondary' 
-                    />
-                    <input 
-                        onChange={(e) => {
-                            const updatedOrderData = {
-                                ...orderData,
-                                fullAddress: {
-                                    ...orderData.fullAddress,
-                                    pincode: e.target.value
-                                }
-                            };
-                            setOrderData(updatedOrderData);
-                        }}  
-                        type="text" 
-                        placeholder='Pincode' 
-                        value={orderData.fullAddress.pincode || ''} 
-                        className='m-3 w-full bg-gray-700 dark:bg-dark-3 rounded-md border border-gray-600 dark:border-dark-5 py-[10px] px-5 text-white outline-none transition focus:border-secondary active:border-secondary' 
-                    />
-
-                    {error && (
-                        <div className="bg-gray-900 dark:bg-dark-1 border border-red-500 text-red-400 px-4 py-3 rounded relative mt-4 mb-4" role="alert">
-                            <span className="block sm:inline">{error}</span>
-                        </div>
-                    )}
-
-                    {sellersWithInventory.length === 0 && citySellers.length > 0 && !error && (
-                        <div className="bg-gray-900 dark:bg-dark-1 border border-yellow-500 text-yellow-400 px-4 py-3 rounded relative mt-4 mb-4" role="alert">
-                            <span className="block sm:inline">Warning: No sellers with active inventory found in this city. You should choose another city.</span>
-                        </div>
-                    )}
-
-                    {/* <div className="text-white text-center mt-4">
-                        Total Print Size: {calculateTotalPrintSize()} units
-                    </div> */}
-
-                    <br />
-                    <button 
-                        onClick={stepDec} 
-                        disabled={isLoading}
-                        className="mr-5 mt-5 p-2 w-1/4 bg-secondary border-secondary border rounded-md inline-flex items-center justify-center py-3 px-7 text-center text-base font-medium text-white hover:bg-[#0BB489] hover:border-[#0BB489] disabled:bg-gray-700 disabled:border-gray-700 disabled:text-gray-400"
-                    >
-                        Prev
-                    </button>
-                    <button 
-                        onClick={handleNextClick} 
-                        disabled={isLoading || sellersWithInventory.length === 0}
-                        className="mt-5 p-2 w-1/4 bg-secondary border-secondary border rounded-md inline-flex items-center justify-center py-3 px-7 text-center text-base font-medium text-white hover:bg-[#0BB489] hover:border-[#0BB489] disabled:bg-gray-700 disabled:border-gray-700 disabled:text-gray-400"
-                    >
-                        {isLoading ? (
-                            <>
-                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Processing...
-                            </>
-                        ) : sellersWithInventory.length === 0 ? 'No Sellers Available' : 'Next'}
-                    </button>
                 </div>
             </div>
-        </>
+
+            <div className="flex justify-between mt-8">
+                <button
+                    onClick={handleBackClick}
+                    className={`px-6 py-2 rounded-lg ${isDarkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                >
+                    Back
+                </button>
+                <button
+                    onClick={handleNextClick}
+                    disabled={isLoading}
+                    className={`px-6 py-2 rounded-lg ${isLoading 
+                        ? isDarkMode 
+                            ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
+                            : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                        : isDarkMode 
+                            ? 'bg-secondary text-black hover:bg-green-600' 
+                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                    } inline-flex items-center`}
+                >
+                    {isLoading ? (
+                        <>
+                            <svg className={`animate-spin -ml-1 mr-2 h-4 w-4 ${isDarkMode ? 'text-gray-400' : 'text-white'}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Processing...
+                        </>
+                    ) : 'Continue'}
+                </button>
+            </div>
+        </div>
     );
 }
 

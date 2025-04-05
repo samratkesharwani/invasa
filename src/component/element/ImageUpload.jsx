@@ -60,7 +60,7 @@ const ImageUpload = ({ onUploadComplete }) => {
 
   return (
     <div className="max-w-md mx-auto p-4">
-      <form onSubmit={handleSubmit} className="space-y-4 bg-gray-800 p-6 rounded-lg">
+      <form onSubmit={handleSubmit} className="space-y-4 bg-gray-800 dark:bg-gray-900 p-6 rounded-lg">
         <div>
           <label className="block text-white mb-2">Select an image file:</label>
           <input
@@ -69,7 +69,7 @@ const ImageUpload = ({ onUploadComplete }) => {
             accept="image/*"
             onChange={handleFileChange}
             required
-            className="w-full text-white bg-gray-700 rounded p-2"
+            className="w-full text-white bg-gray-700 dark:bg-gray-800 rounded p-2"
           />
         </div>
 
@@ -99,14 +99,14 @@ const ImageUpload = ({ onUploadComplete }) => {
       )}
 
       {uploadedUrl && (
-        <div className="mt-4 bg-gray-800 p-4 rounded-lg">
+        <div className="mt-4 bg-gray-800 dark:bg-gray-900 p-4 rounded-lg">
           <h3 className="text-white mb-2">Image URL:</h3>
           <div className="flex gap-2">
             <input
               type="text"
               value={uploadedUrl}
               readOnly
-              className="flex-1 bg-gray-700 text-white p-2 rounded"
+              className="flex-1 bg-gray-700 dark:bg-gray-800 text-white p-2 rounded"
             />
             <button
               onClick={copyToClipboard}

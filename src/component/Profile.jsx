@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaSignOutAlt } from 'react-icons/fa';
 import avatar from '../imgs/avatar.jpg';
 
-function SellerProfile() {
+function SellerProfile({ isDarkMode }) {
   const navigate = useNavigate();
   const [onboardedBrandData, setOnboardedBrandsData] = useState(null);
   const [onboardedSellerData, setOnboardedSellerData] = useState(null);
@@ -63,19 +63,22 @@ function SellerProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black">
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gradient-to-b from-gray-900 to-black' : 'bg-[#f5f9fa]'}`}>
       <div className="container mx-auto px-6 py-8">
         <button 
           onClick={() => navigate(-1)}
-          className="flex items-center text-gray-400 hover:text-white transition-colors duration-300"
+          className={`flex items-center ${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black'} transition-colors duration-300`}
         >
           <FaArrowLeft className="mr-2" /> Back
         </button>
 
         <div className="mt-8 max-w-4xl mx-auto">
-          <div className="bg-black bg-opacity-60 backdrop-blur-lg rounded-2xl shadow-2xl overflow-hidden border border-gray-800">
+          <div className={`${isDarkMode 
+            ? 'bg-black bg-opacity-60 backdrop-blur-lg border-gray-800' 
+            : 'bg-white backdrop-blur-lg border-gray-200'} 
+            rounded-2xl shadow-lg overflow-hidden border`}>
             <div className="relative p-8">
-              <div className="absolute inset-0 bg-gradient-to-r from-[#00E0A4] to-[#0BB489] opacity-5"></div>
+              <div className={`absolute inset-0 bg-gradient-to-r from-[#00E0A4] to-[#0BB489] ${isDarkMode ? 'opacity-5' : 'opacity-2'}`}></div>
               
               <div className="relative z-10">
                 <div className="flex flex-col items-center">
@@ -90,39 +93,39 @@ function SellerProfile() {
                 </div>
 
                 {loading ? (
-                  <div className="text-center mt-8 text-gray-400">Loading profile data...</div>
+                  <div className={`text-center mt-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Loading profile data...</div>
                 ) : (
                   <>
                     {onboardedBrandData && Object.keys(onboardedBrandData).length > 0 && (
                       <>
-                        <h2 className="text-white text-xl font-bold mt-6 mb-4 text-center">Brand Information</h2>
+                        <h2 className={`${isDarkMode ? 'text-white' : 'text-gray-900'} text-xl font-bold mt-6 mb-4 text-center`}>Brand Information</h2>
                         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <ProfileItem label="Name" value={onboardedBrandData.ownerName} />
-                          <ProfileItem label="Brand Name" value={onboardedBrandData.brandName} />
-                          <ProfileItem label="Brand Theme" value={onboardedBrandData.theme} />
-                          <ProfileItem label="Mobile" value={onboardedBrandData.contactNumber} />
-                          <ProfileItem label="Email" value={onboardedBrandData.email} fullWidth />
+                          <ProfileItem label="Name" value={onboardedBrandData.ownerName} isDarkMode={isDarkMode} />
+                          <ProfileItem label="Brand Name" value={onboardedBrandData.brandName} isDarkMode={isDarkMode} />
+                          <ProfileItem label="Brand Theme" value={onboardedBrandData.theme} isDarkMode={isDarkMode} />
+                          <ProfileItem label="Mobile" value={onboardedBrandData.contactNumber} isDarkMode={isDarkMode} />
+                          <ProfileItem label="Email" value={onboardedBrandData.email} fullWidth isDarkMode={isDarkMode} />
                         </div>
                       </>
                     )}
                     
                     {onboardedSellerData && Object.keys(onboardedSellerData).length > 0 && (
                       <>
-                        <h2 className="text-white text-xl font-bold mt-6 mb-4 text-center">Business Information</h2>
+                        <h2 className={`${isDarkMode ? 'text-white' : 'text-gray-900'} text-xl font-bold mt-6 mb-4 text-center`}>Business Information</h2>
                         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <ProfileItem label="Name" value={onboardedSellerData.ownerName} />
-                          <ProfileItem label="Business Name" value={onboardedSellerData.businessName} />
-                          <ProfileItem label="Mobile" value={onboardedSellerData.contactNumber} />
-                          <ProfileItem label="Email" value={onboardedSellerData.email ? `${onboardedSellerData.email.slice(0, 10)}...` : 'N/A'} />
-                          <ProfileItem label="City" value={onboardedSellerData.city} />
-                          <ProfileItem label="Profile Status" value={onboardedSellerData.status} />
+                          <ProfileItem label="Name" value={onboardedSellerData.ownerName} isDarkMode={isDarkMode} />
+                          <ProfileItem label="Business Name" value={onboardedSellerData.businessName} isDarkMode={isDarkMode} />
+                          <ProfileItem label="Mobile" value={onboardedSellerData.contactNumber} isDarkMode={isDarkMode} />
+                          <ProfileItem label="Email" value={onboardedSellerData.email ? `${onboardedSellerData.email.slice(0, 10)}...` : 'N/A'} isDarkMode={isDarkMode} />
+                          <ProfileItem label="City" value={onboardedSellerData.city} isDarkMode={isDarkMode} />
+                          <ProfileItem label="Profile Status" value={onboardedSellerData.status} isDarkMode={isDarkMode} />
                         </div>
                       </>
                     )}
                     
                     {(!onboardedBrandData || Object.keys(onboardedBrandData).length === 0) && 
                      (!onboardedSellerData || Object.keys(onboardedSellerData).length === 0) && (
-                      <div className="text-center mt-8 text-gray-400">No profile data found. Please complete your onboarding.</div>
+                      <div className={`text-center mt-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>No profile data found. Please complete your onboarding.</div>
                     )}
                   </>
                 )}
@@ -144,11 +147,14 @@ function SellerProfile() {
   );
 }
 
-const ProfileItem = ({ label, value, fullWidth = false }) => {
+const ProfileItem = ({ label, value, fullWidth = false, isDarkMode }) => {
   return (
-    <div className={`bg-black bg-opacity-50 rounded-xl p-6 border border-gray-800 transition-all duration-300 hover:border-[#00E0A4] ${fullWidth ? 'col-span-2' : ''}`}>
-      <h3 className="text-gray-400 text-sm mb-2">{label}</h3>
-      <p className="text-white text-lg font-semibold">{value || 'N/A'}</p>
+    <div className={`${isDarkMode 
+      ? 'bg-black bg-opacity-50 border-gray-800 hover:border-[#00E0A4]' 
+      : 'bg-white bg-opacity-90 border-gray-200 hover:border-[#00E0A4]'} 
+      rounded-xl p-6 border transition-all duration-300 ${fullWidth ? 'col-span-2' : ''}`}>
+      <h3 className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-sm mb-2`}>{label}</h3>
+      <p className={`${isDarkMode ? 'text-white' : 'text-gray-900'} text-lg font-semibold`}>{value || 'N/A'}</p>
     </div>
   );
 };

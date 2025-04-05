@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState, useCallback } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider, useAuth } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Header from './component/Header';
 import Layout from "./component/Layout";
 import Signup from "./component/SignUp";
@@ -31,8 +31,9 @@ import AdminRoutes from './component/admin/AdminRoutes';
 import AdminLogin from './component/admin/pages/Login';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
+import Contact from './pages/Contact';
 import './app.css';
-import { ThemeProvider } from './context/ThemeContext';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 
 const ProtectedRoute = ({ children }) => {
   const user = useAuth();
@@ -40,65 +41,83 @@ const ProtectedRoute = ({ children }) => {
 };
 
 function App() {
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Check localStorage but default to light theme
+    const savedTheme = localStorage.getItem('theme');
+    // Only use dark if explicitly set to 'dark' in localStorage
+    return savedTheme === 'dark';
+  });
+  
+  useEffect(() => {
+    // Apply theme to document
+    document.documentElement.classList.toggle('dark', isDarkMode);
+    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
+  
+  const toggleTheme = useCallback(() => {
+    setIsDarkMode(prev => !prev);
+  }, []);
+
   return (
     <ThemeProvider>
       <HelmetProvider>
         <AuthProvider>
           <Router>
-            <div className="flex flex-col min-h-screen">
-              <Header />
+            <div className={`flex flex-col min-h-screen ${isDarkMode ? 'bg-[#111928]' : 'bg-[#f8f9fa]'}`}>
+              <Header toggleTheme={toggleTheme} isDarkMode={isDarkMode} />
               <main className="flex-grow">
                 <Routes>
-                  <Route path="/" element={<Layout />} />
-                  <Route path="/explore-products" element={<ExploreProducts />} />
-                  <Route path="/seller" element={<Seller />} />
-                  <Route path="/thanks" element={<Thanks />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
+                  <Route path="/" element={<Layout isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
+                  <Route path="/explore-products" element={<ExploreProducts isDarkMode={isDarkMode} />} />
+                  <Route path="/seller" element={<Seller isDarkMode={isDarkMode} />} />
+                  <Route path="/thanks" element={<Thanks isDarkMode={isDarkMode} />} />
+                  <Route path="/login" element={<Login isDarkMode={isDarkMode} />} />
+                  <Route path="/register" element={<Register isDarkMode={isDarkMode} />} />
                   <Route path="/dashboard-seller" element={
-                    <Wrapper>
-                      <BrandsDashboard />
+                    <Wrapper isDarkMode={isDarkMode}>
+                      <BrandsDashboard isDarkMode={isDarkMode} />
                     </Wrapper>
                   } />
                   <Route path="/dashboard-brands" element={
-                    <Wrapper>
-                      <SellerDashboard />
+                    <Wrapper isDarkMode={isDarkMode}>
+                      <SellerDashboard isDarkMode={isDarkMode} />
                     </Wrapper>
                   } />
                   <Route path="/profile" element={
-                    <Wrapper>
-                      <Profile />
+                    <Wrapper isDarkMode={isDarkMode}>
+                      <Profile isDarkMode={isDarkMode} />
                     </Wrapper>
                   } />
                   <Route path="/order" element={
-                    <Wrapper>
-                      <Order />
+                    <Wrapper isDarkMode={isDarkMode}>
+                      <Order isDarkMode={isDarkMode} />
                     </Wrapper>
                   } />
                   <Route path="/order/address" element={
-                    <Wrapper>
-                      <FullAddress />
+                    <Wrapper isDarkMode={isDarkMode}>
+                      <FullAddress isDarkMode={isDarkMode} />
                     </Wrapper>
                   } />
                   <Route path="/order/products" element={
-                    <Wrapper>
-                      <SelectProduct />
+                    <Wrapper isDarkMode={isDarkMode}>
+                      <SelectProduct isDarkMode={isDarkMode} />
                     </Wrapper>
                   } />
                   <Route path="/order/options" element={
-                    <Wrapper>
-                      <SelectOptions />
+                    <Wrapper isDarkMode={isDarkMode}>
+                      <SelectOptions isDarkMode={isDarkMode} />
                     </Wrapper>
                   } />
-                  <Route path="/admin/*" element={<AdminRoutes />} />
-                  <Route path="/admin-login" element={<AdminLogin />} />
-                  <Route path="/pay" element={<Payment />} />
-                  <Route path="/location" element={<Location />} />
-                  <Route path="/print" element={<Print />} />
-                  <Route path="/test" element={<Test />} />
-                  <Route path="/inventory-setup" element={<InventorySetup />} />
-                  <Route path="/blog" element={<Blog />} />
-                  <Route path="/blog/:slug" element={<BlogPost />} />
+                  <Route path="/admin/*" element={<AdminRoutes isDarkMode={isDarkMode} />} />
+                  <Route path="/admin-login" element={<AdminLogin isDarkMode={isDarkMode} />} />
+                  <Route path="/pay" element={<Payment isDarkMode={isDarkMode} />} />
+                  <Route path="/location" element={<Location isDarkMode={isDarkMode} />} />
+                  <Route path="/print" element={<Print isDarkMode={isDarkMode} />} />
+                  <Route path="/test" element={<Test isDarkMode={isDarkMode} />} />
+                  <Route path="/inventory-setup" element={<InventorySetup isDarkMode={isDarkMode} />} />
+                  <Route path="/blog" element={<Blog isDarkMode={isDarkMode} />} />
+                  <Route path="/blog/:slug" element={<BlogPost isDarkMode={isDarkMode} />} />
+                  <Route path="/contact" element={<Contact isDarkMode={isDarkMode} />} />
                   <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
               </main>

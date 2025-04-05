@@ -7,8 +7,10 @@ import About from "../component/About";
 import Footer from './Footer';
 import { supabase } from '../utils/supabase';
 import { useNavigate } from 'react-router-dom';
+// import { useTheme } from "../contexts/ThemeContext";
 
-function Layout() {
+function Layout({isDarkMode, toggleTheme}) {
+  // const { isDarkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [role, setRole] = useState("");
   const [loggedIn, setLoggedIn] = useState(false);
@@ -67,24 +69,25 @@ function Layout() {
   }, []);
 
   return (
-    <div className="min-h-screen dark:bg-dark">
+    <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-[#111928]' : 'bg-[#f8f9fa]'}`}>
       <div className="relative">
-        <div className=" blur-3xl rounded-full"></div>
+        <div className="blur-3xl rounded-full"></div>
         <main className="relative z-10">
-          <Hero navigateTo={navigateTo} loggedIn={loggedIn} />
+        
+          <Hero navigateTo={navigateTo} loggedIn={loggedIn} isDarkMode={isDarkMode} />
           <div className="container mx-auto px-6 py-16">
-            <Card />
+            <Card isDarkMode={isDarkMode} />
           </div>
-          <div className="dark:bg-dark bg-opacity-60 backdrop-blur-lg">
+          <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} bg-opacity-60 backdrop-blur-lg`}>
             <div className="container mx-auto px-6 py-16">
-              <Milestone />
+              <Milestone isDarkMode={isDarkMode} />
             </div>
           </div>
           <div className="container mx-auto px-6 py-16">
-            <About navigateTo={navigateTo} loggedIn={loggedIn} />
+            <About navigateTo={navigateTo} loggedIn={loggedIn} isDarkMode={isDarkMode} />
           </div>
         </main>
-        <Footer />
+        <Footer isDarkMode={isDarkMode} />
       </div>
     </div>
   );
