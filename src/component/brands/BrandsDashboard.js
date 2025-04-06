@@ -176,9 +176,30 @@ function BrandsDashboard({ isDarkMode }) {
             <div className={`${isDarkMode 
               ? 'bg-black bg-opacity-60 backdrop-blur-lg border-gray-800' 
               : 'bg-white backdrop-blur-lg border-gray-200'} 
-              rounded-2xl p-8 shadow-lg border`}
+              rounded-2xl p-8 shadow-lg border mb-12`}
               style={{position: 'relative', zIndex: 'auto'}}
             >
+              <div className="flex items-center mb-8">
+                <div className="relative mr-6">
+                  <div className="absolute inset-0 bg-[#00E0A4] opacity-20 blur-xl rounded-full"></div>
+                  <div className="flex items-center justify-center w-12 h-12">
+                    <IconContainer
+                      icon={<FaBox className="m-1.5" />}
+                      isDarkMode={isDarkMode}
+                      size="md"
+                      color="teal"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <h2 className={`text-3xl font-bold ${
+                    isDarkMode 
+                      ? 'bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent' 
+                      : 'text-gray-900'
+                  }`}>Inventory</h2>
+                  <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-lg mt-2`}>Manage your product inventory</p>
+                </div>
+              </div>
               <Inventory isDarkMode={isDarkMode} />
             </div>
           </>

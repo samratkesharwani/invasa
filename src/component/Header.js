@@ -276,7 +276,7 @@ useEffect(() => {
           <div className="px-4 pt-2 pb-4 space-y-3">
             <NavLink mobile path="/" label="Home" onClick={() => setMobileMenuOpen(false)} />
             <NavLink mobile path="/blog" label="Blog" onClick={() => setMobileMenuOpen(false)} />
-            <NavLink mobile path="/about" label="About" onClick={() => setMobileMenuOpen(false)} />
+            {/* <NavLink mobile path="/about" label="About" onClick={() => setMobileMenuOpen(false)} /> */}
             <NavLink mobile path="/contact" label="Contact" onClick={() => setMobileMenuOpen(false)} />
             
             <div className={`flex items-center justify-between py-2 border-t ${isDarkMode ? 'border-gray-800' : 'border-gray-200'}`}>

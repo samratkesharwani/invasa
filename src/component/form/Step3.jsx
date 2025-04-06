@@ -78,32 +78,43 @@ function Step3({formData, handleChange, nextPage, prevPage, isDarkMode = false})
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  
-      if (sessionError || !session || !session.user) {
-        console.error("No user session found.");
-        return;
-      }
-  
-      const userId = session.user.id;
-  
       try {
+        // Get user session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          return;
+        }
+        
+        if (!session || !session.user) {
+          console.error("No user session found.");
+          return;
+        }
+        
+        console.log("User session found:", session.user.id);
+        
+        // Use the user's ID from the session directly
+        setId(session.user.id);
+        
+        // For debugging - try to fetch profile and log result
         const { data: userProfile, error: userProfileError } = await supabase
           .from("profile")
           .select("id")
-          .eq("id", userId)
+          .eq("id", session.user.id)
           .single();
-  
+        
         if (userProfileError) {
-          throw userProfileError;
+          console.warn("Profile fetch error, but using session ID instead:", userProfileError);
+          // Continue with session.user.id even if profile fetch fails
+        } else {
+          console.log("User profile found:", userProfile);
         }
-  
-        setId(userProfile.id);
       } catch (error) {
-        console.error("Error fetching user data:", error.message);
+        console.error("Error in fetchUserProfile:", error.message);
       }
     };
-  
+    
     fetchUserProfile();
   }, []);
 
@@ -124,6 +135,7 @@ function Step3({formData, handleChange, nextPage, prevPage, isDarkMode = false})
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("Form submission initiated");
     
     // Mark all fields as touched
     const allTouched = {};
@@ -133,41 +145,106 @@ function Step3({formData, handleChange, nextPage, prevPage, isDarkMode = false})
     setTouched(allTouched);
 
     if (!validateForm()) {
+      console.error("Form validation failed");
       return;
     }
 
     try {
-      const { error: businessOnboardForm } = await supabase
-        .from("businessOnboardForm")
-        .insert([{
-          id: id,
-          businessName: formData.businessName,
-          ownerName: formData.ownerName,
-          contactNumber: formData.contactNumber,
-          email: formData.email,
-          address: formData.address,
-          pincode: formData.pincode,
-          city: formData.city,
-          printer: formData.printer,
-          printingMethod: formData.printingMethod,
-          ink: formData.ink,
-          printingPrice: formData.printingPrice
-        }]);
-
-      if (businessOnboardForm) {
-        console.error("Brand insert error:", businessOnboardForm);
+      // Get the current session user ID
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("Session error:", sessionError);
         setErrors(prev => ({
           ...prev,
-          submit: "Error submitting form. Please try again."
+          submit: "Authentication error. Please log in again."
+        }));
+        return;
+      }
+      
+      if (!session || !session.user) {
+        console.error("No active session found");
+        setErrors(prev => ({
+          ...prev,
+          submit: "No active session found. Please log in again."
+        }));
+        return;
+      }
+      
+      const userId = session.user.id;
+      console.log("Found user ID:", userId);
+      setId(userId);
+      
+      const formDataToSubmit = {
+        id: userId,
+        businessName: formData.businessName,
+        ownerName: formData.ownerName,
+        contactNumber: formData.contactNumber,
+        email: formData.email,
+        address: formData.address,
+        pincode: formData.pincode,
+        city: formData.city,
+        status: 'pending',
+        printer: formData.printer,
+        printingMethod: formData.printingMethod,
+        ink: formData.ink,
+        printingPrice: formData.printingPrice,
+        coordinates: formData.coordinates || null
+      };
+      
+      console.log("Submitting to Supabase:", formDataToSubmit);
+      
+      // First check if the record already exists
+      const { data: existingData, error: existingError } = await supabase
+        .from("businessOnboardForm")
+        .select("id")
+        .eq("id", userId);
+        
+      console.log("Existing data check:", existingData, existingError);
+      
+      let result;
+      if (existingData && existingData.length > 0) {
+        // Update existing record
+        console.log("Updating existing record");
+        result = await supabase
+          .from("businessOnboardForm")
+          .update(formDataToSubmit)
+          .eq("id", userId)
+          .select();
+      } else {
+        // Insert new record
+        console.log("Inserting new record");
+        result = await supabase
+          .from("businessOnboardForm")
+          .insert([formDataToSubmit])
+          .select();
+      }
+      
+      const { data, error } = result;
+      
+      if (error) {
+        console.error("Supabase operation error:", error);
+        
+        // Special handling for PGRST116 error (no rows returned)
+        if (error.code === 'PGRST116') {
+          console.log("PGRST116 error - continuing to thanks page anyway");
+          navigate('/thanks');
+          return;
+        }
+        
+        setErrors(prev => ({
+          ...prev,
+          submit: `Error submitting form: ${error.message}`
         }));
       } else {
+        console.log("Form submitted successfully:", data);
         navigate('/thanks');
       }
     } catch (error) {
       console.error("Form submission error:", error);
       setErrors(prev => ({
         ...prev,
-        submit: "Error submitting form. Please try again."
+        submit: `Error submitting form: ${error.message}`
       }));
     }
   };
@@ -177,79 +254,82 @@ function Step3({formData, handleChange, nextPage, prevPage, isDarkMode = false})
       <div style={{ marginBottom: '-3vw' }} className=""></div>
       <section className={`py-12 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
         <div className="container">
-          <div className="-mx-4 flex flex-wrap">
-            <DefaultColumn isDarkMode={isDarkMode}>
-              <TextInput
-                title="Which printer do you use?"
-                name="printer"
-                placeholder="EPSON 1800L, Procolored F13 Pro, etc"
-                onChange={handleFieldChange}
-                onBlur={handleBlur}
-                value={formData.printer}
-                error={touched.printer && errors.printer}
-                isDarkMode={isDarkMode}
-              />
-            </DefaultColumn>
+          <form onSubmit={handleSubmit}>
+            <div className="-mx-4 flex flex-wrap">
+              <DefaultColumn isDarkMode={isDarkMode}>
+                <TextInput
+                  title="Which printer do you use?"
+                  name="printer"
+                  placeholder="EPSON 1800L, Procolored F13 Pro, etc"
+                  onChange={handleFieldChange}
+                  onBlur={handleBlur}
+                  value={formData.printer}
+                  error={touched.printer && errors.printer}
+                  isDarkMode={isDarkMode}
+                />
+              </DefaultColumn>
 
-            <DefaultColumn isDarkMode={isDarkMode}>
-              <TextInput
-                title="Which ink do you use?"
-                name="ink"
-                placeholder="Enter ink name (brand)"
-                onChange={handleFieldChange}
-                onBlur={handleBlur}
-                value={formData.ink}
-                error={touched.ink && errors.ink}
-                isDarkMode={isDarkMode}
-              />
-            </DefaultColumn>
+              <DefaultColumn isDarkMode={isDarkMode}>
+                <TextInput
+                  title="Which ink do you use?"
+                  name="ink"
+                  placeholder="Enter ink name (brand)"
+                  onChange={handleFieldChange}
+                  onBlur={handleBlur}
+                  value={formData.ink}
+                  error={touched.ink && errors.ink}
+                  isDarkMode={isDarkMode}
+                />
+              </DefaultColumn>
 
-            <DefaultColumn isDarkMode={isDarkMode}>
-              <SelectInput
-                title="What printing methods do you use?"
-                name="printingMethod"
-                options={['DTF']}
-                onChange={handleSelectChange}
-                value={formData.printingMethod}
-                error={touched.printingMethod && errors.printingMethod}
-                isDarkMode={isDarkMode}
-              />
-            </DefaultColumn>
+              <DefaultColumn isDarkMode={isDarkMode}>
+                <SelectInput
+                  title="What printing methods do you use?"
+                  name="printingMethod"
+                  options={['DTF']}
+                  onChange={handleSelectChange}
+                  value={formData.printingMethod}
+                  error={touched.printingMethod && errors.printingMethod}
+                  isDarkMode={isDarkMode}
+                />
+              </DefaultColumn>
 
-            <DefaultColumn isDarkMode={isDarkMode}>
-              <TextInput
-                title="Printing Price (in sq inch)"
-                name="printingPrice"
-                placeholder="0.75 paise for DTF, etc"
-                onChange={handleFieldChange}
-                onBlur={handleBlur}
-                value={formData.printingPrice}
-                error={touched.printingPrice && errors.printingPrice}
-                isDarkMode={isDarkMode}
-              />
-            </DefaultColumn>
-          </div>
-
-          {errors.submit && (
-            <div className="mb-4 text-red-500 text-center">
-              {errors.submit}
+              <DefaultColumn isDarkMode={isDarkMode}>
+                <TextInput
+                  title="Printing Price (in sq inch)"
+                  name="printingPrice"
+                  placeholder="0.75 paise for DTF, etc"
+                  onChange={handleFieldChange}
+                  onBlur={handleBlur}
+                  value={formData.printingPrice}
+                  error={touched.printingPrice && errors.printingPrice}
+                  isDarkMode={isDarkMode}
+                />
+              </DefaultColumn>
             </div>
-          )}
 
-          <div className="flex gap-4 mt-8">
-            <button
-              onClick={prevPage}
-              className="w-full md:w-1/2 xl:w-1/4 bg-secondary border-secondary border rounded-md inline-flex items-center justify-center py-3 px-7 text-center text-base font-medium text-white hover:bg-[#0BB489] hover:border-[#0BB489] disabled:bg-gray-3 disabled:border-gray-3 disabled:text-dark-5"
-            >
-              Previous
-            </button>
-            <button
-              onClick={handleSubmit}
-              className="w-full md:w-1/2 xl:w-1/4 bg-secondary border-secondary border rounded-md inline-flex items-center justify-center py-3 px-7 text-center text-base font-medium text-white hover:bg-[#0BB489] hover:border-[#0BB489] disabled:bg-gray-3 disabled:border-gray-3 disabled:text-dark-5"
-            >
-              Submit
-            </button>
-          </div>
+            {errors.submit && (
+              <div className="mb-4 text-red-500 text-center">
+                {errors.submit}
+              </div>
+            )}
+
+            <div className="flex gap-6 mt-8">
+              <button
+                type="button"
+                onClick={prevPage}
+                className="w-full md:w-1/2 xl:w-1/4 bg-secondary border-secondary border rounded-md inline-flex items-center justify-center py-3 px-7 text-center text-base font-medium text-white hover:bg-[#0BB489] hover:border-[#0BB489] transition-all duration-300"
+              >
+                Previous
+              </button>
+              <button
+                type="submit"
+                className="w-full md:w-1/2 xl:w-1/4 bg-secondary border-secondary border rounded-md inline-flex items-center justify-center py-3 px-7 text-center text-base font-medium text-white hover:bg-[#0BB489] hover:border-[#0BB489] transition-all duration-300"
+              >
+                Submit
+              </button>
+            </div>
+          </form>
         </div>
       </section>
     </>
@@ -314,10 +394,11 @@ const SelectInput = ({ title, name, options, onChange, value, error, isDarkMode 
               ? 'bg-dark-3 border-dark-3 text-white placeholder-gray-400' 
               : 'bg-white border-[#E9EDF4] text-body-color'
           } ${error ? 'border-red-500' : ''}`}
+          style={isDarkMode ? {backgroundColor: '#1F2937'} : {}}
         >
-          <option value="" className={isDarkMode ? 'bg-dark-3 text-white' : ''}>Select option</option>
+          <option value="" className={isDarkMode ? 'bg-gray-700 text-white' : ''}>Select option</option>
           {options.map((option) => (
-            <option key={option} value={option} className={isDarkMode ? 'bg-dark-3 text-white' : ''}>
+            <option key={option} value={option} className={isDarkMode ? 'bg-gray-700 text-white' : ''}>
               {option}
             </option>
           ))}

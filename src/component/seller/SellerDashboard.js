@@ -339,9 +339,6 @@ function BuyerDashboard({ isDarkMode }) {
                               <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
                                 Status
                               </th>
-                              <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
-                                Actions
-                              </th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -372,17 +369,6 @@ function BuyerDashboard({ isDarkMode }) {
                                   }`}>
                                     {transaction.status || 'Unknown'}
                                   </span>
-                                </td>
-                                <td className={`px-4 py-4 text-sm ${isDarkMode ? "text-gray-300" : "text-gray-900"}`}>
-                                  <button
-                                    onClick={() => {
-                                      setSelectedOrder(transaction);
-                                      navigate(`/order/${transaction.id}`);
-                                    }}
-                                    className="text-secondary hover:text-[#0BB489] transition-colors duration-200"
-                                  >
-                                    View Details
-                                  </button>
                                 </td>
                               </tr>
                             ))}
@@ -440,16 +426,6 @@ function BuyerDashboard({ isDarkMode }) {
                                 </p>
                               </div>
                             )}
-
-                            <button
-                              onClick={() => {
-                                setSelectedOrder(transaction);
-                                navigate(`/order/${transaction.id}`);
-                              }}
-                              className="w-full mt-2 py-2 px-4 bg-secondary bg-opacity-10 hover:bg-opacity-20 rounded-lg text-secondary text-sm font-medium transition-colors duration-200 flex items-center justify-center"
-                            >
-                              <FaEye className="mr-2" /> View Details
-                            </button>
                           </div>
                         ))}
                       </div>

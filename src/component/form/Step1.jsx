@@ -143,104 +143,109 @@ function Step1({ nextPage, handleChange, formData, isDarkMode = false }) {
       <div style={{ marginBottom: '-3vw' }} className=""></div>
       <section className={`py-12 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
         <div className="container">
-          <div className="-mx-4 flex flex-wrap">
-            <DefaultColumn isDarkMode={isDarkMode}>
-              <TextInput
-                title="Business Name"
-                name="businessName"
-                placeholder="Enter your brand name"
-                onChange={handleFieldChange}
-                onBlur={handleBlur}
-                value={formData.businessName}
-                error={touched.businessName && errors.businessName}
-                isDarkMode={isDarkMode}
-              />
-            </DefaultColumn>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            handleNextClick();
+          }}>
+            <div className="-mx-4 flex flex-wrap">
+              <DefaultColumn isDarkMode={isDarkMode}>
+                <TextInput
+                  title="Business Name"
+                  name="businessName"
+                  placeholder="Enter your brand name"
+                  onChange={handleFieldChange}
+                  onBlur={handleBlur}
+                  value={formData.businessName}
+                  error={touched.businessName && errors.businessName}
+                  isDarkMode={isDarkMode}
+                />
+              </DefaultColumn>
 
-            <DefaultColumn isDarkMode={isDarkMode}>
-              <TextInput
-                title="Owner Name"
-                name="ownerName"
-                placeholder="Enter owner name"
-                onChange={handleFieldChange}
-                onBlur={handleBlur}
-                value={formData.ownerName}
-                error={touched.ownerName && errors.ownerName}
-                isDarkMode={isDarkMode}
-              />
-            </DefaultColumn>
+              <DefaultColumn isDarkMode={isDarkMode}>
+                <TextInput
+                  title="Owner Name"
+                  name="ownerName"
+                  placeholder="Enter owner name"
+                  onChange={handleFieldChange}
+                  onBlur={handleBlur}
+                  value={formData.ownerName}
+                  error={touched.ownerName && errors.ownerName}
+                  isDarkMode={isDarkMode}
+                />
+              </DefaultColumn>
 
-            <DefaultColumn isDarkMode={isDarkMode}>
-              <TextInput
-                title="Contact Number"
-                name="contactNumber"
-                placeholder="Enter 10-digit mobile number"
-                onChange={handleFieldChange}
-                onBlur={handleBlur}
-                value={formData.contactNumber}
-                error={touched.contactNumber && errors.contactNumber}
-                isDarkMode={isDarkMode}
-              />
-            </DefaultColumn>
+              <DefaultColumn isDarkMode={isDarkMode}>
+                <TextInput
+                  title="Contact Number"
+                  name="contactNumber"
+                  placeholder="Enter 10-digit mobile number"
+                  onChange={handleFieldChange}
+                  onBlur={handleBlur}
+                  value={formData.contactNumber}
+                  error={touched.contactNumber && errors.contactNumber}
+                  isDarkMode={isDarkMode}
+                />
+              </DefaultColumn>
 
-            <DefaultColumn isDarkMode={isDarkMode}>
-              <EmailInput
-                name="email"
-                placeholder="info@example.com"
-                onChange={handleFieldChange}
-                onBlur={handleBlur}
-                value={formData.email}
-                error={touched.email && errors.email}
-                isDarkMode={isDarkMode}
-              />
-            </DefaultColumn>
+              <DefaultColumn isDarkMode={isDarkMode}>
+                <EmailInput
+                  name="email"
+                  placeholder="info@example.com"
+                  onChange={handleFieldChange}
+                  onBlur={handleBlur}
+                  value={formData.email}
+                  error={touched.email && errors.email}
+                  isDarkMode={isDarkMode}
+                />
+              </DefaultColumn>
 
-            <DefaultColumn isDarkMode={isDarkMode}>
-              <TextInput
-                title="Address"
-                name="address"
-                placeholder="Full address"
-                onChange={handleFieldChange}
-                onBlur={handleBlur}
-                value={formData.address}
-                error={touched.address && errors.address}
-                isDarkMode={isDarkMode}
-              />
-            </DefaultColumn>
+              <DefaultColumn isDarkMode={isDarkMode}>
+                <TextInput
+                  title="Address"
+                  name="address"
+                  placeholder="Full address"
+                  onChange={handleFieldChange}
+                  onBlur={handleBlur}
+                  value={formData.address}
+                  error={touched.address && errors.address}
+                  isDarkMode={isDarkMode}
+                />
+              </DefaultColumn>
 
-            <DefaultColumn isDarkMode={isDarkMode}>
-              <TextInput
-                title="City"
-                name="city"
-                placeholder="City name"
-                onChange={handleFieldChange}
-                onBlur={handleBlur}
-                value={formData.city}
-                error={touched.city && errors.city}
-                isDarkMode={isDarkMode}
-              />
-            </DefaultColumn>
+              <DefaultColumn isDarkMode={isDarkMode}>
+                <TextInput
+                  title="City"
+                  name="city"
+                  placeholder="City name"
+                  onChange={handleFieldChange}
+                  onBlur={handleBlur}
+                  value={formData.city}
+                  error={touched.city && errors.city}
+                  isDarkMode={isDarkMode}
+                />
+              </DefaultColumn>
 
-            <DefaultColumn isDarkMode={isDarkMode}>
-              <TextInput
-                title="Pincode"
-                name="pincode"
-                placeholder="6-digit pincode"
-                onChange={handleFieldChange}
-                onBlur={handleBlur}
-                value={formData.pincode}
-                error={touched.pincode && errors.pincode}
-                isDarkMode={isDarkMode}
-              />
-            </DefaultColumn>
-          </div>
+              <DefaultColumn isDarkMode={isDarkMode}>
+                <TextInput
+                  title="Pincode"
+                  name="pincode"
+                  placeholder="6-digit pincode"
+                  onChange={handleFieldChange}
+                  onBlur={handleBlur}
+                  value={formData.pincode}
+                  error={touched.pincode && errors.pincode}
+                  isDarkMode={isDarkMode}
+                />
+              </DefaultColumn>
+            </div>
 
-          <button
-            onClick={handleNextClick}
-            className="w-full md:w-1/2 xl:w-1/4 bg-secondary border-secondary border rounded-md inline-flex items-center justify-center py-3 px-7 text-center text-base font-medium text-white hover:bg-[#0BB489] hover:border-[#0BB489] disabled:bg-gray-3 disabled:border-gray-3 disabled:text-dark-5"
-          >
-            Next
-          </button>
+            <button
+              type="submit"
+              className="w-full md:w-1/2 xl:w-1/4 bg-secondary border-secondary border rounded-md inline-flex items-center justify-center py-3 px-7 text-center text-base font-medium text-white hover:bg-[#0BB489] hover:border-[#0BB489] disabled:bg-gray-3 disabled:border-gray-3 disabled:text-dark-5"
+            >
+              Next
+            </button>
+          </form>
         </div>
       </section>
     </>

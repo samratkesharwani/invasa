@@ -16,7 +16,7 @@ const FormElementInput = ({ isDarkMode = false }) => {
     pincode: "",
     city: "",
     status:'pending',
-    coordinates:'',
+    coordinates: null,
     printer:'',
     printingMethod:'',
     ink:'',
@@ -46,6 +46,11 @@ const FormElementInput = ({ isDarkMode = false }) => {
     setPageCounter(prev => prev === 2 ? 1 : prev);
   };
  
+  // For debugging purposes
+  useEffect(() => {
+    console.log("Current form data:", formData);
+  }, [formData]);
+
   return (
     <>
       <section className={`py-12 p-5 mt-10 rounded-lg ${isDarkMode ? 'bg-dark-2' : 'bg-gray-50'}`}>

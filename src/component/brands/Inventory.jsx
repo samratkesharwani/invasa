@@ -279,7 +279,7 @@ const Inventory = ({ isDarkMode }) => {
           <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Inventory Management</h2>
           <button 
             onClick={openAddModal}
-            className="bg-[#00E0A4] hover:bg-[#0BB489] text-black font-medium py-2 px-6 rounded-lg transition-all duration-300"
+            className={`${isDarkMode ? 'text-white' : 'text-gray-900'} bg-[#00E0A4] hover:bg-[#0BB489] font-medium py-2 px-6 rounded-lg transition-all duration-300`}
           >
             Add New Product
           </button>
@@ -437,13 +437,23 @@ const InventoryCard = ({ item, openModal, openDeleteConfirmation, isDarkMode }) 
 
 const DeleteConfirmationModal = ({ item, closeModal, confirmDelete, isLoading, isDarkMode }) => {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[9999]" style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0}}>
+    <div className="fixed inset-0 flex items-center justify-center z-[9999]" style={{backdropFilter: 'blur(5px)'}}>
+      <div className="absolute inset-0 bg-black opacity-70"></div>
       <div className={`${
         isDarkMode 
           ? 'bg-gray-800 border-gray-700' 
           : 'bg-white border-gray-300'
-        } rounded-lg w-full max-w-md p-6 border`}>
-        <h3 className={`text-xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Delete Product</h3>
+        } rounded-lg w-full max-w-md p-6 border relative z-10`}>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Delete Product</h3>
+          <button 
+            onClick={closeModal}
+            className={`${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'} flex items-center justify-center w-8 h-8 rounded-full hover:bg-opacity-20 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'} transition-all duration-200`}
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        </div>
         <p className={`mb-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
           Are you sure you want to delete "{item.product_name}" from your inventory? This action cannot be undone.
         </p>
@@ -513,17 +523,19 @@ const UpdateModal = ({ item, closeModal, updateInventory, isLoading, isDarkMode 
   };
   
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[9999]" style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0}}>
+    <div className="fixed inset-0 flex items-center justify-center z-[9999]" style={{backdropFilter: 'blur(5px)'}}>
+      <div className="absolute inset-0 bg-black opacity-70"></div>
       <div className={`${
         isDarkMode 
           ? 'bg-gray-800 border-gray-700' 
           : 'bg-white border-gray-300'
-        } rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto border p-6`}>
+        } rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto border p-6 relative z-10`}>
         <div className="flex justify-between items-center mb-6">
           <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Edit {formData.product_name}</h3>
           <button 
             onClick={closeModal}
-            className={`${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'} text-xl`}
+            className={`${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'} text-xl flex items-center justify-center w-8 h-8 rounded-full hover:bg-opacity-20 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'} transition-all duration-200`}
+            aria-label="Close"
           >
             ✕
           </button>
@@ -801,17 +813,17 @@ const AddProductModal = ({
   };
   
   return (
-    <div className={`fixed inset-0 z-[9999] flex items-center justify-center p-5 ${isDarkMode ? 'bg-gray-900 bg-opacity-50' : 'bg-black bg-opacity-30'}`} style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0}}>
-      <div className={`w-full max-w-2xl rounded-lg shadow-lg p-6 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
+    <div className="fixed inset-0 flex items-center justify-center z-[9999]" style={{backdropFilter: 'blur(5px)'}}>
+      <div className="absolute inset-0 bg-black opacity-70"></div>
+      <div className={`w-full max-w-2xl rounded-lg shadow-lg p-6 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'} relative z-10`}>
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Add New Product</h2>
+          <h2 className={`${isDarkMode ? 'text-white' : 'text-gray-900'} text-xl font-bold`}>Add New Product</h2>
           <button 
             onClick={closeModal} 
-            className={`${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'} flex items-center justify-center w-8 h-8 rounded-full hover:bg-opacity-20 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'} transition-all duration-200`}
+            aria-label="Close"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            ✕
           </button>
         </div>
         
@@ -822,12 +834,12 @@ const AddProductModal = ({
               name="product_id" 
               value={formData.product_id} 
               onChange={handleChange}
-              className={`w-full px-3 py-2 border rounded ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white border-gray-300'}`}
+              className={`w-full px-3 py-2 border rounded ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'text-black bg-white border-gray-300'}`}
               required
             >
-              <option value="">Select Product</option>
+              <option className={`${isDarkMode ? 'text-gray-300' : 'text-black'}`} value="">Select Product</option>
               {products && products.map(product => (
-                <option key={product.id} value={product.id}>
+                <option className={`${isDarkMode ? 'text-gray-300' : 'text-black'}`} key={product.id} value={product.id}>
                   {product.name}
                 </option>
               ))}
@@ -841,7 +853,7 @@ const AddProductModal = ({
               name="price" 
               value={formData.price} 
               onChange={handleChange}
-              className={`w-full px-3 py-2 border rounded ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white border-gray-300'}`}
+              className={`w-full px-3 py-2 border rounded ${isDarkMode ? 'bg-gray-700 text-white' : ' text-gray-900'}`}
               placeholder="Enter price" 
               required
             />
@@ -852,12 +864,12 @@ const AddProductModal = ({
             <div className="flex items-center">
               <select 
                 id="colorSelect" 
-                className={`flex-1 px-3 py-2 border rounded ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white border-gray-300'}`}
+                className={`flex-1 px-3 py-2 border rounded ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'text-black'}`}
               >
-                <option value="">Select Color</option>
+                <option className={`${isDarkMode ? 'text-gray-300' : 'text-black'}`} value="">Select Color</option>
                 {availableColors && availableColors.map(color => (
                   !formData.colors.includes(color.name) && (
-                    <option key={color.id} value={color.name}>
+                    <option className={`${isDarkMode ? 'text-gray-300' : 'text-black'}`} key={color.id} value={color.name}>
                       {color.name}
                     </option>
                   )
@@ -898,12 +910,12 @@ const AddProductModal = ({
             <div className="flex items-center">
               <select 
                 id="sizeSelect" 
-                className={`flex-1 px-3 py-2 border rounded ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white border-gray-300'}`}
+                className={`flex-1 px-3 py-2 border rounded ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'}`}
               >
-                <option value="">Select Size</option>
+                <option className={`${isDarkMode ? 'text-gray-300' : 'text-black'}`} value="">Select Size</option>
                 {availableSizes && availableSizes.map(size => (
                   !formData.sizes.includes(size.name) && (
-                    <option key={size.id} value={size.name}>
+                    <option className={`${isDarkMode ? 'text-gray-300' : 'text-black'}`} key={size.id} value={size.name}>
                       {size.name}
                     </option>
                   )
@@ -941,7 +953,7 @@ const AddProductModal = ({
           
           {/* Color-Size Quantity Matrix */}
           {formData.colors && formData.colors.length > 0 && formData.sizes && formData.sizes.length > 0 && (
-            <div className="mb-4">
+            <div className="mb-6">
               <h3 className="block mb-2 text-sm font-medium">Set Quantities</h3>
               <div className={`border rounded overflow-hidden ${isDarkMode ? 'border-gray-600' : 'border-gray-300'}`}>
                 <table className="w-full">
@@ -986,10 +998,18 @@ const AddProductModal = ({
             </button>
             <button
               type="submit"
+              className="px-4 py-2 bg-[#00E0A4] text-black rounded hover:bg-[#0BB489] flex items-center"
               disabled={isLoading}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
             >
-              {isLoading ? 'Adding...' : 'Add Product'}
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Adding
+                </>
+              ) : 'Add Product'}
             </button>
           </div>
         </form>

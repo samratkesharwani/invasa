@@ -229,7 +229,7 @@ const Signin = ({ isDarkMode }) => {
                       type="email"
                       name="email"
                       placeholder="Enter your email"
-                      className={`mb-1 w-full rounded-md border ${formErrors.email ? 'border-red-500' : 'border-stroke'} bg-transparent px-5 py-3 text-base text-white outline-none focus:border-primary focus-visible:shadow-none transition-colors`}
+                      className={`${isDarkMode ? 'text-white' : 'text-gray-900'} mb-1 w-full rounded-md border ${formErrors.email ? 'border-red-500' : 'border-stroke'} bg-transparent px-5 py-3 text-base outline-none focus:border-primary focus-visible:shadow-none transition-colors`}
                       onChange={(e) => {
                         setEmail(e.target.value);
                         if (formErrors.email) {
@@ -249,7 +249,7 @@ const Signin = ({ isDarkMode }) => {
                       type="password"
                       name="password"
                       placeholder="Enter your password"
-                      className={`mb-1 w-full rounded-md border ${formErrors.password ? 'border-red-500' : 'border-stroke'} bg-transparent px-5 py-3 text-base text-white outline-none focus:border-primary focus-visible:shadow-none transition-colors`}
+                      className={`${isDarkMode ? 'text-black' : 'text-gray-900'} mb-1 w-full rounded-md border ${formErrors.password ? 'border-red-500' : 'border-stroke'} bg-transparent px-5 py-3 text-base outline-none focus:border-primary focus-visible:shadow-none transition-colors`}
                       onChange={(e) => {
                         setPassword(e.target.value);
                         if (formErrors.password) {
