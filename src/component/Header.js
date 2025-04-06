@@ -136,24 +136,13 @@ useEffect(() => {
   }, []);
   return (
     <div className={`${isDarkMode ? 'bg-[#1A1F2E]' : 'bg-white border-b-1'} sticky top-0 z-50 shadow-md shadow-gray-900/20`}>
-      <div className="container mx-auto px-4 sm:px-6">
-        <div className="flex justify-between items-center h-16">
+      <div className="container mx-auto px-6 lg:px-8">
+        <div className="flex justify-between items-center h-20">
           <Logo />
 
-          <div className="hidden md:flex items-center space-x-6">
+          <div className="hidden md:flex items-center space-x-8">
             <NavLink path="/" label="Home" />
-            {/* {loggedIn && (
-              <button
-                onClick={navigateTo}
-                className={`${
-                  isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-black'
-                } font-medium transition-colors duration-300`}
-              >
-                Dashboard
-              </button>
-            )} */}
             <NavLink path="/blog" label="Blog" />
-            {/* <NavLink path="/about" label="About" /> */}
             <NavLink path="/contact" label="Contact" />
           </div>
 
@@ -195,11 +184,11 @@ useEffect(() => {
           </div>
 
           {/* Desktop Profile/Login Section */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-6">
             {/* Theme Toggle */}
             <button 
               onClick={toggleTheme} 
-              className="focus:outline-none"
+              className="focus:outline-none mr-2"
             >
               {isDarkMode ? (
                 <IconContainer 
@@ -219,22 +208,22 @@ useEffect(() => {
             {loading ? (
               <div className="h-8 w-24 rounded-full bg-gray-200 animate-pulse"></div>
             ) : loggedIn ? (
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-4">
                 <button
                   onClick={navigateTo}
                   className={`flex items-center justify-center space-x-2 ${
                     isDarkMode ? 'bg-gray-800 hover:bg-gray-700 text-white' : 'bg-gray-100 hover:bg-gray-200 text-black'
-                  } px-4 py-2 rounded-full transition-all duration-300 border border-gray-600 hover:border-[#00E0A4]`}
+                  } px-5 py-2.5 rounded-full transition-all duration-300 border border-gray-600 hover:border-[#00E0A4]`}
                 >
                   <div className="flex items-center">
                     <IconContainer 
-                      icon={<svg xmlns="http://www.w3.org/2000/svg" className=" p-0.5 h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      icon={<svg xmlns="http://www.w3.org/2000/svg" className="p-0.5 h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
                       </svg>} 
                       size="xs" 
                       color="teal" 
                     />
-                    <span className={`${isDarkMode ? 'text-white' : 'text-black'} text-sm font-medium m-1`}>Dashboard</span>
+                    <span className={`${isDarkMode ? 'text-white' : 'text-black'} text-sm font-medium ml-2`}>Dashboard</span>
                   </div>
                 </button>
                 <div className="flex items-center space-x-2">
@@ -242,7 +231,7 @@ useEffect(() => {
                   onClick={navigateToProfile}
                     className={`flex items-center justify-center ${
                     isDarkMode ? 'bg-gray-900 hover:bg-gray-800 text-white' : 'bg-gray-100 hover:bg-gray-200 text-black'
-                    } px-4 py-2 rounded-full transition-all duration-300 border border-[#00E0A4] hover:border-[#0BB489]`}
+                    } px-5 py-2.5 rounded-full transition-all duration-300 border border-[#00E0A4] hover:border-[#0BB489]`}
                 >
                   <div className="flex items-center">
                     <IconContainer 
@@ -250,18 +239,20 @@ useEffect(() => {
                       size="xs" 
                       color="teal" 
                     />
-                      <span className={`${isDarkMode ? 'text-white' : 'text-black'} text-sm font-medium m-1`}>Profile</span>
+                    <span className={`${isDarkMode ? 'text-white' : 'text-black'} text-sm font-medium ml-2`}>Profile</span>
                   </div>
                 </button>
-                  <button
-                    onClick={handleLogout}
-                    className={`flex items-center justify-center ${
-                      isDarkMode ? 'bg-red-900/30 hover:bg-red-900/50 text-white' : 'bg-red-50 hover:bg-red-100 text-red-600'
-                    } px-4 py-2 rounded-full transition-all duration-300 border border-red-500/30`}
-                  >
-                    <span className={`${isDarkMode ? 'text-white' : 'text-black'} text-sm font-medium`}>Logout</span>
-                  </button>
-                </div>
+                <button
+                  onClick={handleLogout}
+                  className={`px-5 py-2.5 rounded-full text-sm font-medium ${
+                    isDarkMode 
+                      ? 'bg-red-900/20 text-white border border-red-500/30 hover:bg-red-900/30' 
+                      : 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100'
+                  } transition-all duration-300`}
+                >
+                  Logout
+                </button>
+              </div>
               </div>
             ) : (
               <LoginOptions setMobileMenuOpen={setMobileMenuOpen} />
@@ -367,7 +358,7 @@ const Logo = () => {
       <img 
         src={isDarkMode ? logoWhite : logoBlack} 
         alt="Invasa Logo" 
-        className="h-8 md:h-10" 
+        className="h-9 md:h-12" 
       />
     </div>
   );
@@ -392,7 +383,7 @@ const NavLink = ({ path, label, mobile = false, onClick }) => {
         ${isDarkMode 
           ? 'text-gray-300 hover:text-white' 
           : 'text-gray-700 hover:text-black'}
-        font-medium transition-colors duration-300
+        font-medium transition-colors duration-300 text-base
       `}
     >
       {label}
@@ -405,7 +396,7 @@ const LoginOptions = ({ setMobileMenuOpen }) => {
   const navigate = useNavigate();
   
   return (
-    <div className="flex items-center space-x-4">
+    <div className="flex items-center space-x-5">
       <button
         onClick={() => {
           navigate('/login');
@@ -413,7 +404,7 @@ const LoginOptions = ({ setMobileMenuOpen }) => {
         }}
         className={`${
           isDarkMode ? 'text-white' : 'text-black'
-        } hover:text-[#00E0A4] transition-colors duration-300 text-sm font-medium`}
+        } hover:text-[#00E0A4] transition-colors duration-300 text-sm font-medium px-3 py-2`}
       >
         Login
       </button>
@@ -422,7 +413,7 @@ const LoginOptions = ({ setMobileMenuOpen }) => {
           navigate('/register');
           if (setMobileMenuOpen) setMobileMenuOpen(false);
         }}
-        className="bg-gradient-to-r from-[#00E0A4] to-[#0BB489] hover:from-[#0BB489] hover:to-[#00E0A4] text-black font-semibold py-2 px-6 rounded-full flex items-center text-sm transition-all duration-300 transform hover:scale-105 shadow-[0_0_15px_rgba(0,224,164,0.3)]"
+        className="bg-gradient-to-r from-[#00E0A4] to-[#0BB489] hover:from-[#0BB489] hover:to-[#00E0A4] text-black font-semibold py-2.5 px-7 rounded-full flex items-center text-sm transition-all duration-300 transform hover:scale-105 shadow-[0_0_15px_rgba(0,224,164,0.3)]"
       >
         Get Started
       </button>
