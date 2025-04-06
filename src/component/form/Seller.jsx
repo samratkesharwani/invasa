@@ -50,7 +50,7 @@ const FormElementInput = ({ isDarkMode = false }) => {
     <>
       <section className={`py-12 p-5 mt-10 rounded-lg ${isDarkMode ? 'bg-dark-2' : 'bg-gray-50'}`}>
         <div className="container">
-          <h3 className={`p-8 mb-6 text-2xl font-bold sm:text-[32px] ${isDarkMode ? 'text-black' : 'text-gray-900'}`}>
+          <h3 className={`p-8 mb-6 text-2xl font-bold sm:text-[32px] ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
             <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Seller Onboarding Form</span> 
           </h3>
           {pageCounter === 1 && <Step1 handleChange={handleChange} formData={formData} nextPage={nextPage} isDarkMode={isDarkMode} />}

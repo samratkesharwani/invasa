@@ -176,7 +176,9 @@ function BrandsDashboard({ isDarkMode }) {
             <div className={`${isDarkMode 
               ? 'bg-black bg-opacity-60 backdrop-blur-lg border-gray-800' 
               : 'bg-white backdrop-blur-lg border-gray-200'} 
-              rounded-2xl p-8 shadow-lg border`}>
+              rounded-2xl p-8 shadow-lg border`}
+              style={{position: 'relative', zIndex: 'auto'}}
+            >
               <Inventory isDarkMode={isDarkMode} />
             </div>
           </>

@@ -26,11 +26,28 @@ const Inventory = ({ isDarkMode }) => {
   
   // Predefined colors and sizes
   const availableColors = [
-    'White', 'Black', 'Navy', 'Red', 'Blue',
-    'Gray', 'Green', 'Yellow', 'Pink', 'Purple', 'Orange'
+    { id: 'white', name: 'White' },
+    { id: 'black', name: 'Black' },
+    { id: 'navy', name: 'Navy' },
+    { id: 'red', name: 'Red' },
+    { id: 'blue', name: 'Blue' },
+    { id: 'gray', name: 'Gray' },
+    { id: 'green', name: 'Green' },
+    { id: 'yellow', name: 'Yellow' },
+    { id: 'pink', name: 'Pink' },
+    { id: 'purple', name: 'Purple' },
+    { id: 'orange', name: 'Orange' }
   ];
   
-  const availableSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+  const availableSizes = [
+    { id: 'xs', name: 'XS' },
+    { id: 's', name: 'S' },
+    { id: 'm', name: 'M' },
+    { id: 'l', name: 'L' },
+    { id: 'xl', name: 'XL' },
+    { id: 'xxl', name: 'XXL' },
+    { id: 'xxxl', name: 'XXXL' }
+  ];
   
   useEffect(() => {
     const fetchInventory = async () => {
@@ -68,21 +85,40 @@ const Inventory = ({ isDarkMode }) => {
     fetchInventory();
   }, []);
 
+  // Control body scroll when modals are open
+  useEffect(() => {
+    // If any modal is open, prevent body scrolling
+    if (isModalOpen || isAddModalOpen || isDeleteModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    // Clean up on unmount
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isModalOpen, isAddModalOpen, isDeleteModalOpen]);
+
   const openModal = (item) => {
+    console.log("Opening update modal for item:", item);
     setSelectedItem(item);
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
+    console.log("Closing update modal");
     setIsModalOpen(false);
     setSelectedItem(null);
   };
 
   const openAddModal = () => {
+    console.log("Opening add product modal");
     setIsAddModalOpen(true);
   };
 
   const closeAddModal = () => {
+    console.log("Closing add product modal");
     setIsAddModalOpen(false);
   };
 
@@ -274,6 +310,7 @@ const Inventory = ({ isDarkMode }) => {
         ))}
       </div>
 
+      {console.log("isModalOpen:", isModalOpen, "selectedItem:", selectedItem)}
       {isModalOpen && selectedItem && (
         <UpdateModal 
           item={selectedItem} 
@@ -284,6 +321,7 @@ const Inventory = ({ isDarkMode }) => {
         />
       )}
 
+      {console.log("isAddModalOpen:", isAddModalOpen)}
       {isAddModalOpen && (
         <AddProductModal 
           closeModal={closeAddModal} 
@@ -296,6 +334,7 @@ const Inventory = ({ isDarkMode }) => {
         />
       )}
 
+      {console.log("isDeleteModalOpen:", isDeleteModalOpen, "itemToDelete:", itemToDelete)}
       {isDeleteModalOpen && itemToDelete && (
         <DeleteConfirmationModal 
           item={itemToDelete} 
@@ -311,15 +350,19 @@ const Inventory = ({ isDarkMode }) => {
 
 const InventoryCard = ({ item, openModal, openDeleteConfirmation, isDarkMode }) => {
   const calculateTotalQuantity = () => {
-    let total = 0;
-    if (item.data && Array.isArray(item.data)) {
-      item.data.forEach(colorData => {
-        Object.keys(colorData.sizes || {}).forEach(size => {
-          total += parseInt(colorData.sizes[size] || 0, 10);
-        });
-      });
+    if (!item.data || !Array.isArray(item.data)) {
+      return 0;
     }
-    return total;
+    
+    return item.data.reduce((total, colorData) => {
+      if (!colorData.sizes) return total;
+      
+      const colorTotal = Object.values(colorData.sizes).reduce(
+        (sum, quantity) => sum + parseInt(quantity || 0, 10), 
+        0
+      );
+      return total + colorTotal;
+    }, 0);
   };
 
   const formatCurrency = (amount) => {
@@ -374,13 +417,14 @@ const InventoryCard = ({ item, openModal, openDeleteConfirmation, isDarkMode }) 
                   <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{colorData.color}</span>
                 </div>
                 <div className="grid grid-cols-4 gap-2 ml-6">
-                  {Object.entries(colorData.sizes || {}).map(([size, quantity]) => (
-                    parseInt(quantity, 10) > 0 && (
+                  {colorData.sizes && Object.entries(colorData.sizes).map(([size, quantity]) => {
+                    const quantityValue = parseInt(quantity || 0, 10);
+                    return quantityValue > 0 ? (
                       <div key={size} className="text-sm text-gray-300">
                         <span>{size}: {quantity}</span>
                       </div>
-                    )
-                  ))}
+                    ) : null;
+                  })}
                 </div>
               </div>
             ))}
@@ -393,7 +437,7 @@ const InventoryCard = ({ item, openModal, openDeleteConfirmation, isDarkMode }) 
 
 const DeleteConfirmationModal = ({ item, closeModal, confirmDelete, isLoading, isDarkMode }) => {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[9999]" style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0}}>
       <div className={`${
         isDarkMode 
           ? 'bg-gray-800 border-gray-700' 
@@ -438,7 +482,20 @@ const DeleteConfirmationModal = ({ item, closeModal, confirmDelete, isLoading, i
 
 const UpdateModal = ({ item, closeModal, updateInventory, isLoading, isDarkMode }) => {
   // Clone the item to avoid mutating the original
-  const [formData, setFormData] = useState(JSON.parse(JSON.stringify(item)));
+  const [formData, setFormData] = useState(() => {
+    const clonedItem = JSON.parse(JSON.stringify(item));
+    
+    // Ensure data and sizes are properly initialized for each color
+    if (clonedItem && clonedItem.data) {
+      clonedItem.data = clonedItem.data.map(colorData => ({
+        ...colorData,
+        // Ensure sizes is always an object
+        sizes: colorData.sizes || {}
+      }));
+    }
+    
+    return clonedItem;
+  });
   
   const handleInputChange = (colorIndex, size, value) => {
     const newData = [...formData.data];
@@ -456,7 +513,7 @@ const UpdateModal = ({ item, closeModal, updateInventory, isLoading, isDarkMode 
   };
   
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[9999]" style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0}}>
       <div className={`${
         isDarkMode 
           ? 'bg-gray-800 border-gray-700' 
@@ -509,7 +566,7 @@ const UpdateModal = ({ item, closeModal, updateInventory, isLoading, isDarkMode 
                 </div>
                 
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {Object.keys(colorData.sizes).map(size => (
+                  {colorData.sizes && Object.keys(colorData.sizes).map(size => (
                     <div key={size} className="flex flex-col">
                       <label className={`text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{size}</label>
                       <input
@@ -588,6 +645,8 @@ const AddProductModal = ({
   
   const addColor = () => {
     const colorSelect = document.getElementById('colorSelect');
+    if (!colorSelect) return;
+    
     const selectedColor = colorSelect.value;
     
     if (selectedColor && !formData.colors.includes(selectedColor)) {
@@ -597,7 +656,7 @@ const AddProductModal = ({
       // Add new color data with empty sizes
       newColorSizeData.push({
         color: selectedColor,
-        sizes: formData.sizes.reduce((acc, size) => {
+        sizes: (formData.sizes || []).reduce((acc, size) => {
           acc[size] = "0";
           return acc;
         }, {})
@@ -616,7 +675,7 @@ const AddProductModal = ({
   
   const removeColor = (color) => {
     const newColors = formData.colors.filter(c => c !== color);
-    const newColorSizeData = formData.colorSizeData.filter(data => data.color !== color);
+    const newColorSizeData = (formData.colorSizeData || []).filter(data => data.color !== color);
     
     setFormData({
       ...formData,
@@ -627,16 +686,18 @@ const AddProductModal = ({
   
   const addSize = () => {
     const sizeSelect = document.getElementById('sizeSelect');
+    if (!sizeSelect) return;
+    
     const selectedSize = sizeSelect.value;
     
     if (selectedSize && !formData.sizes.includes(selectedSize)) {
       const newSizes = [...formData.sizes, selectedSize];
-      const newColorSizeData = formData.colorSizeData.map(colorData => {
-        const newSizes = { ...colorData.sizes };
-        newSizes[selectedSize] = "0";
+      const newColorSizeData = (formData.colorSizeData || []).map(colorData => {
+        const newSizesObj = { ...(colorData.sizes || {}) };
+        newSizesObj[selectedSize] = "0";
         return {
           ...colorData,
-          sizes: newSizes
+          sizes: newSizesObj
         };
       });
       
@@ -653,12 +714,14 @@ const AddProductModal = ({
   
   const removeSize = (size) => {
     const newSizes = formData.sizes.filter(s => s !== size);
-    const newColorSizeData = formData.colorSizeData.map(colorData => {
-      const newSizes = { ...colorData.sizes };
-      delete newSizes[size];
+    const newColorSizeData = (formData.colorSizeData || []).map(colorData => {
+      const newSizesObj = { ...(colorData.sizes || {}) };
+      if (newSizesObj && size in newSizesObj) {
+        delete newSizesObj[size];
+      }
       return {
         ...colorData,
-        sizes: newSizes
+        sizes: newSizesObj
       };
     });
     
@@ -669,259 +732,264 @@ const AddProductModal = ({
     });
   };
   
+  const handleQuantityChange = (colorIndex, size, value) => {
+    // Validate the value is a non-negative number
+    const numValue = parseInt(value, 10) >= 0 ? value : "0";
+    
+    const newColorSizeData = [...formData.colorSizeData];
+    if (newColorSizeData[colorIndex]) {
+      if (!newColorSizeData[colorIndex].sizes) {
+        newColorSizeData[colorIndex].sizes = {};
+      }
+      newColorSizeData[colorIndex].sizes[size] = numValue;
+      setFormData({
+        ...formData,
+        colorSizeData: newColorSizeData
+      });
+    }
+  };
+  
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    if (formData.colors.length === 0 || formData.sizes.length === 0) {
-      alert('Please add at least one color and one size.');
+    // Validate required fields
+    if (!formData.product_id || !formData.price) {
+      console.error("Missing required fields");
       return;
     }
     
-    addInventoryItem(formData);
-  };
-  
-  const handleQuantityChange = (colorIndex, size, value) => {
-    const newColorSizeData = [...formData.colorSizeData];
-    newColorSizeData[colorIndex].sizes[size] = value;
+    // Validate colors and sizes
+    if (!formData.colors || formData.colors.length === 0) {
+      console.error("At least one color is required");
+      return;
+    }
     
-    setFormData({
-      ...formData,
-      colorSizeData: newColorSizeData
+    if (!formData.sizes || formData.sizes.length === 0) {
+      console.error("At least one size is required");
+      return;
+    }
+    
+    // Validate color-size data
+    if (!formData.colorSizeData || formData.colorSizeData.length === 0) {
+      console.error("Color-size data is required");
+      return;
+    }
+    
+    // Check if any size has a quantity greater than 0
+    const hasInventory = formData.colorSizeData.some(colorData => {
+      if (!colorData.sizes) return false;
+      return Object.values(colorData.sizes).some(quantity => parseInt(quantity, 10) > 0);
     });
+    
+    if (!hasInventory) {
+      console.error("At least one size must have a quantity greater than 0");
+      return;
+    }
+    
+    // Format the data before submission if needed
+    const submissionData = {
+      ...formData,
+      price: parseFloat(formData.price),
+      colorSizeData: formData.colorSizeData.map(colorData => ({
+        color: colorData.color,
+        sizes: colorData.sizes || {}
+      }))
+    };
+    
+    // Submit the data
+    addInventoryItem(submissionData);
   };
   
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-      <div className={`${
-        isDarkMode 
-          ? 'bg-gray-800 border-gray-700' 
-          : 'bg-white border-gray-300'
-        } rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto border p-6`}>
-        <div className="flex justify-between items-center mb-6">
-          <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Add New Product</h3>
+    <div className={`fixed inset-0 z-[9999] flex items-center justify-center p-5 ${isDarkMode ? 'bg-gray-900 bg-opacity-50' : 'bg-black bg-opacity-30'}`} style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0}}>
+      <div className={`w-full max-w-2xl rounded-lg shadow-lg p-6 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">Add New Product</h2>
           <button 
-            onClick={closeModal}
-            className={`${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'} text-xl`}
+            onClick={closeModal} 
+            className={`${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'}`}
           >
-            ✕
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
         
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <label className={`block mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Product Type</label>
-              <select
-                name="product_id"
-                value={formData.product_id}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 rounded border ${
-                  isDarkMode 
-                    ? 'bg-gray-700 border-gray-600 text-white focus:ring-[#00E0A4] focus:border-[#00E0A4]' 
-                    : 'bg-white border-gray-300 text-gray-900 focus:ring-[#00E0A4] focus:border-[#00E0A4]'
-                } focus:outline-none focus:ring-2`}
-                required
-              >
-                <option value="">Select a product</option>
-                {products.map(product => (
-                  <option key={product.id} value={product.id}>{product.name}</option>
-                ))}
-              </select>
-            </div>
-            
-            <div>
-              <label className={`block mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Price</label>
-              <div className={`relative rounded-md ${isDarkMode ? 'bg-gray-700' : 'bg-white'}`}>
-                <div className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  ₹
-                </div>
-                <input
-                  type="number"
-                  name="price"
-                  value={formData.price}
-                  onChange={handleChange}
-                  step="0.01"
-                  min="0"
-                  className={`block w-full pl-10 pr-3 py-2 rounded-md border ${
-                    isDarkMode 
-                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#00E0A4] focus:border-[#00E0A4]' 
-                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-[#00E0A4] focus:border-[#00E0A4]'
-                  } focus:outline-none focus:ring-2`}
-                  placeholder="0.00"
-                  required
-                />
-              </div>
-            </div>
+          <div className="mb-4">
+            <label className="block mb-2 text-sm font-medium">Product Type</label>
+            <select 
+              name="product_id" 
+              value={formData.product_id} 
+              onChange={handleChange}
+              className={`w-full px-3 py-2 border rounded ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white border-gray-300'}`}
+              required
+            >
+              <option value="">Select Product</option>
+              {products && products.map(product => (
+                <option key={product.id} value={product.id}>
+                  {product.name}
+                </option>
+              ))}
+            </select>
           </div>
           
-          <div className="mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <label className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Colors</label>
-              <div className="flex space-x-2">
-                <select 
-                  id="colorSelect" 
-                  className={`px-3 py-1 rounded border ${
-                    isDarkMode 
-                      ? 'bg-gray-700 border-gray-600 text-white' 
-                      : 'bg-white border-gray-300 text-gray-900'
-                  }`}
-                >
-                  <option value="">Select a color</option>
-                  {availableColors.filter(color => !formData.colors.includes(color)).map(color => (
-                    <option key={color} value={color}>{color}</option>
-                  ))}
-                </select>
-                <button 
-                  type="button" 
-                  onClick={addColor}
-                  className="bg-[#00E0A4] hover:bg-[#0BB489] text-black px-3 py-1 rounded"
-                >
-                  Add
-                </button>
-              </div>
+          <div className="mb-4">
+            <label className="block mb-2 text-sm font-medium">Price</label>
+            <input 
+              type="number" 
+              name="price" 
+              value={formData.price} 
+              onChange={handleChange}
+              className={`w-full px-3 py-2 border rounded ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white border-gray-300'}`}
+              placeholder="Enter price" 
+              required
+            />
+          </div>
+          
+          <div className="mb-4">
+            <label className="block mb-2 text-sm font-medium">Add Colors</label>
+            <div className="flex items-center">
+              <select 
+                id="colorSelect" 
+                className={`flex-1 px-3 py-2 border rounded ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white border-gray-300'}`}
+              >
+                <option value="">Select Color</option>
+                {availableColors && availableColors.map(color => (
+                  !formData.colors.includes(color.name) && (
+                    <option key={color.id} value={color.name}>
+                      {color.name}
+                    </option>
+                  )
+                ))}
+              </select>
+              <button 
+                type="button" 
+                onClick={addColor}
+                className="ml-2 px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Add
+              </button>
             </div>
             
-            <div className="flex flex-wrap gap-2 mb-4">
-              {formData.colors.map(color => (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {formData.colors && formData.colors.map(color => (
                 <div 
-                  key={color} 
-                  className={`flex items-center space-x-2 px-3 py-1 rounded ${
-                    isDarkMode 
-                      ? 'bg-gray-700 text-white' 
-                      : 'bg-gray-100 text-gray-800'
-                  }`}
+                  key={color}
+                  className="flex items-center px-2 py-1 bg-blue-100 text-blue-800 rounded"
                 >
-                  <div 
-                    className="w-3 h-3 rounded-full" 
-                    style={{ backgroundColor: color.toLowerCase() }}
-                  ></div>
                   <span>{color}</span>
                   <button 
-                    type="button" 
+                    type="button"
                     onClick={() => removeColor(color)}
-                    className={`ml-2 ${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'}`}
+                    className="ml-1 text-blue-800 hover:text-blue-900"
                   >
-                    ✕
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                   </button>
                 </div>
               ))}
             </div>
           </div>
           
-          <div className="mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <label className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Sizes</label>
-              <div className="flex space-x-2">
-                <select 
-                  id="sizeSelect" 
-                  className={`px-3 py-1 rounded border ${
-                    isDarkMode 
-                      ? 'bg-gray-700 border-gray-600 text-white' 
-                      : 'bg-white border-gray-300 text-gray-900'
-                  }`}
-                >
-                  <option value="">Select a size</option>
-                  {availableSizes.filter(size => !formData.sizes.includes(size)).map(size => (
-                    <option key={size} value={size}>{size}</option>
-                  ))}
-                </select>
-                <button 
-                  type="button" 
-                  onClick={addSize}
-                  className="bg-[#00E0A4] hover:bg-[#0BB489] text-black px-3 py-1 rounded"
-                >
-                  Add
-                </button>
-              </div>
+          <div className="mb-4">
+            <label className="block mb-2 text-sm font-medium">Add Sizes</label>
+            <div className="flex items-center">
+              <select 
+                id="sizeSelect" 
+                className={`flex-1 px-3 py-2 border rounded ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white border-gray-300'}`}
+              >
+                <option value="">Select Size</option>
+                {availableSizes && availableSizes.map(size => (
+                  !formData.sizes.includes(size.name) && (
+                    <option key={size.id} value={size.name}>
+                      {size.name}
+                    </option>
+                  )
+                ))}
+              </select>
+              <button 
+                type="button" 
+                onClick={addSize}
+                className="ml-2 px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Add
+              </button>
             </div>
             
-            <div className="flex flex-wrap gap-2">
-              {formData.sizes.map(size => (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {formData.sizes && formData.sizes.map(size => (
                 <div 
-                  key={size} 
-                  className={`flex items-center space-x-2 px-3 py-1 rounded ${
-                    isDarkMode 
-                      ? 'bg-gray-700 text-white' 
-                      : 'bg-gray-100 text-gray-800'
-                  }`}
+                  key={size}
+                  className="flex items-center px-2 py-1 bg-green-100 text-green-800 rounded"
                 >
                   <span>{size}</span>
                   <button 
-                    type="button" 
+                    type="button"
                     onClick={() => removeSize(size)}
-                    className={`ml-2 ${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'}`}
+                    className="ml-1 text-green-800 hover:text-green-900"
                   >
-                    ✕
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                   </button>
                 </div>
               ))}
             </div>
           </div>
           
-          {formData.colors.length > 0 && formData.sizes.length > 0 && (
-            <div className="mb-6">
-              <h4 className={`text-lg font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Inventory Quantities</h4>
-              
-              {formData.colorSizeData.map((colorData, colorIndex) => (
-                <div key={colorIndex} className={`mb-6 p-4 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                  <div className="flex items-center mb-4">
-                    <div 
-                      className="w-5 h-5 rounded-full mr-2" 
-                      style={{ backgroundColor: colorData.color.toLowerCase() }}
-                    ></div>
-                    <h5 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{colorData.color}</h5>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {Object.keys(colorData.sizes).map(size => (
-                      <div key={size} className="flex flex-col">
-                        <label className={`text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{size}</label>
-                        <input
-                          type="number"
-                          value={colorData.sizes[size]}
-                          onChange={(e) => handleQuantityChange(colorIndex, size, e.target.value)}
-                          min="0"
-                          className={`w-full px-3 py-2 rounded border ${
-                            isDarkMode 
-                              ? 'bg-gray-800 border-gray-600 text-white focus:ring-[#00E0A4] focus:border-[#00E0A4]' 
-                              : 'bg-white border-gray-300 text-gray-900 focus:ring-[#00E0A4] focus:border-[#00E0A4]'
-                          } focus:outline-none focus:ring-2`}
-                        />
-                      </div>
+          {/* Color-Size Quantity Matrix */}
+          {formData.colors && formData.colors.length > 0 && formData.sizes && formData.sizes.length > 0 && (
+            <div className="mb-4">
+              <h3 className="block mb-2 text-sm font-medium">Set Quantities</h3>
+              <div className={`border rounded overflow-hidden ${isDarkMode ? 'border-gray-600' : 'border-gray-300'}`}>
+                <table className="w-full">
+                  <thead>
+                    <tr className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                      <th className="px-4 py-2 text-left">Color</th>
+                      {formData.sizes.map(size => (
+                        <th key={size} className="px-4 py-2 text-center">{size}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {formData.colorSizeData && formData.colorSizeData.map((colorData, index) => (
+                      <tr key={colorData.color} className={`${isDarkMode ? 'border-t border-gray-600' : 'border-t border-gray-200'}`}>
+                        <td className="px-4 py-2 font-medium">{colorData.color}</td>
+                        {formData.sizes && formData.sizes.map(size => (
+                          <td key={size} className="px-4 py-2 text-center">
+                            <input 
+                              type="number" 
+                              value={colorData.sizes && colorData.sizes[size] ? colorData.sizes[size] : "0"} 
+                              onChange={(e) => handleQuantityChange(index, size, e.target.value)}
+                              className={`w-16 px-2 py-1 text-center border rounded ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white border-gray-300'}`}
+                              min="0"
+                            />
+                          </td>
+                        ))}
+                      </tr>
                     ))}
-                  </div>
-                </div>
-              ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
           
-          <div className="flex justify-end space-x-3">
+          <div className="flex justify-end mt-6">
             <button
               type="button"
               onClick={closeModal}
-              className={`px-4 py-2 rounded-lg ${
-                isDarkMode 
-                  ? 'bg-gray-700 hover:bg-gray-600 text-white' 
-                  : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-              } transition-colors`}
-              disabled={isLoading}
+              className={`px-4 py-2 mr-2 rounded ${isDarkMode ? 'bg-gray-600 hover:bg-gray-700 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'}`}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="bg-[#00E0A4] hover:bg-[#0BB489] text-black font-medium px-4 py-2 rounded-lg transition-colors flex items-center"
               disabled={isLoading}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
             >
-              {isLoading ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Adding
-                </>
-              ) : 'Add Product'}
+              {isLoading ? 'Adding...' : 'Add Product'}
             </button>
           </div>
         </form>

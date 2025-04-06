@@ -286,7 +286,7 @@ const Signin = () => {
                         <select
                           id="role"
                           name="role"
-                          className={`mb-1 w-full rounded-md border px-5 py-3 text-base outline-none focus-visible:shadow-none transition-colors ${
+                          className={`w-full rounded px-5 py-3 appearance-none border ${
                             formErrors.role 
                               ? 'border-red-500' 
                               : isDarkMode 
@@ -296,10 +296,11 @@ const Signin = () => {
                           onChange={handleInputChange(setRole, 'role')}
                           value={role}
                           disabled={loading}
+                          style={isDarkMode ? {backgroundColor: '#374151'} : {}}
                         >
-                          <option className={`${isDarkMode ? 'text-white' : 'text-black'}`} value="">Select your role</option>
-                          <option className={`${isDarkMode ? 'text-white' : 'text-black'}`} value="seller">Seller - Printing Service Provider</option>
-                          <option className={`${isDarkMode ? 'text-white' : 'text-black'}`} value="brands">Brand - Designer/Company/Individual</option>
+                          <option className={`${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-black'}`} value="">Select your role</option>
+                          <option className={`${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-black'}`} value="seller">Seller - Printing Service Provider</option>
+                          <option className={`${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-black'}`} value="brands">Brand - Designer/Company/Individual</option>
                         </select>
                         {formErrors.role && <p className="text-red-500 text-xs mt-1">{formErrors.role}</p>}
                       </div>

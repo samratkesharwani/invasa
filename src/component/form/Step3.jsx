@@ -311,13 +311,13 @@ const SelectInput = ({ title, name, options, onChange, value, error, isDarkMode 
           onChange={onChange}
           className={`w-full appearance-none rounded-md border border-form-stroke py-3 px-5 text-base font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-[#F5F7FD] ${
             isDarkMode 
-              ? 'bg-dark-3 border-dark-3 text-white' 
+              ? 'bg-dark-3 border-dark-3 text-white placeholder-gray-400' 
               : 'bg-white border-[#E9EDF4] text-body-color'
           } ${error ? 'border-red-500' : ''}`}
         >
-          <option value="">Select option</option>
+          <option value="" className={isDarkMode ? 'bg-dark-3 text-white' : ''}>Select option</option>
           {options.map((option) => (
-            <option key={option} value={option}>
+            <option key={option} value={option} className={isDarkMode ? 'bg-dark-3 text-white' : ''}>
               {option}
             </option>
           ))}
