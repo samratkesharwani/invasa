@@ -3,12 +3,14 @@ import { Helmet } from 'react-helmet-async';
 import { toast } from 'react-hot-toast';
 import IconContainer from '../component/IconContainer';
 import { FaPhone, FaEnvelope, FaMapMarkerAlt, FaInstagram, FaYoutube, FaLinkedin } from 'react-icons/fa';
+import { supabase } from '../utils/supabase';
 
 const Contact = ({ isDarkMode }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     subject: '',
+    phone: '',
     message: ''
   });
   const [loading, setLoading] = useState(false);
@@ -37,23 +39,42 @@ const Contact = ({ isDarkMode }) => {
       return;
     }
     
+    // Phone validation (optional field)
+    if (formData.phone && !/^\d{10}$/.test(formData.phone.replace(/\D/g, ''))) {
+      toast.error('Please enter a valid 10-digit phone number');
+      return;
+    }
+    
     setLoading(true);
     
     try {
-      // You would implement actual form submission here
-      // For now, let's simulate an API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Submit form data to Supabase without requiring authentication
+      const { data, error } = await supabase
+        .from('contact_submissions')
+        .insert([{
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject || 'General Inquiry',
+          phone: formData.phone || null,
+          message: formData.message
+        }]);
+      
+      if (error) {
+        console.error('Submission error:', error);
+        throw new Error(error.message);
+      }
       
       toast.success('Your message has been sent successfully!');
       setFormData({
         name: '',
         email: '',
         subject: '',
+        phone: '',
         message: ''
       });
     } catch (error) {
       console.error('Error sending message:', error);
-      toast.error('Failed to send message. Please try again later.');
+      toast.error(`Failed to send message: ${error.message || 'Please try again later'}`);
     } finally {
       setLoading(false);
     }
@@ -99,7 +120,7 @@ const Contact = ({ isDarkMode }) => {
                 />
                 <div className="ml-4">
                   <h3 className={`font-medium mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Phone</h3>
-                  <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>+1 (302) 543-3921</p>
+                  <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>+91 95958 62561</p>
                 </div>
               </div>
               
@@ -113,7 +134,7 @@ const Contact = ({ isDarkMode }) => {
                 />
                 <div className="ml-4">
                   <h3 className={`font-medium mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Email</h3>
-                  <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>support@invasalink.com</p>
+                  <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>admin@invasalink.in</p>
                 </div>
               </div>
               
@@ -128,8 +149,8 @@ const Contact = ({ isDarkMode }) => {
                 <div className="ml-4">
                   <h3 className={`font-medium mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Location</h3>
                   <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                    1201 N Market St, Suite 111<br />
-                    Wilmington, DE 19801
+                    Pune, Maharashtra<br />
+                    India
                   </p>
                 </div>
               </div>
@@ -240,26 +261,50 @@ const Contact = ({ isDarkMode }) => {
                 />
               </div>
               
-              <div>
-                <label 
-                  htmlFor="subject" 
-                  className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}
-                >
-                  Subject
-                </label>
-                <input
-                  type="text"
-                  id="subject"
-                  name="subject"
-                  value={formData.subject}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 rounded-lg border ${
-                    isDarkMode 
-                      ? 'bg-gray-800 border-gray-700 text-white focus:ring-purple-500 focus:border-purple-500' 
-                      : 'bg-white border-gray-300 text-gray-900 focus:ring-purple-600 focus:border-purple-600'
-                  } focus:outline-none focus:ring-2`}
-                  placeholder="How can we help you?"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label 
+                    htmlFor="phone" 
+                    className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}
+                  >
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-3 rounded-lg border ${
+                      isDarkMode 
+                        ? 'bg-gray-800 border-gray-700 text-white focus:ring-purple-500 focus:border-purple-500' 
+                        : 'bg-white border-gray-300 text-gray-900 focus:ring-purple-600 focus:border-purple-600'
+                    } focus:outline-none focus:ring-2`}
+                    placeholder="Phone number (optional)"
+                  />
+                </div>
+                
+                <div>
+                  <label 
+                    htmlFor="subject" 
+                    className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}
+                  >
+                    Subject
+                  </label>
+                  <input
+                    type="text"
+                    id="subject"
+                    name="subject"
+                    value={formData.subject}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-3 rounded-lg border ${
+                      isDarkMode 
+                        ? 'bg-gray-800 border-gray-700 text-white focus:ring-purple-500 focus:border-purple-500' 
+                        : 'bg-white border-gray-300 text-gray-900 focus:ring-purple-600 focus:border-purple-600'
+                    } focus:outline-none focus:ring-2`}
+                    placeholder="How can we help you?"
+                  />
+                </div>
               </div>
               
               <div>
@@ -293,8 +338,8 @@ const Contact = ({ isDarkMode }) => {
                     loading 
                       ? 'bg-gray-500 cursor-not-allowed' 
                       : isDarkMode
-                        ? 'bg-purple-800 hover:bg-purple-700 active:bg-purple-900'
-                        : 'bg-purple-600 hover:bg-purple-700 active:bg-purple-800'
+                        ? 'bg-gradient-to-r from-[#00E0A4] to-[#0BB489] hover:from-[#0BB489] hover:to-[#00E0A4] text-black'
+                        : 'bg-gradient-to-r from-[#00E0A4] to-[#0BB489] hover:from-[#0BB489] hover:to-[#00E0A4] text-black'
                   }`}
                 >
                   {loading ? (
