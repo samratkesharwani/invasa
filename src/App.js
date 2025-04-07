@@ -11,6 +11,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 // Import critical components directly
 import Login from "./component/auth/Login";
 import Register from "./component/auth/Register";
+import AdminLogin from "./component/admin/pages/Login";
 import AdminRoutes from './component/admin/AdminRoutes';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
@@ -82,6 +83,7 @@ function App() {
                     <Route path="/thanks" element={<Thanks isDarkMode={isDarkMode} />} />
                     <Route path="/login" element={<Login isDarkMode={isDarkMode} />} />
                     <Route path="/register" element={<Register isDarkMode={isDarkMode} />} />
+                    <Route path="/admin-login" element={<AdminLogin isDarkMode={isDarkMode} />} />
                     <Route path="/dashboard-seller" element={
                       <Wrapper isDarkMode={isDarkMode}>
                         <BrandsDashboard isDarkMode={isDarkMode} />
