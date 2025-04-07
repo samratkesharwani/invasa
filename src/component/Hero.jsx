@@ -313,13 +313,13 @@ const Hero = ({navigateTo, loggedIn, isDarkMode}) => {
                       >
                         <IconContainer 
                           icon={product.icon}
-                          size="xs"
+                          size="md"
                           alt={product.name}
                           isDarkMode={isDarkMode}
                           color={product.color}
                         />
                         <div className="ml-3">
-                          <span className="font-medium text-sm">{product.name}</span>
+                          <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} font-medium text-sm`}>{product.name}</span>
                         </div>
                       </div>
                     ))
