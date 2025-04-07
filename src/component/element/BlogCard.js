@@ -3,6 +3,26 @@ import { Link } from 'react-router-dom';
 import IconContainer from '../IconContainer';
 import { useTheme } from '../../contexts/ThemeContext';
 
+// Helper function to format dates safely and prevent 1/1/1970
+const formatDate = (dateString) => {
+  if (!dateString) return 'Recently';
+  
+  try {
+    const date = new Date(dateString);
+    // Check if date is valid
+    if (isNaN(date.getTime()) || date.getFullYear() < 2000) {
+      return 'Recently';
+    }
+    return date.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short', 
+      day: 'numeric'
+    });
+  } catch (error) {
+    return 'Recently';
+  }
+};
+
 const BlogCard = ({ post }) => {
   const { isDarkMode } = useTheme();
   
@@ -55,11 +75,9 @@ const BlogCard = ({ post }) => {
             )}
             <span className="ml-2">{post.author?.email}</span>
           </div>
-          {post.published_at && (
-            <time dateTime={post.published_at}>
-              {new Date(post.published_at).toLocaleDateString()}
-            </time>
-          )}
+          <time dateTime={post.published_at || post.created_at}>
+            {formatDate(post.published_at || post.created_at)}
+          </time>
         </div>
       </div>
     </article>

@@ -1,53 +1,99 @@
 import { supabase } from './supabase';
 
+// Simple in-memory cache to reduce repeated requests
+const cache = {
+  categories: null,
+  tags: null,
+  postsCache: new Map(),
+  // Cache expiration time (5 minutes)
+  expiry: 5 * 60 * 1000,
+  categoriesTimestamp: 0,
+  tagsTimestamp: 0
+};
+
+// Helper function to ensure valid dates and prevent 1/1/1970
+const ensureValidDate = (dateField) => {
+  if (!dateField || new Date(dateField).getFullYear() < 2000) {
+    return new Date().toISOString();
+  }
+  return dateField;
+};
+
 export const blogService = {
   // Get all published blog posts
   async getBlogPosts(page = 1, limit = 10) {
-    const start = (page - 1) * limit;
-    const end = start + limit - 1;
-    
-    const { data, error, count } = await supabase
-      .from('blog_posts')
-      .select(`
-        *,
-        categories:blog_post_categories (
-          category:blog_categories (
-            id,
-            name,
-            slug
+    try {
+      const start = (page - 1) * limit;
+      const end = start + limit - 1;
+      
+      const { data, error, count } = await supabase
+        .from('blog_posts')
+        .select(`
+          *,
+          categories:blog_post_categories (
+            category:blog_categories (
+              id,
+              name,
+              slug
+            )
+          ),
+          tags:blog_post_tags (
+            tag:blog_tags (
+              id,
+              name,
+              slug
+            )
           )
-        ),
-        tags:blog_post_tags (
-          tag:blog_tags (
-            id,
-            name,
-            slug
-          )
-        )
-      `, { count: 'exact' })
-      .eq('status', 'published')
-      .order('published_at', { ascending: false })
-      .range(start, end);
+        `, { count: 'exact' })
+        .eq('status', 'published')
+        .order('published_at', { ascending: false })
+        .range(start, end);
 
-    if (error) throw error;
+      if (error) throw error;
 
-    // Fetch author information separately
-    const postsWithAuthors = await Promise.all(
-      data.map(async (post) => {
-        const { data: authorData } = await supabase.auth.admin.getUserById(post.author_id);
-        return {
-          ...post,
-          author: authorData?.user || null
-        };
-      })
-    );
+      // Use a Promise.all to request all authors in parallel
+      const authorIds = [...new Set(data.map(post => post.author_id))];
+      const authorsResponse = await Promise.all(
+        authorIds.map(id => supabase.auth.admin.getUserById(id))
+      );
+      
+      // Create a map of author data for quick lookup
+      const authorsMap = {};
+      authorsResponse.forEach((response, index) => {
+        if (response.data?.user) {
+          authorsMap[authorIds[index]] = response.data.user;
+        }
+      });
+      
+      // Attach authors to posts and ensure valid dates
+      const postsWithAuthors = data.map(post => ({
+        ...post,
+        published_at: ensureValidDate(post.published_at),
+        created_at: ensureValidDate(post.created_at),
+        updated_at: ensureValidDate(post.updated_at),
+        author: authorsMap[post.author_id] || null
+      }));
 
-    return { data: postsWithAuthors, count };
+      return { data: postsWithAuthors, count };
+    } catch (error) {
+      console.error('Error fetching blog posts:', error);
+      throw error;
+    }
   },
 
   // Get a single blog post by id or slug
   async getBlogPost(identifier) {
     try {
+      // Check if the post is in cache
+      if (cache.postsCache.has(identifier)) {
+        const { post, timestamp } = cache.postsCache.get(identifier);
+        // If cache is fresh, return it
+        if (Date.now() - timestamp < cache.expiry) {
+          return post;
+        }
+        // Otherwise continue to fetch fresh data
+      }
+      
       // Check if identifier is a UUID
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       
@@ -61,40 +107,53 @@ export const blogService = {
       if (error) throw error;
       if (!post) return null;
       
-      // Get categories
-      const { data: categories, error: categoriesError } = await supabase
-        .from('blog_post_categories')
-        .select(`
-          category:blog_categories (
-            id,
-            name,
-            slug
-          )
-        `)
-        .eq('post_id', post.id);
+      // Use Promise.all to get categories and tags in parallel
+      const [categoriesResult, tagsResult] = await Promise.all([
+        supabase
+          .from('blog_post_categories')
+          .select(`
+            category:blog_categories (
+              id,
+              name,
+              slug
+            )
+          `)
+          .eq('post_id', post.id),
+          
+        supabase
+          .from('blog_post_tags')
+          .select(`
+            tag:blog_tags (
+              id,
+              name,
+              slug
+            )
+          `)
+          .eq('post_id', post.id)
+      ]);
       
-      if (categoriesError) throw categoriesError;
+      if (categoriesResult.error) throw categoriesResult.error;
+      if (tagsResult.error) throw tagsResult.error;
       
-      // Get tags
-      const { data: tags, error: tagsError } = await supabase
-        .from('blog_post_tags')
-        .select(`
-          tag:blog_tags (
-            id,
-            name,
-            slug
-          )
-        `)
-        .eq('post_id', post.id);
-      
-      if (tagsError) throw tagsError;
+      // Ensure valid dates
+      post.published_at = ensureValidDate(post.published_at);
+      post.created_at = ensureValidDate(post.created_at);
+      post.updated_at = ensureValidDate(post.updated_at);
       
       // Combine all data
-      return {
+      const fullPost = {
         ...post,
-        categories: categories || [],
-        tags: tags || []
+        categories: categoriesResult.data || [],
+        tags: tagsResult.data || []
       };
+      
+      // Store in cache
+      cache.postsCache.set(identifier, {
+        post: fullPost,
+        timestamp: Date.now()
+      });
+      
+      return fullPost;
     } catch (error) {
       console.error('Error fetching blog post:', error);
       throw error;
@@ -103,227 +162,181 @@ export const blogService = {
 
   // Create a new blog post
   async createBlogPost(postData) {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData?.user?.id) throw new Error('User not authenticated');
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user?.id) throw new Error('User not authenticated');
 
-    // Extract category_ids and tag_ids from postData
-    const { category_ids, tag_ids, ...postDataWithoutRelations } = postData;
+      // Extract category_ids and tag_ids from postData
+      const { category_ids, tag_ids, ...postDataWithoutRelations } = postData;
 
-    // Create the blog post
-    const { data: post, error: postError } = await supabase
-      .from('blog_posts')
-      .insert([{
+      // Ensure dates are set and valid
+      const now = new Date().toISOString();
+      const dataWithDates = {
         ...postDataWithoutRelations,
-        author_id: userData.user.id
-      }])
-      .select()
-      .single();
+        created_at: now,
+        updated_at: now,
+        published_at: postDataWithoutRelations.status === 'published' ? now : null
+      };
 
-    if (postError) throw postError;
+      // Create the blog post
+      const { data: post, error: postError } = await supabase
+        .from('blog_posts')
+        .insert([{
+          ...dataWithDates,
+          author_id: userData.user.id
+        }])
+        .select()
+        .single();
 
-    // If categories are provided, create the relationships
-    if (category_ids && category_ids.length > 0) {
-      const categoryRelations = category_ids.map(categoryId => ({
-        post_id: post.id,
-        category_id: categoryId
-      }));
+      if (postError) throw postError;
 
-      const { error: categoryError } = await supabase
-        .from('blog_post_categories')
-        .insert(categoryRelations);
+      // Create relationships in parallel
+      const relationPromises = [];
+      
+      // Add category relationships if provided
+      if (category_ids && category_ids.length > 0) {
+        const categoryRelations = category_ids.map(categoryId => ({
+          post_id: post.id,
+          category_id: categoryId
+        }));
 
-      if (categoryError) throw categoryError;
+        relationPromises.push(
+          supabase.from('blog_post_categories').insert(categoryRelations)
+        );
+      }
+
+      // Add tag relationships if provided
+      if (tag_ids && tag_ids.length > 0) {
+        const tagRelations = tag_ids.map(tagId => ({
+          post_id: post.id,
+          tag_id: tagId
+        }));
+
+        relationPromises.push(
+          supabase.from('blog_post_tags').insert(tagRelations)
+        );
+      }
+
+      // Wait for all relationship creations to complete
+      const relationResults = await Promise.all(relationPromises);
+      
+      // Check for errors
+      relationResults.forEach(result => {
+        if (result.error) throw result.error;
+      });
+
+      // Return post with relationships and ensure dates are valid
+      return {
+        ...post,
+        published_at: ensureValidDate(post.published_at),
+        created_at: ensureValidDate(post.created_at),
+        updated_at: ensureValidDate(post.updated_at),
+        categories: category_ids ? category_ids.map(id => ({ category: { id } })) : [],
+        tags: tag_ids ? tag_ids.map(id => ({ tag: { id } })) : []
+      };
+    } catch (error) {
+      console.error('Error creating blog post:', error);
+      throw error;
     }
-
-    // If tags are provided, create the relationships
-    if (tag_ids && tag_ids.length > 0) {
-      const tagRelations = tag_ids.map(tagId => ({
-        post_id: post.id,
-        tag_id: tagId
-      }));
-
-      const { error: tagError } = await supabase
-        .from('blog_post_tags')
-        .insert(tagRelations);
-
-      if (tagError) throw tagError;
-    }
-
-    // Fetch the complete post with relationships
-    const { data: completePost, error: fetchError } = await supabase
-      .from('blog_posts')
-      .select(`
-        *,
-        categories:blog_post_categories (
-          category:blog_categories (
-            id,
-            name,
-            slug
-          )
-        ),
-        tags:blog_post_tags (
-          tag:blog_tags (
-            id,
-            name,
-            slug
-          )
-        )
-      `)
-      .eq('id', post.id)
-      .single();
-
-    if (fetchError) throw fetchError;
-
-    // Fetch author information
-    const { data: authorData } = await supabase.auth.admin.getUserById(completePost.author_id);
-
-    return {
-      ...completePost,
-      author: authorData?.user || null
-    };
   },
 
   // Update a blog post
   async updateBlogPost(id, postData) {
     try {
-      console.log('Starting update for post ID:', id);
-      console.log('Update data:', postData);
-      
       // First check if the post exists
       const { data: existingPost, error: checkError } = await supabase
         .from('blog_posts')
-        .select('id, author_id')
+        .select('id, author_id, status')
         .eq('id', id)
         .maybeSingle();
 
-      if (checkError) {
-        console.error('Error checking post existence:', checkError);
-        throw checkError;
-      }
-      
-      if (!existingPost) {
-        console.error('Blog post not found with ID:', id);
-        throw new Error('Blog post not found');
-      }
-
-      console.log('Found existing post:', existingPost);
+      if (checkError) throw checkError;
+      if (!existingPost) throw new Error('Blog post not found');
 
       // Get current user
       const { data: userData, error: userError } = await supabase.auth.getUser();
-      
-      if (userError) {
-        console.error('Error getting user:', userError);
-        throw userError;
-      }
-      
-      if (!userData?.user?.id) {
-        console.error('User not authenticated');
-        throw new Error('User not authenticated');
-      }
-
-      console.log('Current user ID:', userData.user.id);
-      console.log('Post author ID:', existingPost.author_id);
-
-      // Remove permission check temporarily for debugging
-      // We'll just log instead of throwing an error
-      if (existingPost.author_id !== userData.user.id) {
-        console.warn('User is not the author, but proceeding anyway for debugging');
-        // Continue anyway for debugging purposes
-      }
+      if (userError) throw userError;
+      if (!userData?.user?.id) throw new Error('User not authenticated');
 
       // Extract category_ids and tag_ids from postData
       const { category_ids, tag_ids, ...postDataWithoutRelations } = postData;
-
-      console.log('Updating post with data:', postDataWithoutRelations);
+      
+      // Prepare data with current timestamp for updated_at
+      const now = new Date().toISOString();
+      const dataWithDates = {
+        ...postDataWithoutRelations,
+        updated_at: now,
+        // Set published_at if status changed from draft to published
+        published_at: (existingPost.status !== 'published' && postDataWithoutRelations.status === 'published') 
+          ? now 
+          : (postDataWithoutRelations.published_at || null)
+      };
 
       // Update the blog post
       const { data: post, error: postError } = await supabase
         .from('blog_posts')
-        .update(postDataWithoutRelations)
+        .update(dataWithDates)
         .eq('id', id)
         .select();
 
-      if (postError) {
-        console.error('Error updating post:', postError);
-        throw postError;
-      }
+      if (postError) throw postError;
 
-      console.log('Post updated successfully:', post);
+      // Update relationships in parallel
+      const relationPromises = [
+        // Delete existing relationship
+        supabase.from('blog_post_categories').delete().eq('post_id', id),
+        supabase.from('blog_post_tags').delete().eq('post_id', id)
+      ];
 
-      try {
-        // Delete existing category relationships
-        const { error: deleteCatError } = await supabase
-          .from('blog_post_categories')
-          .delete()
-          .eq('post_id', id);
+      // Wait for deletions to complete
+      await Promise.all(relationPromises);
 
-        if (deleteCatError) console.error('Error deleting categories:', deleteCatError);
-      } catch (e) {
-        console.error('Exception while deleting categories:', e);
-      }
+      // Create new relationships if needed
+      const createRelationPromises = [];
 
-      try {
-        // Delete existing tag relationships
-        const { error: deleteTagError } = await supabase
-          .from('blog_post_tags')
-          .delete()
-          .eq('post_id', id);
-
-        if (deleteTagError) console.error('Error deleting tags:', deleteTagError);
-      } catch (e) {
-        console.error('Exception while deleting tags:', e);
-      }
-
-      // If categories are provided, create new relationships
+      // Add category relationships if provided
       if (category_ids && category_ids.length > 0) {
-        console.log('Adding categories:', category_ids);
-        
         const categoryRelations = category_ids.map(categoryId => ({
           post_id: id,
           category_id: categoryId
         }));
 
-        try {
-          const { error: categoryError } = await supabase
-            .from('blog_post_categories')
-            .insert(categoryRelations);
-
-          if (categoryError) {
-            console.error('Error inserting categories:', categoryError);
-          }
-        } catch (e) {
-          console.error('Exception while inserting categories:', e);
-        }
+        createRelationPromises.push(
+          supabase.from('blog_post_categories').insert(categoryRelations)
+        );
       }
 
-      // If tags are provided, create new relationships
+      // Add tag relationships if provided
       if (tag_ids && tag_ids.length > 0) {
-        console.log('Adding tags:', tag_ids);
-        
         const tagRelations = tag_ids.map(tagId => ({
           post_id: id,
           tag_id: tagId
         }));
 
-        try {
-          const { error: tagError } = await supabase
-            .from('blog_post_tags')
-            .insert(tagRelations);
-
-          if (tagError) {
-            console.error('Error inserting tags:', tagError);
-          }
-        } catch (e) {
-          console.error('Exception while inserting tags:', e);
-        }
+        createRelationPromises.push(
+          supabase.from('blog_post_tags').insert(tagRelations)
+        );
       }
 
-      console.log('Update completed successfully');
+      // Wait for all relationship creations to complete
+      if (createRelationPromises.length > 0) {
+        await Promise.all(createRelationPromises);
+      }
+
+      // Clear the post from cache
+      cache.postsCache.delete(id);
       
-      // Instead of fetching the complete post again (which might fail),
-      // just return the updated post data
-      return {
+      // Make sure we have a valid post object with valid dates
+      const updatedPost = post && post[0] ? {
         ...post[0],
+        published_at: ensureValidDate(post[0].published_at),
+        created_at: ensureValidDate(post[0].created_at),
+        updated_at: ensureValidDate(post[0].updated_at),
+      } : {};
+      
+      // Return updated post with relationships
+      return {
+        ...updatedPost,
         categories: category_ids ? category_ids.map(id => ({ category: { id } })) : [],
         tags: tag_ids ? tag_ids.map(id => ({ tag: { id } })) : []
       };
@@ -335,138 +348,203 @@ export const blogService = {
 
   // Delete a blog post
   async deleteBlogPost(id) {
-    const { error } = await supabase
-      .from('blog_posts')
-      .delete()
-      .eq('id', id);
+    try {
+      const { error } = await supabase
+        .from('blog_posts')
+        .delete()
+        .eq('id', id);
 
-    if (error) throw error;
+      if (error) throw error;
+      
+      // Clear the post from cache
+      cache.postsCache.delete(id);
+    } catch (error) {
+      console.error('Error deleting blog post:', error);
+      throw error;
+    }
   },
 
   // Get all categories
   async getCategories() {
-    const { data, error } = await supabase
-      .from('blog_categories')
-      .select('*')
-      .order('name');
+    try {
+      // Return cached data if available and fresh
+      if (cache.categories && (Date.now() - cache.categoriesTimestamp < cache.expiry)) {
+        return cache.categories;
+      }
+      
+      const { data, error } = await supabase
+        .from('blog_categories')
+        .select('*')
+        .order('name');
 
-    if (error) throw error;
-    return data;
+      if (error) throw error;
+      
+      // Update cache
+      cache.categories = data;
+      cache.categoriesTimestamp = Date.now();
+      
+      return data;
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      throw error;
+    }
   },
 
   // Get all tags
   async getTags() {
-    const { data, error } = await supabase
-      .from('blog_tags')
-      .select('*')
-      .order('name');
+    try {
+      // Return cached data if available and fresh
+      if (cache.tags && (Date.now() - cache.tagsTimestamp < cache.expiry)) {
+        return cache.tags;
+      }
+      
+      const { data, error } = await supabase
+        .from('blog_tags')
+        .select('*')
+        .order('name');
 
-    if (error) throw error;
-    return data;
+      if (error) throw error;
+      
+      // Update cache
+      cache.tags = data;
+      cache.tagsTimestamp = Date.now();
+      
+      return data;
+    } catch (error) {
+      console.error('Error fetching tags:', error);
+      throw error;
+    }
   },
 
   // Add a comment to a blog post
   async addComment(postId, content) {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData?.user?.id) throw new Error('User not authenticated');
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user?.id) throw new Error('User not authenticated');
 
-    const { data, error } = await supabase
-      .from('blog_comments')
-      .insert([{
-        post_id: postId,
-        content,
-        user_id: userData.user.id
-      }])
-      .select()
-      .single();
+      const { data, error } = await supabase
+        .from('blog_comments')
+        .insert([{
+          post_id: postId,
+          content,
+          user_id: userData.user.id
+        }])
+        .select()
+        .single();
 
-    if (error) throw error;
-    return data;
+      if (error) throw error;
+      
+      // Clear the post from cache since it has new comments
+      cache.postsCache.delete(postId);
+      
+      return data;
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      throw error;
+    }
   },
 
   // Get posts by category
   async getPostsByCategory(categorySlug, page = 1, limit = 10) {
-    const start = (page - 1) * limit;
-    const end = start + limit - 1;
+    try {
+      const start = (page - 1) * limit;
+      const end = start + limit - 1;
 
-    const { data, error, count } = await supabase
-      .from('blog_posts')
-      .select(`
-        *,
-        categories:blog_post_categories (
-          category:blog_categories (
-            id,
-            name,
-            slug
+      const { data, error, count } = await supabase
+        .from('blog_posts')
+        .select(`
+          *,
+          categories:blog_post_categories (
+            category:blog_categories (
+              id,
+              name,
+              slug
+            )
           )
-        )
-      `, { count: 'exact' })
-      .eq('status', 'published')
-      .eq('categories.category.slug', categorySlug)
-      .order('published_at', { ascending: false })
-      .range(start, end);
+        `, { count: 'exact' })
+        .eq('status', 'published')
+        .eq('categories.category.slug', categorySlug)
+        .order('published_at', { ascending: false })
+        .range(start, end);
 
-    if (error) throw error;
+      if (error) throw error;
 
-    // Fetch author information separately
-    const postsWithAuthors = await Promise.all(
-      data.map(async (post) => {
-        const { data: authorData } = await supabase
-          .from('auth.users')
-          .select('id, email, user_metadata')
-          .eq('id', post.author_id)
-          .single();
-        
-        return {
-          ...post,
-          author: authorData
-        };
-      })
-    );
+      // Use a Promise.all to request all authors in parallel
+      const authorIds = [...new Set(data.map(post => post.author_id))];
+      const authorsResponse = await Promise.all(
+        authorIds.map(id => supabase.from('auth.users').select('id, email, user_metadata').eq('id', id).single())
+      );
+      
+      // Create a map of author data for quick lookup
+      const authorsMap = {};
+      authorsResponse.forEach((response, index) => {
+        if (!response.error && response.data) {
+          authorsMap[authorIds[index]] = response.data;
+        }
+      });
+      
+      // Attach authors to posts
+      const postsWithAuthors = data.map(post => ({
+        ...post,
+        author: authorsMap[post.author_id] || null
+      }));
 
-    return { data: postsWithAuthors, count };
+      return { data: postsWithAuthors, count };
+    } catch (error) {
+      console.error('Error fetching posts by category:', error);
+      throw error;
+    }
   },
 
   // Get posts by tag
   async getPostsByTag(tagSlug, page = 1, limit = 10) {
-    const start = (page - 1) * limit;
-    const end = start + limit - 1;
+    try {
+      const start = (page - 1) * limit;
+      const end = start + limit - 1;
 
-    const { data, error, count } = await supabase
-      .from('blog_posts')
-      .select(`
-        *,
-        tags:blog_post_tags (
-          tag:blog_tags (
-            id,
-            name,
-            slug
+      const { data, error, count } = await supabase
+        .from('blog_posts')
+        .select(`
+          *,
+          tags:blog_post_tags (
+            tag:blog_tags (
+              id,
+              name,
+              slug
+            )
           )
-        )
-      `, { count: 'exact' })
-      .eq('status', 'published')
-      .eq('tags.tag.slug', tagSlug)
-      .order('published_at', { ascending: false })
-      .range(start, end);
+        `, { count: 'exact' })
+        .eq('status', 'published')
+        .eq('tags.tag.slug', tagSlug)
+        .order('published_at', { ascending: false })
+        .range(start, end);
 
-    if (error) throw error;
+      if (error) throw error;
 
-    // Fetch author information separately
-    const postsWithAuthors = await Promise.all(
-      data.map(async (post) => {
-        const { data: authorData } = await supabase
-          .from('auth.users')
-          .select('id, email, user_metadata')
-          .eq('id', post.author_id)
-          .single();
-        
-        return {
-          ...post,
-          author: authorData
-        };
-      })
-    );
+      // Use a Promise.all to request all authors in parallel
+      const authorIds = [...new Set(data.map(post => post.author_id))];
+      const authorsResponse = await Promise.all(
+        authorIds.map(id => supabase.from('auth.users').select('id, email, user_metadata').eq('id', id).single())
+      );
+      
+      // Create a map of author data for quick lookup
+      const authorsMap = {};
+      authorsResponse.forEach((response, index) => {
+        if (!response.error && response.data) {
+          authorsMap[authorIds[index]] = response.data;
+        }
+      });
+      
+      // Attach authors to posts
+      const postsWithAuthors = data.map(post => ({
+        ...post,
+        author: authorsMap[post.author_id] || null
+      }));
 
-    return { data: postsWithAuthors, count };
+      return { data: postsWithAuthors, count };
+    } catch (error) {
+      console.error('Error fetching posts by tag:', error);
+      throw error;
+    }
   }
 }; 

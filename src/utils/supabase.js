@@ -7,7 +7,13 @@ const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 console.log('Supabase URL available:', !!supabaseUrl);
 console.log('Supabase Key available:', !!supabaseKey);
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+// Create a simpler client with just the essential options
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true
+  }
+});
 
 // Add error handler for Supabase
 supabase.auth.onAuthStateChange((event, session) => {

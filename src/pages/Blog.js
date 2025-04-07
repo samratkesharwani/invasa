@@ -3,6 +3,26 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { blogService } from '../utils/blogService';
 
+// Helper function to format dates safely
+const formatDate = (dateString) => {
+  if (!dateString) return 'Recently';
+  
+  try {
+    const date = new Date(dateString);
+    // Check if date is valid
+    if (isNaN(date.getTime()) || date.getFullYear() < 2000) {
+      return 'Recently';
+    }
+    return date.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short', 
+      day: 'numeric'
+    });
+  } catch (error) {
+    return 'Recently';
+  }
+};
+
 const Blog = ({ isDarkMode }) => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -155,7 +175,7 @@ const BlogCard = ({ post, isDarkMode }) => {
             )}
           </div>
           <span className={`${isDarkMode ? 'text-gray-500' : 'text-gray-600'} text-sm`}>
-            {new Date(post.published_at).toLocaleDateString()}
+            {formatDate(post.published_at || post.created_at)}
           </span>
         </div>
       </div>
