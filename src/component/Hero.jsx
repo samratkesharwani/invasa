@@ -389,9 +389,9 @@ const Hero = ({navigateTo, loggedIn, isDarkMode}) => {
                             onChange={(e) => setProduct(e.target.value)}
                             disabled={!loggedIn}
                           >
-                            <option value="Tshirt">Tshirt</option>
-                            <option value="Hoodie">Hoodie</option>
-                            <option value="Cap">Cap</option>
+                            <option className={isDarkMode ? 'text-gray-300' : 'text-gray-700'} value="Tshirt">Tshirt</option>
+                            <option className={isDarkMode ? 'text-gray-300' : 'text-gray-700'} value="Hoodie">Hoodie</option>
+                            <option className={isDarkMode ? 'text-gray-300' : 'text-gray-700'} value="Cap">Cap</option>
                           </select>
                         </div>
                         <div>
@@ -423,14 +423,14 @@ const Hero = ({navigateTo, loggedIn, isDarkMode}) => {
                           >
                             <option value="">Select</option>
                             {cities.map((cityName, index) => (
-                              <option key={index} value={cityName}>{cityName.charAt(0).toUpperCase() + cityName.slice(1)}</option>
+                              <option className={isDarkMode ? 'text-gray-300' : 'text-gray-700'} key={index} value={cityName}>{cityName.charAt(0).toUpperCase() + cityName.slice(1)}</option>
                             ))}
                             {cities.length === 0 && (
                               <>
-                                <option value="mumbai">Mumbai</option>
-                                <option value="pune">Pune</option>
-                                <option value="delhi">Delhi</option>
-                                <option value="bangalore">Bangalore</option>
+                                <option className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}  value="mumbai">Mumbai</option>
+                                <option className={isDarkMode ? 'text-gray-300' : 'text-gray-700'} value="pune">Pune</option>
+                                <option className={isDarkMode ? 'text-gray-300' : 'text-gray-700'} value="delhi">Delhi</option>
+                                <option className={isDarkMode ? 'text-gray-300' : 'text-gray-700'} value="bangalore">Bangalore</option>
                               </>
                             )}
                           </select>
